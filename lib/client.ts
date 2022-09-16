@@ -13,19 +13,20 @@ import { User, Friend } from "./friend"
 import { Discuss, Group } from "./group"
 import { Member } from "./member"
 import { Forwardable, Quotable, Sendable, parseDmMessageId, parseGroupMessageId, Image, ImageElem} from "./message"
+import EventDeliver from "event-deliver";
 
 /** 事件接口 */
 export interface Client extends BaseClient {
-	on<T extends keyof EventMap>(event: T, listener: EventMap<this>[T]): this
-	on<S extends string | symbol>(event: S & Exclude<S, keyof EventMap>, listener: (this: this, ...args: any[]) => void): this
-	once<T extends keyof EventMap>(event: T, listener: EventMap<this>[T]): this
-	once<S extends string | symbol>(event: S & Exclude<S, keyof EventMap>, listener: (this: this, ...args: any[]) => void): this
-	prependListener<T extends keyof EventMap>(event: T, listener: EventMap<this>[T]): this
-	prependListener(event: string | symbol, listener: (this: this, ...args: any[]) => void): this
-	prependOnceListener<T extends keyof EventMap>(event: T, listener: EventMap<this>[T]): this
-	prependOnceListener(event: string | symbol, listener: (this: this, ...args: any[]) => void): this
-	off<T extends keyof EventMap>(event: T, listener: EventMap<this>[T]): this
-	off<S extends string | symbol>(event: S & Exclude<S, keyof EventMap>, listener: (this: this, ...args: any[]) => void): this
+	on<T extends keyof EventMap>(event: T, listener: EventMap<this>[T]): EventDeliver.Dispose
+	on<S extends string | symbol>(event: S & Exclude<S, keyof EventMap>, listener: (this: this, ...args: any[]) => void): EventDeliver.Dispose
+	once<T extends keyof EventMap>(event: T, listener: EventMap<this>[T]): EventDeliver.Dispose
+	once<S extends string | symbol>(event: S & Exclude<S, keyof EventMap>, listener: (this: this, ...args: any[]) => void): EventDeliver.Dispose
+	prependListener<T extends keyof EventMap>(event: T, listener: EventMap<this>[T]): EventDeliver.Dispose
+	prependListener(event: string | symbol, listener: (this: this, ...args: any[]) => void): EventDeliver.Dispose
+	prependOnceListener<T extends keyof EventMap>(event: T, listener: EventMap<this>[T]): EventDeliver.Dispose
+	prependOnceListener(event: string | symbol, listener: (this: this, ...args: any[]) => void): EventDeliver.Dispose
+	off<T extends keyof EventMap>(event: T, listener: EventMap<this>[T]): boolean
+	off<S extends string | symbol>(event: S & Exclude<S, keyof EventMap>, listener: (this: this, ...args: any[]) => void): boolean
 }
 
 /** 一个客户端 */
@@ -116,8 +117,6 @@ export class Client extends BaseClient {
 		(this.logger as log4js.Logger).level = level
 		this.config.log_level = level
 	}
-
-	//@ts-ignore ts2376??
 	constructor(uin: number, conf?: Config) {
 
 		const config = {
@@ -150,8 +149,8 @@ export class Client extends BaseClient {
 		if (_)
 			this.logger.mark("创建了新的设备文件：" + file)
 		this.logger.mark("----------")
-		this.logger.mark(`Package Version: oicq@${pkg.version} (Released on ${pkg.upday})`)
-		this.logger.mark("View Changelogs：https://github.com/takayama-lily/oicq/releases")
+		this.logger.mark(`Package Version: icqq@${pkg.version} (Released on ${pkg.upday})`)
+		this.logger.mark("View Changelogs：https://github.com/icqqjs/icqq/releases")
 		this.logger.mark("----------")
 
 		this.dir = dir

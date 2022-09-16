@@ -1,28 +1,28 @@
-# oicq
+# icqq
 
-[![npm version](https://img.shields.io/npm/v/oicq/latest.svg)](https://www.npmjs.com/package/oicq)
-[![dm](https://shields.io/npm/dm/oicq)](https://www.npmjs.com/package/oicq)
-[![node engine](https://img.shields.io/node/v/oicq/latest.svg)](https://nodejs.org)
+[![npm version](https://img.shields.io/npm/v/icqq/latest.svg)](https://www.npmjs.com/package/icqq)
+[![dm](https://shields.io/npm/dm/icqq)](https://www.npmjs.com/package/icqq)
+[![node engine](https://img.shields.io/node/v/icqq/latest.svg)](https://nodejs.org)
 [![discord](https://img.shields.io/static/v1?label=chat&message=on%20discord&color=7289da&logo=discord)](https://discord.gg/gKnU7BARzv)
 
 * QQ(安卓)协议基于Node.js的实现，支持最低node版本为 v14
-* 若你不熟悉Node.js或不会组织代码，可通过 [template](https://github.com/takayama-lily/oicq-template) 创建一个简单的应用程序
-* [API Reference](#api-reference) / [Type Docs](https://oicqjs.github.io/oicq/) (文档仅供参考，具体类型以包内d.ts声明文件为准)
-* [从v1.x升级](https://github.com/takayama-lily/oicq/projects/3#column-16638290) (v1在master分支)
-* QQ频道未来不会直接支持，请使用插件 [oicq-guild](https://github.com/takayama-lily/oicq-guild)
+* 若你不熟悉Node.js或不会组织代码，可通过 [template](https://github.com/icqqjs/icqq-template) 创建一个简单的应用程序
+* [API Reference](#api-reference) / [Type Docs](https://icqqjs.github.io/icqq/) (文档仅供参考，具体类型以包内d.ts声明文件为准)
+* [从v1.x升级](https://github.com/icqqjs/icqq/projects/3#column-16638290) (v1在master分支)
+* QQ频道未来不会直接支持，请使用插件 [icqq-guild](https://github.com/icqqjs/icqq-guild)
 
 ----
 
 **Install:**
 
 ```bash
-> npm i oicq  # or > yarn add oicq
+> npm i icqq  # or > yarn add icqq
 ```
 
 **Usage:**
 
 ```js
-const { createClient } = require("oicq")
+const { createClient } = require("icqq")
 const account = 147258369
 const client = createClient(account)
 
@@ -41,7 +41,7 @@ client.on("system.login.qrcode", function (e) {
 ```
 
 注意：扫码登录现在仅能在同一ip下进行，建议使用密码登录，只需验证一次设备便长期有效  
-[密码登录教程](https://github.com/takayama-lily/oicq/wiki/01.%E4%BD%BF%E7%94%A8%E5%AF%86%E7%A0%81%E7%99%BB%E5%BD%95-(%E6%BB%91%E5%8A%A8%E9%AA%8C%E8%AF%81%E7%A0%81%E6%95%99%E7%A8%8B))
+[密码登录教程](https://github.com/icqqjs/icqq/wiki/01.%E4%BD%BF%E7%94%A8%E5%AF%86%E7%A0%81%E7%99%BB%E5%BD%95-(%E6%BB%91%E5%8A%A8%E9%AA%8C%E8%AF%81%E7%A0%81%E6%95%99%E7%A8%8B))
 
 ## Api Reference
 
@@ -359,7 +359,7 @@ client.on("system.login.qrcode", function (e) {
 
 ```js
 //样例代码，文字+图片+表情+AT
-const { segment } = require("oicq")
+const { segment } = require("icqq")
 const message = [
   "hello world",
   segment.image("/tmp/abc.jpg"),
@@ -390,7 +390,7 @@ const message = [
 **其他：**
 
 * [QQWebApi](./web-api.md) QQ Web Api 收集整理 (途中)
-* [码云镜像仓库](https://gitee.com/takayama/oicq)
+* [码云镜像仓库](https://gitee.com/takayama/icqq)
 * [赞助记录](./sponsors.md)
 * [TXHook](https://github.com/fuqiuluo/TXHook) 抓包工具推荐
 

@@ -232,9 +232,14 @@ export async function getGrpSysMsg(this: Client) {
 			}
 			if (e.sub_type === "add") {
 				this.logger.info(`用户 ${e.user_id}(${e.nickname}) 请求加入群 ${e.group_id}(${e.group_name}) (seq: ${e.seq}, flag: ${e.flag})`)
+				const group=this.pickGroup(e.group_id)
+				group.emit('request',e)
+				group.emit('request.add',e)
 				this.em("request.group.add", e)
 			} else {
 				this.logger.info(`用户 ${e.user_id}(${e.nickname}) 邀请你加入群 ${e.group_id}(${e.group_name}) (seq: ${e.seq}, flag: ${e.flag})`)
+				const friend=this.pickFriend(e.user_id)
+				friend.emit('invite',e)
 				this.em("request.group.invite", e)
 			}
 		} catch (e: any) {

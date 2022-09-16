@@ -1,6 +1,7 @@
 import { EventEmitter } from "events"
 import { randomBytes } from "crypto"
 import { Readable } from "stream"
+import EventDeliver from "event-deliver";
 import Network from "./network"
 import Ecdh from "./ecdh"
 import Writer from "./writer"
@@ -42,36 +43,38 @@ export enum QrcodeResult {
 
 export interface BaseClient {
 	/** 收到二维码 */
-	on(name: "internal.qrcode", listener: (this: this, qrcode: Buffer) => void): this
+	on(name: "internal.qrcode", listener: (this: this, qrcode: Buffer) => void): EventDeliver.Dispose
 	/** 收到滑动验证码 */
-	on(name: "internal.slider", listener: (this: this, url: string) => void): this
+	on(name: "internal.slider", listener: (this: this, url: string) => void): EventDeliver.Dispose
 	/** 登录保护验证 */
-	on(name: "internal.verify", listener: (this: this, url: string, phone: string) => void): this
+	on(name: "internal.verify", listener: (this: this, url: string, phone: string) => void): EventDeliver.Dispose
 	/** token过期(此时已掉线) */
-	on(name: "internal.error.token", listener: (this: this) => void): this
+	on(name: "internal.error.token", listener: (this: this) => void): EventDeliver.Dispose
 	/** 网络错误 */
-	on(name: "internal.error.network", listener: (this: this, code: number, message: string) => void): this
+	on(name: "internal.error.network", listener: (this: this, code: number, message: string) => void): EventDeliver.Dispose
 	/** 密码登录相关错误 */
-	on(name: "internal.error.login", listener: (this: this, code: number, message: string) => void): this
+	on(name: "internal.error.login", listener: (this: this, code: number, message: string) => void): EventDeliver.Dispose
 	/** 扫码登录相关错误 */
-	on(name: "internal.error.qrcode", listener: (this: this, code: QrcodeResult, message: string) => void): this
+	on(name: "internal.error.qrcode", listener: (this: this, code: QrcodeResult, message: string) => void): EventDeliver.Dispose
 	/** 登录成功 */
-	on(name: "internal.online", listener: (this: this, token: Buffer, nickname: string, gender: number, age: number) => void): this
+	on(name: "internal.online", listener: (this: this, token: Buffer, nickname: string, gender: number, age: number) => void): EventDeliver.Dispose
 	/** token更新 */
-	on(name: "internal.token", listener: (this: this, token: Buffer) => void): this
+	on(name: "internal.token", listener: (this: this, token: Buffer) => void): EventDeliver.Dispose
 	/** 服务器强制下线 */
-	on(name: "internal.kickoff", listener: (this: this, reason: string) => void): this
+	on(name: "internal.kickoff", listener: (this: this, reason: string) => void): EventDeliver.Dispose
 	/** 业务包 */
-	on(name: "internal.sso", listener: (this: this, cmd: string, payload: Buffer, seq: number) => void): this
+	on(name: "internal.sso", listener: (this: this, cmd: string, payload: Buffer, seq: number) => void): EventDeliver.Dispose
 	/** 日志信息 */
-	on(name: "internal.verbose", listener: (this: this, verbose: unknown, level: VerboseLevel) => void): this
-	on(name: string | symbol, listener: (this: this, ...args: any[]) => void): this
+	on(name: "internal.verbose", listener: (this: this, verbose: unknown, level: VerboseLevel) => void): EventDeliver.Dispose
+	on(name: string | symbol, listener: (this: this, ...args: any[]) => void): EventDeliver.Dispose
 }
 
-export class BaseClient extends EventEmitter {
+export class BaseClient extends EventDeliver {
 
 	private [IS_ONLINE] = false
 	private [LOGIN_LOCK] = false
+	// 心跳定时器
+	private [HEARTBEAT]: NodeJS.Timeout=null as unknown as NodeJS.Timeout
 	private [ECDH] = new Ecdh
 	private readonly [NET] = new Network
 	// 回包的回调函数
@@ -118,8 +121,6 @@ export class BaseClient extends EventEmitter {
 	protected interval = 30
 	/** 随心跳一起触发的函数，可以随意设定 */
 	protected heartbeat = NOOP
-	// 心跳定时器
-	private [HEARTBEAT]: NodeJS.Timeout
 	/** 数据统计 */
 	protected readonly statistics = {
 		start_time: timestamp(),

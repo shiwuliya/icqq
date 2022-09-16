@@ -5,7 +5,7 @@ web api 是需要 cookie 或 csrf-token(bkn) 才可正常访问，用于实现�
 
 ----
 
-**使用oicq客户端登录后获取cookie和csrf-token:**
+**使用icqq客户端登录后获取cookie和csrf-token:**
 
 ```js
 let domain = ""; //支持qun.qq.com等多个domain

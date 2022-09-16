@@ -5,7 +5,7 @@ const os = require("os");
 const querystring = require("querystring");
 const url = require("url");
 const crypto = require("crypto");
-const oicq = require("../");
+const icqq = require("../");
 const http = require("http");
 const https = require("https");
 const WebSocket = require("ws");
@@ -14,12 +14,12 @@ const api = require("./api");
 const transNotice = require("./cq-notice");
 
 /**
- * @type {oicq.ConfBot}
+ * @type {icqq.ConfBot}
  */
 const config = {};
 
 /**
- * @type {oicq.Client}
+ * @type {icqq.Client}
  */
 let bot;
 
@@ -41,8 +41,8 @@ let account = 0, passdir = "", wsrCreated = false;
 function startup(arg1, arg2) {
     account = arg1;
     Object.assign(config, arg2);
-    config.data_dir = path.join(os.homedir(), ".oicq");
-    passdir = path.join(os.homedir(), ".oicq", String(account));
+    config.data_dir = path.join(os.homedir(), ".icqq");
+    passdir = path.join(os.homedir(), ".icqq", String(account));
     console.log("已加载配置文件：", config);
     if (config.enable_heartbeat && (config.use_ws || config.ws_reverse_url.length)) {
         setInterval(()=>{
@@ -100,7 +100,7 @@ function botLogin() {
  * 创建bot
  */
 function createBot() {
-    bot = oicq.createClient(account, config);
+    bot = icqq.createClient(account, config);
     api.setBot(bot, config.rate_limit_interval);
     bot.on("system.login.slider", ()=>{
         process.stdin.once("data", (input)=>{

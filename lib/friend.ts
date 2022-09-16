@@ -7,8 +7,9 @@ import { ErrorCode, drop } from "./errors"
 import { Gender, PB_CONTENT, code2uin, timestamp, lock, hide, fileHash, md5, sha, log } from "./common"
 import { Sendable, PrivateMessage, buildMusic, MusicPlatform, Quotable, rand2uuid, genDmMessageId, parseDmMessageId, FileElem } from "./message"
 import { buildSyncCookie, Contactable, highwayHttpUpload, CmdID } from "./internal"
-import { MessageRet } from "./events"
+import {FriendNoticeEvent, GroupRequestEvent, MessageRet, PrivateMessageEvent} from "./events"
 import { FriendInfo } from "./entities"
+import EventDeliver from "event-deliver";
 
 type Client = import("./client").Client
 
@@ -184,6 +185,7 @@ export class User extends Contactable {
 			drop(rsp[1], rsp[2])
 		}
 		this.c.logger.info(`succeed to send: [Private(${this.uid})] ` + brief)
+		this.c.stat.sent_msg_cnt++
 		const time = rsp[3]
 		const message_id = genDmMessageId(this.uid, seq, rand, rsp[3], 1)
 		return { message_id, seq, rand, time }
@@ -303,7 +305,29 @@ export class User extends Contactable {
 		return (await this.getFileInfo(fid)).url
 	}
 }
-
+export interface Friend {
+	on<E extends keyof Friend.EventMap>(event:E,listener:Friend.EventMap[E]):EventDeliver.Dispose
+	on<S extends EventDeliver.EventName>(event:S & Exclude<S, keyof Friend.EventMap>,listener:EventDeliver.Listener):EventDeliver.Dispose
+	once<E extends keyof Friend.EventMap>(event:E,listener:Friend.EventMap[E]):EventDeliver.Dispose
+	once<S extends EventDeliver.EventName>(event:S & Exclude<S, keyof Friend.EventMap>,listener:EventDeliver.Listener):EventDeliver.Dispose
+	addEventListener<E extends keyof Friend.EventMap>(event:E,listener:Friend.EventMap[E]):EventDeliver.Dispose
+	addEventListener<S extends EventDeliver.EventName>(event:S & Exclude<S, keyof Friend.EventMap>,listener:EventDeliver.Listener):EventDeliver.Dispose
+	emit<E extends keyof Friend.EventMap>(event:E,...args:Parameters<Friend.EventMap[E]>):void
+	emit<S extends EventDeliver.EventName>(event:S & Exclude<S, keyof Friend.EventMap>,...args:any[]):void
+	emitSync<E extends keyof Friend.EventMap>(event:E,...args:Parameters<Friend.EventMap[E]>):Promise<void>
+	emitSync<S extends EventDeliver.EventName>(event:S & Exclude<S, keyof Friend.EventMap>,...args:any[]):Promise<void>
+	removeListener<E extends keyof Friend.EventMap>(event?:E,listener?:Friend.EventMap[E]):boolean
+	removeListener<S extends EventDeliver.EventName>(event?:S & Exclude<S, keyof Friend.EventMap>,listener?:EventDeliver.Listener):boolean
+	off<E extends keyof Friend.EventMap>(event?:E,listener?:Friend.EventMap[E]):boolean
+	off<S extends EventDeliver.EventName>(event?:S & Exclude<S, keyof Friend.EventMap>,listener?:EventDeliver.Listener):boolean
+}
+export namespace Friend{
+	export interface EventMap{
+		message(e:PrivateMessageEvent):EventDeliver.Dispose
+		invite(e:GroupRequestEvent):EventDeliver.Dispose
+		notice(e:FriendNoticeEvent):EventDeliver.Dispose
+	}
+}
 /** 好友(继承User) */
 export class Friend extends User {
 

@@ -1,7 +1,7 @@
 import { pb, jce } from "../core"
 import { NOOP, timestamp, OnlineStatus, log } from "../common"
 import { PrivateMessage, GroupMessage, DiscussMessage, genDmMessageId, genGroupMessageId } from "../message"
-import { GroupMessageEvent, DiscussMessageEvent } from "../events"
+import {GroupMessageEvent, DiscussMessageEvent, FriendNoticeEvent, GroupNoticeEvent} from "../events"
 
 type Client = import("../client").Client
 
@@ -253,23 +253,29 @@ const push732: {[k: number]: (this: Client, gid: number, buf: Buffer) => OnlineP
 function emitFriendNoticeEvent(c: Client, uid: number, e: OnlinePushEvent | void) {
 	if (!e) return
 	const name = "notice.friend." + e.sub_type
-	c.em(name, Object.assign({
+	const f= c.pickFriend(uid)
+	const event=Object.assign({
 		post_type: "notice",
 		notice_type: "friend",
 		user_id: uid,
-		friend: c.pickFriend(uid)
-	}, e))
+		friend: f
+	}, e) as FriendNoticeEvent
+	f.emit('notice',event)
+	c.em(name, event)
 }
 
 export function emitGroupNoticeEvent(c: Client, gid: number, e: OnlinePushEvent | void) {
 	if (!e) return
 	const name = "notice.group." + e.sub_type
-	c.em(name, Object.assign({
+	const group=c.pickGroup(gid)
+	const event=Object.assign({
 		post_type: "notice",
 		notice_type: "group",
 		group_id: gid,
-		group: c.pickGroup(gid)
-	}, e))
+		group: group
+	}, e) as GroupNoticeEvent
+	group.emit('notice',event)
+	c.em(name, event)
 }
 
 export function onlinePushListener(this: Client, payload: Buffer, seq: number) {
@@ -385,8 +391,10 @@ export function groupMsgListener(this: Client, payload: Buffer) {
 	}
 
 	if (msg.raw_message) {
-		msg.group = this.pickGroup(msg.group_id)
-		msg.member = msg.group.pickMember(msg.user_id)
+		const group=this.pickGroup(msg.group_id)
+		const member=group.pickMember(msg.sender.user_id)
+		msg.group = group
+		msg.member = member
 		msg.reply = function (content, quote = false) {
 			return this.group.sendMsg(content, quote ? this : undefined)
 		}
@@ -404,8 +412,11 @@ export function groupMsgListener(this: Client, payload: Buffer) {
 			info.title = sender.title
 			info.level = sender.level
 			info.last_sent_time = timestamp()
+			member.emit('message.'+msg.sub_type,msg)
 		}
 		this.logger.info(`recv from: [Group: ${msg.group_name}(${msg.group_id}), Member: ${sender.card || sender.nickname}(${sender.user_id})] ` + msg)
+		group.emit('message',msg)
+		group.emit('message.'+msg.sub_type,msg)
 		this.em("message.group." + msg.sub_type, msg)
 		msg.group.info!.last_sent_time = timestamp()
 	}
@@ -420,9 +431,11 @@ export function discussMsgListener(this: Client, payload: Buffer, seq: number) {
 	if (msg.user_id === this.uin && this.config.ignore_self)
 		return
 	if (msg.raw_message) {
-		msg.discuss = this.pickDiscuss(msg.discuss_id)
+		const discuss=this.pickDiscuss(msg.discuss_id)
+		msg.discuss = discuss
 		msg.reply = msg.discuss.sendMsg.bind(msg.discuss)
 		this.logger.info(`recv from: [Discuss: ${msg.discuss_name}(${msg.discuss_id}), Member: ${msg.sender.card}(${msg.sender.user_id})] ` + msg)
+		discuss.emit('message',msg)
 		this.em("message.discuss", msg)
 	}
 }

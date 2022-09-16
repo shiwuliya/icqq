@@ -2,12 +2,35 @@ import { pb, jce } from "./core"
 import { ErrorCode, drop } from "./errors"
 import { timestamp, parseFunString, NOOP, lock, hide } from "./common"
 import { MemberInfo } from "./entities"
-import { User } from "./friend"
+import {Friend, User} from "./friend"
+import {GroupMessageEvent, GroupNoticeEvent} from "./events";
+import EventDeliver from "event-deliver";
 
 type Client = import("./client").Client
 
 const weakmap = new WeakMap<MemberInfo, Member>()
-
+export interface Member{
+	on<E extends keyof Member.EventMap>(event:E,listener:Member.EventMap[E]):EventDeliver.Dispose
+	on<S extends EventDeliver.EventName>(event:S & Exclude<S, keyof Member.EventMap>,listener:EventDeliver.Listener):EventDeliver.Dispose
+	once<E extends keyof Member.EventMap>(event:E,listener:Member.EventMap[E]):EventDeliver.Dispose
+	once<S extends EventDeliver.EventName>(event:S & Exclude<S, keyof Member.EventMap>,listener:EventDeliver.Listener):EventDeliver.Dispose
+	addEventListener<E extends keyof Member.EventMap>(event:E,listener:Member.EventMap[E]):EventDeliver.Dispose
+	addEventListener<S extends EventDeliver.EventName>(event:S & Exclude<S, keyof Member.EventMap>,listener:EventDeliver.Listener):EventDeliver.Dispose
+	emit<E extends keyof Member.EventMap>(event:E,...args:Parameters<Member.EventMap[E]>):void
+	emit<S extends EventDeliver.EventName>(event:S & Exclude<S, keyof Member.EventMap>,...args:any[]):void
+	emitSync<E extends keyof Member.EventMap>(event:E,...args:Parameters<Member.EventMap[E]>):Promise<void>
+	emitSync<S extends EventDeliver.EventName>(event:S & Exclude<S, keyof Member.EventMap>,...args:any[]):Promise<void>
+	removeListener<E extends keyof Member.EventMap>(event?:E,listener?:Member.EventMap[E]):boolean
+	removeListener<S extends EventDeliver.EventName>(event?:S & Exclude<S, keyof Member.EventMap>,listener?:EventDeliver.Listener):boolean
+	off<E extends keyof Member.EventMap>(event?:E,listener?:Member.EventMap[E]):boolean
+	off<S extends EventDeliver.EventName>(event?:S & Exclude<S, keyof Member.EventMap>,listener?:EventDeliver.Listener):boolean
+}
+export namespace Member{
+	export interface EventMap{
+		message(e:GroupMessageEvent):void
+		notice(e:GroupNoticeEvent):void
+	}
+}
 /** @ts-ignore ts(2417) 群员(继承User) */
 export class Member extends User {
 

@@ -6,8 +6,15 @@ import { timestamp, code2uin, PB_CONTENT, NOOP, lock, hide } from "./common"
 import { Contactable } from "./internal"
 import { Sendable, GroupMessage, Image, ImageElem, buildMusic, MusicPlatform, Anonymous, parseGroupMessageId, Quotable, Converter } from "./message"
 import { Gfs } from "./gfs"
-import { MessageRet } from "./events"
+import {
+	DiscussMessageEvent,
+	GroupMessageEvent,
+	GroupNoticeEvent,
+	GroupRequestEvent,
+	MessageRet,
+} from "./events"
 import { GroupInfo, MemberInfo } from "./entities"
+import EventDeliver from "event-deliver";
 
 type Client = import("./client").Client
 
@@ -30,7 +37,27 @@ const GI_BUF = pb.encode({
 	54: 0,
 	89: "",
 })
-
+export interface Discuss{
+	on<E extends keyof Discuss.EventMap>(event:E,listener:Discuss.EventMap[E]):EventDeliver.Dispose
+	on<S extends EventDeliver.EventName>(event:S & Exclude<S, keyof Discuss.EventMap>,listener:EventDeliver.Listener):EventDeliver.Dispose
+	once<E extends keyof Discuss.EventMap>(event:E,listener:Discuss.EventMap[E]):EventDeliver.Dispose
+	once<S extends EventDeliver.EventName>(event:S & Exclude<S, keyof Discuss.EventMap>,listener:EventDeliver.Listener):EventDeliver.Dispose
+	addEventListener<E extends keyof Discuss.EventMap>(event:E,listener:Discuss.EventMap[E]):EventDeliver.Dispose
+	addEventListener<S extends EventDeliver.EventName>(event:S & Exclude<S, keyof Discuss.EventMap>,listener:EventDeliver.Listener):EventDeliver.Dispose
+	emit<E extends keyof Discuss.EventMap>(event:E,...args:Parameters<Discuss.EventMap[E]>):void
+	emit<S extends EventDeliver.EventName>(event:S & Exclude<S, keyof Discuss.EventMap>,...args:any[]):void
+	emitSync<E extends keyof Discuss.EventMap>(event:E,...args:Parameters<Discuss.EventMap[E]>):Promise<void>
+	emitSync<S extends EventDeliver.EventName>(event:S & Exclude<S, keyof Discuss.EventMap>,...args:any[]):Promise<void>
+	removeListener<E extends keyof Discuss.EventMap>(event?:E,listener?:Discuss.EventMap[E]):boolean
+	removeListener<S extends EventDeliver.EventName>(event?:S & Exclude<S, keyof Discuss.EventMap>,listener?:EventDeliver.Listener):boolean
+	off<E extends keyof Discuss.EventMap>(event?:E,listener?:Discuss.EventMap[E]):boolean
+	off<S extends EventDeliver.EventName>(event?:S & Exclude<S, keyof Discuss.EventMap>,listener?:EventDeliver.Listener):boolean
+}
+export namespace Discuss{
+	export interface EventMap{
+		message(e:DiscussMessageEvent):void
+	}
+}
 /** 讨论组 */
 export class Discuss extends Contactable {
 
@@ -62,6 +89,7 @@ export class Discuss extends Contactable {
 			this.c.logger.error(`failed to send: [Discuss(${this.gid})] ${rsp[2]}(${rsp[1]})`)
 			drop(rsp[1], rsp[2])
 		}
+		this.c.stat.sent_msg_cnt++
 		this.c.logger.info(`succeed to send: [Discuss(${this.gid})] ` + brief)
 		return {
 			message_id: "",
@@ -78,8 +106,29 @@ export interface Group {
 	recallMsg(msg: GroupMessage): Promise<boolean>
 	recallMsg(msgid: string): Promise<boolean>
 	recallMsg(seq: number, rand: number, pktnum?: number): Promise<boolean>
+	on<E extends keyof Group.EventMap>(event:E,listener:Group.EventMap[E]):EventDeliver.Dispose
+	on<S extends EventDeliver.EventName>(event:S & Exclude<S, keyof Group.EventMap>,listener:EventDeliver.Listener):EventDeliver.Dispose
+	once<E extends keyof Group.EventMap>(event:E,listener:Group.EventMap[E]):EventDeliver.Dispose
+	once<S extends EventDeliver.EventName>(event:S & Exclude<S, keyof Group.EventMap>,listener:EventDeliver.Listener):EventDeliver.Dispose
+	addEventListener<E extends keyof Group.EventMap>(event:E,listener:Group.EventMap[E]):EventDeliver.Dispose
+	addEventListener<S extends EventDeliver.EventName>(event:S & Exclude<S, keyof Group.EventMap>,listener:EventDeliver.Listener):EventDeliver.Dispose
+	emit<E extends keyof Group.EventMap>(event:E,...args:Parameters<Group.EventMap[E]>):void
+	emit<S extends EventDeliver.EventName>(event:S & Exclude<S, keyof Group.EventMap>,...args:any[]):void
+	emitSync<E extends keyof Group.EventMap>(event:E,...args:Parameters<Group.EventMap[E]>):Promise<void>
+	emitSync<S extends EventDeliver.EventName>(event:S & Exclude<S, keyof Group.EventMap>,...args:any[]):Promise<void>
+	removeListener<E extends keyof Group.EventMap>(event?:E,listener?:Group.EventMap[E]):boolean
+	removeListener<S extends EventDeliver.EventName>(event?:S & Exclude<S, keyof Group.EventMap>,listener?:EventDeliver.Listener):boolean
+	off<E extends keyof Group.EventMap>(event?:E,listener?:Group.EventMap[E]):boolean
+	off<S extends EventDeliver.EventName>(event?:S & Exclude<S, keyof Group.EventMap>,listener?:EventDeliver.Listener):boolean
 }
 
+export namespace Group{
+	export interface EventMap{
+		message(e:GroupMessageEvent):void
+		add(e:GroupRequestEvent):void
+		notice(e:GroupNoticeEvent):void
+	}
+}
 /** 群 */
 export class Group extends Discuss {
 
@@ -288,7 +337,7 @@ export class Group extends Discuss {
 				drop(rsp[1], rsp[2])
 			}
 		} finally {
-			this.c.removeAllListeners(e)
+			this.c.removeListener(e)
 		}
 
 		// 分片专属屎山
@@ -297,7 +346,7 @@ export class Group extends Discuss {
 				const time = this.c.config.resend ? (converter.length <= 80 ? 2000 : 500) : 5000
 				message_id = await new Promise((resolve, reject) => {
 					const timeout = setTimeout(() => {
-						this.c.removeAllListeners(e)
+						this.c.removeListener(e)
 						reject()
 					}, time)
 					this.c.once(e, (id) => {
@@ -309,6 +358,7 @@ export class Group extends Discuss {
 		} catch {
 			message_id = await this._sendMsgByFrag(converter)
 		}
+		this.c.stat.sent_msg_cnt++
 		this.c.logger.info(`succeed to send: [Group(${this.gid})] ` + converter.brief)
 		{
 			const { seq, rand, time } = parseGroupMessageId(message_id)
@@ -343,7 +393,7 @@ export class Group extends Discuss {
 		try {
 			return await new Promise((resolve: (id: string) => void, reject) => {
 				const timeout = setTimeout(() => {
-					this.c.removeAllListeners(e)
+					this.c.removeListener(e)
 					reject()
 				}, 5000)
 				this.c.once(e, (id) => {

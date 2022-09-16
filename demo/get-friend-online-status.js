@@ -2,7 +2,7 @@
 try {
 	var { createClient, core } = require("../lib")
 } catch {
-	var { createClient, core } = require("oicq")
+	var { createClient, core } = require("icqq")
 }
 const jce = core.jce
 

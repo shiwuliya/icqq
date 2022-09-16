@@ -1,20 +1,20 @@
 {
-  "name": "oicq",
-  "version": "2.3.1",
-  "upday": "2022/6/21",
+  "name": "icqq",
+  "version": "0.0.1",
+  "upday": "2022/9/16",
   "description": "QQ protocol!",
   "main": "lib/index.js",
   "types": "lib/index.d.ts",
   "scripts": {
-    "test": "tsc && node ./bin/oicq"
+    "test": "tsc && node ./bin/icqq"
   },
   "engines": {
     "node": ">= v14"
   },
-  "repository": "https://github.com/takayama-lily/oicq",
+  "repository": "https://github.com/icqqjs/icqq",
   "keywords": [
     "qq",
-    "oicq",
+    "icqq",
     "protocol",
     "android",
     "bot",
@@ -22,11 +22,12 @@
   ],
   "author": "takayama",
   "license": "MPL-2.0",
-  "bugs": "https://github.com/takayama-lily/oicq/issues",
-  "homepage": "https://github.com/takayama-lily/oicq#readme",
-  "changelogs": "https://github.com/takayama-lily/oicq/releases",
+  "bugs": "https://github.com/icqqjs/icqq/issues",
+  "homepage": "https://github.com/icqqjs/icqq#readme",
+  "changelogs": "https://github.com/icqqjs/icqq/releases",
   "dependencies": {
     "axios": "^0.27.2",
+    "event-deliver": "^1.0.2",
     "log4js": "^6.3.0",
     "long": "^4.0.0",
     "pngjs": "^6.0.0",

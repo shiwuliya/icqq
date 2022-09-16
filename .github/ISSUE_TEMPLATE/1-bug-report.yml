@@ -11,7 +11,7 @@ body:
       description: Output of `node -v`
   - type: input
     attributes:
-      label: Package(oicq) Version
+      label: Package(icqq) Version
       description: Installed by npm or yarn
       placeholder: latest?
   - type: dropdown
