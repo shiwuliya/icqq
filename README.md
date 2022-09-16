@@ -3,7 +3,7 @@
 [![npm version](https://img.shields.io/npm/v/icqq/latest.svg)](https://www.npmjs.com/package/icqq)
 [![dm](https://shields.io/npm/dm/icqq)](https://www.npmjs.com/package/icqq)
 [![node engine](https://img.shields.io/node/v/icqq/latest.svg)](https://nodejs.org)
-[![discord](https://img.shields.io/static/v1?label=chat&message=on%20discord&color=7289da&logo=discord)](https://discord.gg/gKnU7BARzv)
+[![discord](https://img.shields.io/static/v1?label=chat&message=on%20discord&color=7289da&logo=discord)](https://discord.gg/D7T7wPtwvb)
 
 * QQ(安卓)协议基于Node.js的实现，支持最低node版本为 v14
 * 若你不熟悉Node.js或不会组织代码，可通过 [template](https://github.com/icqqjs/icqq-template) 创建一个简单的应用程序
@@ -394,4 +394,4 @@ const message = [
 * [赞助记录](./sponsors.md)
 * [TXHook](https://github.com/fuqiuluo/TXHook) 抓包工具推荐
 
-[![group:236172566](https://img.shields.io/badge/group-236172566-blue)](https://qm.qq.com/cgi-bin/qm/qr?k=NXw3NEA5lzPjkRhyEpjVBqMpdg1WHRKJ&jump_from=webapi)
+[![group:860669870](https://img.shields.io/badge/group-860669870-blue)](https://jq.qq.com/?_wv=1027&k=xAdGDRVh)
