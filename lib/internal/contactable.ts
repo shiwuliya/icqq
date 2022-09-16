@@ -213,10 +213,10 @@ export abstract class Contactable extends EventDeliver{
 				})
 			})
 		})
-		const [width, height, seconds] = await new Promise((resolve) => {
+		const [width, height, seconds] = await new Promise<number[]>((resolve) => {
 			exec(`${this.c.config.ffprobe_path || "ffprobe"} -i "${file}" -show_streams`, (error, stdout, stderr) => {
 				const lines = (stdout || stderr || "").split("\n")
-				let width = 1280, height = 720, seconds = 120
+				let width: number = 1280, height: number = 720, seconds: number = 120
 				for (const line of lines) {
 					if (line.startsWith("width=")) {
 						width = parseInt(line.slice(6))
