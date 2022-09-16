@@ -390,8 +390,6 @@ const message = [
 **其他：**
 
 * [QQWebApi](./web-api.md) QQ Web Api 收集整理 (途中)
-* [码云镜像仓库](https://gitee.com/takayama/icqq)
-* [赞助记录](./sponsors.md)
 * [TXHook](https://github.com/fuqiuluo/TXHook) 抓包工具推荐
 
 [![group:860669870](https://img.shields.io/badge/group-860669870-blue)](https://jq.qq.com/?_wv=1027&k=xAdGDRVh)
