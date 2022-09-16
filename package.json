@@ -7,7 +7,8 @@
   "types": "lib/index.d.ts",
   "scripts": {
     "build": "tsc",
-    "pub": "npm publish --access public"
+    "pub": "npm publish --access public",
+    "clean": "rm -rf lib/**/*.js && rm -rf lib/**/*.d.ts"
   },
   "engines": {
     "node": ">= v14"
