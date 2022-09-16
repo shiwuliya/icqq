@@ -6,6 +6,8 @@
   "main": "lib/index.js",
   "types": "lib/index.d.ts",
   "scripts": {
+    "build": "tsc",
+    "pub": "npm publish --access public",
     "test": "tsc && node ./bin/icqq"
   },
   "engines": {
