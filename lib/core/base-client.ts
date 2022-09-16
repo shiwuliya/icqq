@@ -74,7 +74,8 @@ export class BaseClient extends EventDeliver {
 	private [IS_ONLINE] = false
 	private [LOGIN_LOCK] = false
 	// 心跳定时器
-	private [HEARTBEAT]: NodeJS.Timeout=null as unknown as NodeJS.Timeout
+	// @ts-ignore
+	private [HEARTBEAT]: NodeJS.Timeout
 	private [ECDH] = new Ecdh
 	private readonly [NET] = new Network
 	// 回包的回调函数
