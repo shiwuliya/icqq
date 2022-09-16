@@ -8,7 +8,6 @@
   "scripts": {
     "build": "tsc",
     "pub": "npm publish --access public",
-    "test": "tsc && node ./bin/icqq"
   },
   "engines": {
     "node": ">= v14"
