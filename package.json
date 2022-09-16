@@ -7,7 +7,7 @@
   "types": "lib/index.d.ts",
   "scripts": {
     "build": "tsc",
-    "pub": "npm publish --access public",
+    "pub": "npm publish --access public"
   },
   "engines": {
     "node": ">= v14"
