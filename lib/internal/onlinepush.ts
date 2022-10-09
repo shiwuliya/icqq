@@ -260,7 +260,7 @@ function emitFriendNoticeEvent(c: Client, uid: number, e: OnlinePushEvent | void
 		user_id: uid,
 		friend: f
 	}, e) as FriendNoticeEvent
-	f.emit('notice',event)
+	f.emit('notice',event as any)
 	c.em(name, event)
 }
 
@@ -274,7 +274,7 @@ export function emitGroupNoticeEvent(c: Client, gid: number, e: OnlinePushEvent 
 		group_id: gid,
 		group: group
 	}, e) as GroupNoticeEvent
-	group.emit('notice',event)
+	group.emit('notice',event as any)
 	c.em(name, event)
 }
 

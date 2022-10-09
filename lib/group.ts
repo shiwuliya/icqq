@@ -7,10 +7,10 @@ import { Contactable } from "./internal"
 import { Sendable, GroupMessage, Image, ImageElem, buildMusic, MusicPlatform, Anonymous, parseGroupMessageId, Quotable, Converter } from "./message"
 import { Gfs } from "./gfs"
 import {
-	DiscussMessageEvent,
-	GroupMessageEvent,
-	GroupNoticeEvent,
-	GroupRequestEvent,
+	DiscussMessageEvent, GroupAdminEvent, GroupInviteEvent,
+	GroupMessageEvent, GroupMuteEvent,
+	GroupNoticeEvent, GroupPokeEvent, GroupRecallEvent,
+	GroupRequestEvent, GroupTransferEvent, MemberDecreaseEvent, MemberIncreaseEvent,
 	MessageRet,
 } from "./events"
 import { GroupInfo, MemberInfo } from "./entities"
@@ -100,34 +100,49 @@ export class Discuss extends Contactable {
 	}
 }
 
+export interface GroupMessageEventMap{
+	'message'(event:GroupMessageEvent):void
+	'message.normal'(event:GroupMessageEvent):void
+	'message.anonymous'(event:GroupMessageEvent):void
+}
+export interface GroupNoticeEventMap{
+	'notice'(event:MemberIncreaseEvent | MemberDecreaseEvent | GroupRecallEvent | GroupAdminEvent | GroupMuteEvent | GroupTransferEvent | GroupPokeEvent):void
+	'notice.increase'(event:MemberIncreaseEvent):void
+	'notice.decrease'(event:MemberDecreaseEvent):void
+	'notice.recall'(event:GroupRecallEvent):void
+	'notice.admin'(event:GroupAdminEvent):void
+	'notice.ban'(event:GroupMuteEvent):void
+	'notice.transfer'(event:GroupTransferEvent):void
+	'notice.poke'(event:GroupPokeEvent):void
+}
+export interface GroupRequestEventMap{
+	'request'(event:GroupRequestEvent | GroupInviteEvent):void
+	'request.add'(event:GroupRequestEvent):void
+	'request.invite'(event:GroupInviteEvent):void
+}
+export interface GroupEventMap extends GroupMessageEventMap,GroupNoticeEventMap,GroupRequestEventMap{
+}
+
 /** 群 */
 export interface Group {
 	/** 撤回消息 */
 	recallMsg(msg: GroupMessage): Promise<boolean>
 	recallMsg(msgid: string): Promise<boolean>
 	recallMsg(seq: number, rand: number, pktnum?: number): Promise<boolean>
-	on<E extends keyof Group.EventMap>(event:E,listener:Group.EventMap[E]):EventDeliver.Dispose
-	on<S extends EventDeliver.EventName>(event:S & Exclude<S, keyof Group.EventMap>,listener:EventDeliver.Listener):EventDeliver.Dispose
-	once<E extends keyof Group.EventMap>(event:E,listener:Group.EventMap[E]):EventDeliver.Dispose
-	once<S extends EventDeliver.EventName>(event:S & Exclude<S, keyof Group.EventMap>,listener:EventDeliver.Listener):EventDeliver.Dispose
-	addEventListener<E extends keyof Group.EventMap>(event:E,listener:Group.EventMap[E]):EventDeliver.Dispose
-	addEventListener<S extends EventDeliver.EventName>(event:S & Exclude<S, keyof Group.EventMap>,listener:EventDeliver.Listener):EventDeliver.Dispose
-	emit<E extends keyof Group.EventMap>(event:E,...args:Parameters<Group.EventMap[E]>):void
-	emit<S extends EventDeliver.EventName>(event:S & Exclude<S, keyof Group.EventMap>,...args:any[]):void
-	emitSync<E extends keyof Group.EventMap>(event:E,...args:Parameters<Group.EventMap[E]>):Promise<void>
-	emitSync<S extends EventDeliver.EventName>(event:S & Exclude<S, keyof Group.EventMap>,...args:any[]):Promise<void>
-	removeListener<E extends keyof Group.EventMap>(event?:E,listener?:Group.EventMap[E]):boolean
-	removeListener<S extends EventDeliver.EventName>(event?:S & Exclude<S, keyof Group.EventMap>,listener?:EventDeliver.Listener):boolean
-	off<E extends keyof Group.EventMap>(event?:E,listener?:Group.EventMap[E]):boolean
-	off<S extends EventDeliver.EventName>(event?:S & Exclude<S, keyof Group.EventMap>,listener?:EventDeliver.Listener):boolean
-}
-
-export namespace Group{
-	export interface EventMap{
-		message(e:GroupMessageEvent):void
-		add(e:GroupRequestEvent):void
-		notice(e:GroupNoticeEvent):void
-	}
+	on<E extends keyof GroupEventMap>(event:E,listener:GroupEventMap[E]):EventDeliver.Dispose
+	on<S extends EventDeliver.EventName>(event:S & Exclude<S, keyof GroupEventMap>,listener:EventDeliver.Listener):EventDeliver.Dispose
+	once<E extends keyof GroupEventMap>(event:E,listener:GroupEventMap[E]):EventDeliver.Dispose
+	once<S extends EventDeliver.EventName>(event:S & Exclude<S, keyof GroupEventMap>,listener:EventDeliver.Listener):EventDeliver.Dispose
+	addEventListener<E extends keyof GroupEventMap>(event:E,listener:GroupEventMap[E]):EventDeliver.Dispose
+	addEventListener<S extends EventDeliver.EventName>(event:S & Exclude<S, keyof GroupEventMap>,listener:EventDeliver.Listener):EventDeliver.Dispose
+	emit<E extends keyof GroupEventMap>(event:E,...args:Parameters<GroupEventMap[E]>):void
+	emit<S extends EventDeliver.EventName>(event:S & Exclude<S, keyof GroupEventMap>,...args:any[]):void
+	emitSync<E extends keyof GroupEventMap>(event:E,...args:Parameters<GroupEventMap[E]>):Promise<void>
+	emitSync<S extends EventDeliver.EventName>(event:S & Exclude<S, keyof GroupEventMap>,...args:any[]):Promise<void>
+	removeListener<E extends keyof GroupEventMap>(event?:E,listener?:GroupEventMap[E]):boolean
+	removeListener<S extends EventDeliver.EventName>(event?:S & Exclude<S, keyof GroupEventMap>,listener?:EventDeliver.Listener):boolean
+	off<E extends keyof GroupEventMap>(event?:E,listener?:GroupEventMap[E]):boolean
+	off<S extends EventDeliver.EventName>(event?:S & Exclude<S, keyof GroupEventMap>,listener?:EventDeliver.Listener):boolean
 }
 /** 群 */
 export class Group extends Discuss {
@@ -362,7 +377,10 @@ export class Group extends Discuss {
 		this.c.logger.info(`succeed to send: [Group(${this.gid})] ` + converter.brief)
 		{
 			const { seq, rand, time } = parseGroupMessageId(message_id)
-			return { seq, rand, time, message_id}
+			const messageRet:MessageRet={ seq, rand, time, message_id}
+			this.c.emit('send',messageRet)
+
+			return messageRet
 		}
 	}
 

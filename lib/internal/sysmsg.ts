@@ -141,9 +141,13 @@ export async function getFrdSysMsg(this: Client) {
 					nickname: e.nickname,
 				})
 				this.logger.info(`${e.user_id}(${e.nickname}) 将你添加为单向好友 (seq: ${e.seq}, flag: ${e.flag})`)
+				const friend=this.pickFriend(e.user_id)
+				friend.emit('request.single',e)
 				this.em("request.friend.single", e)
 			} else {
 				this.logger.info(`收到 ${e.user_id}(${e.nickname}) 的加好友请求 (seq: ${e.seq}, flag: ${e.flag})`)
+				const friend=this.pickFriend(e.user_id)
+				friend.emit('request.add',e)
 				this.em("request.friend.add", e)
 			}
 		} catch (e: any) {
@@ -239,7 +243,7 @@ export async function getGrpSysMsg(this: Client) {
 			} else {
 				this.logger.info(`用户 ${e.user_id}(${e.nickname}) 邀请你加入群 ${e.group_id}(${e.group_name}) (seq: ${e.seq}, flag: ${e.flag})`)
 				const friend=this.pickFriend(e.user_id)
-				friend.emit('invite',e)
+				friend.emit('request.invite',e as unknown as GroupInviteEvent)
 				this.em("request.group.invite", e)
 			}
 		} catch (e: any) {

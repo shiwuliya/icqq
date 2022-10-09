@@ -37,8 +37,8 @@ export interface MemberInfo {
 	group_id: number
 	user_id: number
 	nickname: string
-	card: string
 	sex: Gender
+	card: string
 	age: number
 	area?: string
 	join_time: number

@@ -17,15 +17,15 @@ import EventDeliver from "event-deliver";
 
 /** 事件接口 */
 export interface Client extends BaseClient {
-	on<T extends keyof EventMap>(event: T, listener: EventMap<this>[T]): EventDeliver.Dispose
+	on<T extends keyof EventMap>(event: T, listener: EventMap[T]): EventDeliver.Dispose
 	on<S extends string | symbol>(event: S & Exclude<S, keyof EventMap>, listener: (this: this, ...args: any[]) => void): EventDeliver.Dispose
-	once<T extends keyof EventMap>(event: T, listener: EventMap<this>[T]): EventDeliver.Dispose
+	once<T extends keyof EventMap>(event: T, listener: EventMap[T]): EventDeliver.Dispose
 	once<S extends string | symbol>(event: S & Exclude<S, keyof EventMap>, listener: (this: this, ...args: any[]) => void): EventDeliver.Dispose
-	prependListener<T extends keyof EventMap>(event: T, listener: EventMap<this>[T]): EventDeliver.Dispose
+	prependListener<T extends keyof EventMap>(event: T, listener: EventMap[T]): EventDeliver.Dispose
 	prependListener(event: string | symbol, listener: (this: this, ...args: any[]) => void): EventDeliver.Dispose
-	prependOnceListener<T extends keyof EventMap>(event: T, listener: EventMap<this>[T]): EventDeliver.Dispose
+	prependOnceListener<T extends keyof EventMap>(event: T, listener: EventMap[T]): EventDeliver.Dispose
 	prependOnceListener(event: string | symbol, listener: (this: this, ...args: any[]) => void): EventDeliver.Dispose
-	off<T extends keyof EventMap>(event: T, listener: EventMap<this>[T]): boolean
+	off<T extends keyof EventMap>(event: T, listener: EventMap[T]): boolean
 	off<S extends string | symbol>(event: S & Exclude<S, keyof EventMap>, listener: (this: this, ...args: any[]) => void): boolean
 }
 
