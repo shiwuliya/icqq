@@ -190,21 +190,21 @@ export interface GroupTransferEvent extends GroupNoticeEvent {
 
 export type PushStrToNextStr<S extends string,NS extends string>=NS extends `${infer L}.${infer R}`?`${L}.${S}.${R}`:`${NS}.${S}`
 export type MessageEventMap={
-	'message'(event:PrivateMessageEvent|GroupMessageEvent):EventDeliver.Dispose
+	'message'(event:PrivateMessageEvent|GroupMessageEvent):void
 } & {
 	[P in keyof PrivateMessageEventMap as PushStrToNextStr<'private',P>]:PrivateMessageEventMap[P]
 } & {
 	[P in keyof GroupMessageEventMap as PushStrToNextStr<'group',P>]:GroupMessageEventMap[P]
 }
 export type NoticeEventMap={
-	'notice'(event:Parameters<MergeEventMap['notice.friend']> | Parameters<MergeEventMap['notice.group']> ):EventDeliver.Dispose
+	'notice'(event:Parameters<MergeEventMap['notice.friend']> | Parameters<MergeEventMap['notice.group']> ):void
 } & {
 	[P in keyof FriendNoticeEventMap as PushStrToNextStr<'friend',P>]:FriendNoticeEventMap[P]
 } & {
 	[P in keyof GroupNoticeEventMap as PushStrToNextStr<'group',P>]:GroupNoticeEventMap[P]
 }
 export type RequestEventMap={
-	'request'(event:Parameters<MergeEventMap['request.friend']> | Parameters<MergeEventMap['request.group']> ):EventDeliver.Dispose
+	'request'(event:Parameters<MergeEventMap['request.friend']> | Parameters<MergeEventMap['request.group']> ):void
 } & {
 	[P in keyof FriendRequestEventMap as PushStrToNextStr<'friend',P>]:FriendRequestEventMap[P]
 } & {
