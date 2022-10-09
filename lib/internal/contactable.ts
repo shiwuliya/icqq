@@ -11,6 +11,7 @@ import { escapeXml, md5, NOOP, timestamp, uuid, md5Stream, IS_WIN, TMP_DIR, gzip
 import { Sendable, PrivateMessage, MessageElem, ForwardMessage, Forwardable, Quotable, Image, ImageElem, VideoElem, PttElem, Converter, XmlElem, rand2uuid } from "../message"
 import { CmdID, highwayUpload } from "./highway"
 import EventDeliver from "event-deliver";
+import {fromCqcode} from "../message/cqCode";
 type Client = import("../client").Client
 
 /** 所有用户和群的基类 */
@@ -178,6 +179,7 @@ export abstract class Contactable extends EventDeliver{
 		try {
 			if (!Array.isArray(content))
 				content = [content]
+			content=content.map(item=>typeof item==="string"?fromCqcode(item):item).flat()
 			if ((content[0] as MessageElem).type === "video")
 				content[0] = await this.uploadVideo(content[0] as VideoElem)
 			else if ((content[0] as MessageElem).type === "record")

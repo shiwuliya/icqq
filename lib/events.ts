@@ -190,7 +190,8 @@ export interface GroupTransferEvent extends GroupNoticeEvent {
 
 export type PushStrToNextStr<S extends string,NS extends string>=NS extends `${infer L}.${infer R}`?`${L}.${S}.${R}`:`${NS}.${S}`
 export type MessageEventMap={
-	'message'(event:PrivateMessageEvent|GroupMessageEvent):void
+	'message'(event:PrivateMessageEvent|GroupMessageEvent|DiscussMessageEvent):void
+	'message.discuss'(event:DiscussMessageEvent):void
 } & {
 	[P in keyof PrivateMessageEventMap as PushStrToNextStr<'private',P>]:PrivateMessageEventMap[P]
 } & {
