@@ -167,7 +167,7 @@ export abstract class Message implements Quotable, Forwardable {
 				message: parse(Array.isArray(q[5]) ? q[5] : [q[5]]).brief,
 			}
 		}
-		
+
 		lock(this, "proto")
 		lock(this, "parsed")
 		lock(this, "pktnum")
@@ -183,6 +183,13 @@ export abstract class Message implements Quotable, Forwardable {
 	/** 以适合人类阅读的形式输出 */
 	toString() {
 		return this.parsed.content
+	}
+	toJSON(keys:string[]):Record<string, any>{
+		return Object.fromEntries(Object.keys(this).filter((key)=>{
+			return typeof this[key as keyof this]!=="function" && !keys.includes(key as any)
+		}).map(key=>{
+			return [key,this[key as keyof this]]
+		}))
 	}
 
 	/** @deprecated 转换为CQ码 */
