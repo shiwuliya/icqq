@@ -28,7 +28,7 @@
   "homepage": "https://github.com/icqqjs/icqq#readme",
   "changelogs": "https://github.com/icqqjs/icqq/releases",
   "dependencies": {
-    "axios": "^0.27.2",
+    "axios": "^1.1.2",
     "lodash": "^4.17.21",
     "log4js": "^6.3.0",
     "long": "^4.0.0",
