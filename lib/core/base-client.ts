@@ -1,7 +1,6 @@
 import { EventEmitter } from "events"
 import { randomBytes } from "crypto"
 import { Readable } from "stream"
-import EventDeliver from "event-deliver";
 import Network from "./network"
 import Ecdh from "./ecdh"
 import Writer from "./writer"

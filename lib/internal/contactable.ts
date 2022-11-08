@@ -433,7 +433,7 @@ export abstract class Contactable extends EventEmitter{
 		let MultiMsg = []
 		let brief
 		for (const fake of msglist) {
-			if (fake.message?.type == 'xml' && fake.message?.data) {
+			if (typeof fake.message!=="string" && !Array.isArray(fake.message) && fake.message?.type == 'xml' && fake.message?.data) {
 				let data = fake.message.data
 				let brief_reg = /brief\=\"(.*?)\"/gm.exec(data)
 
@@ -461,7 +461,7 @@ export abstract class Contactable extends EventEmitter{
 						}
 					}
 				}
-			} else if (fake.message?.type == 'json' && fake.message?.data) {
+			} else if (typeof fake.message!=="string" && !Array.isArray(fake.message) && fake.message?.type == 'json' && fake.message?.data) {
 				let json = fake.message.data
 				if (json) {
 					brief = json.prompt
