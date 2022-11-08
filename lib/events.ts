@@ -6,7 +6,6 @@ import {Group, Discuss, GroupRequestEventMap, GroupNoticeEventMap, GroupMessageE
 import { Member } from "./member"
 import { MemberInfo } from "./entities"
 import { LoginErrorCode } from "./errors"
-import EventDeliver from "event-deliver";
 
 /** 发消息的返回值 */
 export interface MessageRet {

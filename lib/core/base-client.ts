@@ -43,33 +43,33 @@ export enum QrcodeResult {
 
 export interface BaseClient {
 	/** 收到二维码 */
-	on(name: "internal.qrcode", listener: (this: this, qrcode: Buffer) => void): EventDeliver.Dispose
+	on(name: "internal.qrcode", listener: (this: this, qrcode: Buffer) => void): this
 	/** 收到滑动验证码 */
-	on(name: "internal.slider", listener: (this: this, url: string) => void): EventDeliver.Dispose
+	on(name: "internal.slider", listener: (this: this, url: string) => void): this
 	/** 登录保护验证 */
-	on(name: "internal.verify", listener: (this: this, url: string, phone: string) => void): EventDeliver.Dispose
+	on(name: "internal.verify", listener: (this: this, url: string, phone: string) => void): this
 	/** token过期(此时已掉线) */
-	on(name: "internal.error.token", listener: (this: this) => void): EventDeliver.Dispose
+	on(name: "internal.error.token", listener: (this: this) => void): this
 	/** 网络错误 */
-	on(name: "internal.error.network", listener: (this: this, code: number, message: string) => void): EventDeliver.Dispose
+	on(name: "internal.error.network", listener: (this: this, code: number, message: string) => void): this
 	/** 密码登录相关错误 */
-	on(name: "internal.error.login", listener: (this: this, code: number, message: string) => void): EventDeliver.Dispose
+	on(name: "internal.error.login", listener: (this: this, code: number, message: string) => void): this
 	/** 扫码登录相关错误 */
-	on(name: "internal.error.qrcode", listener: (this: this, code: QrcodeResult, message: string) => void): EventDeliver.Dispose
+	on(name: "internal.error.qrcode", listener: (this: this, code: QrcodeResult, message: string) => void): this
 	/** 登录成功 */
-	on(name: "internal.online", listener: (this: this, token: Buffer, nickname: string, gender: number, age: number) => void): EventDeliver.Dispose
+	on(name: "internal.online", listener: (this: this, token: Buffer, nickname: string, gender: number, age: number) => void): this
 	/** token更新 */
-	on(name: "internal.token", listener: (this: this, token: Buffer) => void): EventDeliver.Dispose
+	on(name: "internal.token", listener: (this: this, token: Buffer) => void): this
 	/** 服务器强制下线 */
-	on(name: "internal.kickoff", listener: (this: this, reason: string) => void): EventDeliver.Dispose
+	on(name: "internal.kickoff", listener: (this: this, reason: string) => void): this
 	/** 业务包 */
-	on(name: "internal.sso", listener: (this: this, cmd: string, payload: Buffer, seq: number) => void): EventDeliver.Dispose
+	on(name: "internal.sso", listener: (this: this, cmd: string, payload: Buffer, seq: number) => void): this
 	/** 日志信息 */
-	on(name: "internal.verbose", listener: (this: this, verbose: unknown, level: VerboseLevel) => void): EventDeliver.Dispose
-	on(name: string | symbol, listener: (this: this, ...args: any[]) => void): EventDeliver.Dispose
+	on(name: "internal.verbose", listener: (this: this, verbose: unknown, level: VerboseLevel) => void): this
+	on(name: string | symbol, listener: (this: this, ...args: any[]) => void): this
 }
 
-export class BaseClient extends EventDeliver {
+export class BaseClient extends EventEmitter {
 
 	private [IS_ONLINE] = false
 	private [LOGIN_LOCK] = false

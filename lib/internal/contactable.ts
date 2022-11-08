@@ -10,12 +10,12 @@ import { ErrorCode, drop } from "../errors"
 import { escapeXml, md5, NOOP, timestamp, uuid, md5Stream, IS_WIN, TMP_DIR, gzip, unzip, int32ip2str, lock, pipeline, DownloadTransform, log } from "../common"
 import { Sendable, PrivateMessage, MessageElem, ForwardMessage, Forwardable, Quotable, Image, ImageElem, VideoElem, PttElem, Converter, XmlElem, rand2uuid } from "../message"
 import { CmdID, highwayUpload } from "./highway"
-import EventDeliver from "event-deliver";
 import {fromCqcode} from "../message/cqCode";
+import {EventEmitter} from "events";
 type Client = import("../client").Client
 
 /** 所有用户和群的基类 */
-export abstract class Contactable extends EventDeliver{
+export abstract class Contactable extends EventEmitter{
 
 	/** 对方QQ号 */
 	protected uid?: number

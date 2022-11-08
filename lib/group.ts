@@ -8,13 +8,11 @@ import { Sendable, GroupMessage, Image, ImageElem, buildMusic, MusicPlatform, An
 import { Gfs } from "./gfs"
 import {
 	DiscussMessageEvent, GroupAdminEvent, GroupInviteEvent,
-	GroupMessageEvent, GroupMuteEvent,
-	GroupNoticeEvent, GroupPokeEvent, GroupRecallEvent,
+	GroupMessageEvent, GroupMuteEvent, GroupPokeEvent, GroupRecallEvent,
 	GroupRequestEvent, GroupTransferEvent, MemberDecreaseEvent, MemberIncreaseEvent,
 	MessageRet,
 } from "./events"
 import { GroupInfo, MemberInfo } from "./entities"
-import EventDeliver from "event-deliver";
 
 type Client = import("./client").Client
 
@@ -38,20 +36,18 @@ const GI_BUF = pb.encode({
 	89: "",
 })
 export interface Discuss{
-	on<E extends keyof Discuss.EventMap>(event:E,listener:Discuss.EventMap[E]):EventDeliver.Dispose
-	on<S extends EventDeliver.EventName>(event:S & Exclude<S, keyof Discuss.EventMap>,listener:EventDeliver.Listener):EventDeliver.Dispose
-	once<E extends keyof Discuss.EventMap>(event:E,listener:Discuss.EventMap[E]):EventDeliver.Dispose
-	once<S extends EventDeliver.EventName>(event:S & Exclude<S, keyof Discuss.EventMap>,listener:EventDeliver.Listener):EventDeliver.Dispose
-	addEventListener<E extends keyof Discuss.EventMap>(event:E,listener:Discuss.EventMap[E]):EventDeliver.Dispose
-	addEventListener<S extends EventDeliver.EventName>(event:S & Exclude<S, keyof Discuss.EventMap>,listener:EventDeliver.Listener):EventDeliver.Dispose
-	emit<E extends keyof Discuss.EventMap>(event:E,...args:Parameters<Discuss.EventMap[E]>):void
-	emit<S extends EventDeliver.EventName>(event:S & Exclude<S, keyof Discuss.EventMap>,...args:any[]):void
-	emitSync<E extends keyof Discuss.EventMap>(event:E,...args:Parameters<Discuss.EventMap[E]>):Promise<void>
-	emitSync<S extends EventDeliver.EventName>(event:S & Exclude<S, keyof Discuss.EventMap>,...args:any[]):Promise<void>
-	removeListener<E extends keyof Discuss.EventMap>(event?:E,listener?:Discuss.EventMap[E]):boolean
-	removeListener<S extends EventDeliver.EventName>(event?:S & Exclude<S, keyof Discuss.EventMap>,listener?:EventDeliver.Listener):boolean
-	off<E extends keyof Discuss.EventMap>(event?:E,listener?:Discuss.EventMap[E]):boolean
-	off<S extends EventDeliver.EventName>(event?:S & Exclude<S, keyof Discuss.EventMap>,listener?:EventDeliver.Listener):boolean
+	on<E extends keyof Discuss.EventMap>(event:E,listener:Discuss.EventMap[E]):this
+	on<S extends string|symbol>(event:S & Exclude<S, keyof Discuss.EventMap>,listener:(...args:any[])=>any):this
+	once<E extends keyof Discuss.EventMap>(event:E,listener:Discuss.EventMap[E]):this
+	once<S extends string|symbol>(event:S & Exclude<S, keyof Discuss.EventMap>,listener:(...args:any[])=>any):this
+	addEventListener<E extends keyof Discuss.EventMap>(event:E,listener:Discuss.EventMap[E]):this
+	addEventListener<S extends string|symbol>(event:S & Exclude<S, keyof Discuss.EventMap>,listener:(...args:any[])=>any):this
+	emit<E extends keyof Discuss.EventMap>(event:E,...args:Parameters<Discuss.EventMap[E]>):boolean
+	emit<S extends string|symbol>(event:S & Exclude<S, keyof Discuss.EventMap>,...args:any[]):boolean
+	removeListener<E extends keyof Discuss.EventMap>(event?:E,listener?:Discuss.EventMap[E]):this
+	removeListener<S extends string|symbol>(event?:S & Exclude<S, keyof Discuss.EventMap>,listener?:(...args:any[])=>any):this
+	off<E extends keyof Discuss.EventMap>(event?:E,listener?:Discuss.EventMap[E]):this
+	off<S extends string|symbol>(event?:S & Exclude<S, keyof Discuss.EventMap>,listener?:(...args:any[])=>any):this
 }
 export namespace Discuss{
 	export interface EventMap{
@@ -129,20 +125,18 @@ export interface Group {
 	recallMsg(msg: GroupMessage): Promise<boolean>
 	recallMsg(msgid: string): Promise<boolean>
 	recallMsg(seq: number, rand: number, pktnum?: number): Promise<boolean>
-	on<E extends keyof GroupEventMap>(event:E,listener:GroupEventMap[E]):EventDeliver.Dispose
-	on<S extends EventDeliver.EventName>(event:S & Exclude<S, keyof GroupEventMap>,listener:EventDeliver.Listener):EventDeliver.Dispose
-	once<E extends keyof GroupEventMap>(event:E,listener:GroupEventMap[E]):EventDeliver.Dispose
-	once<S extends EventDeliver.EventName>(event:S & Exclude<S, keyof GroupEventMap>,listener:EventDeliver.Listener):EventDeliver.Dispose
-	addEventListener<E extends keyof GroupEventMap>(event:E,listener:GroupEventMap[E]):EventDeliver.Dispose
-	addEventListener<S extends EventDeliver.EventName>(event:S & Exclude<S, keyof GroupEventMap>,listener:EventDeliver.Listener):EventDeliver.Dispose
-	emit<E extends keyof GroupEventMap>(event:E,...args:Parameters<GroupEventMap[E]>):void
-	emit<S extends EventDeliver.EventName>(event:S & Exclude<S, keyof GroupEventMap>,...args:any[]):void
-	emitSync<E extends keyof GroupEventMap>(event:E,...args:Parameters<GroupEventMap[E]>):Promise<void>
-	emitSync<S extends EventDeliver.EventName>(event:S & Exclude<S, keyof GroupEventMap>,...args:any[]):Promise<void>
-	removeListener<E extends keyof GroupEventMap>(event?:E,listener?:GroupEventMap[E]):boolean
-	removeListener<S extends EventDeliver.EventName>(event?:S & Exclude<S, keyof GroupEventMap>,listener?:EventDeliver.Listener):boolean
-	off<E extends keyof GroupEventMap>(event?:E,listener?:GroupEventMap[E]):boolean
-	off<S extends EventDeliver.EventName>(event?:S & Exclude<S, keyof GroupEventMap>,listener?:EventDeliver.Listener):boolean
+	on<E extends keyof GroupEventMap>(event:E,listener:GroupEventMap[E]):this
+	on<S extends string|symbol>(event:S & Exclude<S, keyof GroupEventMap>,listener:(...args:any[])=>any):this
+	once<E extends keyof GroupEventMap>(event:E,listener:GroupEventMap[E]):this
+	once<S extends string|symbol>(event:S & Exclude<S, keyof GroupEventMap>,listener:(...args:any[])=>any):this
+	addEventListener<E extends keyof GroupEventMap>(event:E,listener:GroupEventMap[E]):this
+	addEventListener<S extends string|symbol>(event:S & Exclude<S, keyof GroupEventMap>,listener:(...args:any[])=>any):this
+	emit<E extends keyof GroupEventMap>(event:E,...args:Parameters<GroupEventMap[E]>):boolean
+	emit<S extends string|symbol>(event:S & Exclude<S, keyof GroupEventMap>,...args:any[]):boolean
+	removeListener<E extends keyof GroupEventMap>(event?:E,listener?:GroupEventMap[E]):this
+	removeListener<S extends string|symbol>(event?:S & Exclude<S, keyof GroupEventMap>,listener?:(...args:any[])=>any):this
+	off<E extends keyof GroupEventMap>(event?:E,listener?:GroupEventMap[E]):this
+	off<S extends string|symbol>(event?:S & Exclude<S, keyof GroupEventMap>,listener?:(...args:any[])=>any):this
 }
 /** 群 */
 export class Group extends Discuss {
@@ -352,7 +346,7 @@ export class Group extends Discuss {
 				drop(rsp[1], rsp[2])
 			}
 		} finally {
-			this.c.removeListener(e)
+			this.c.removeAllListeners(e)
 		}
 
 		// 分片专属屎山
@@ -361,7 +355,7 @@ export class Group extends Discuss {
 				const time = this.c.config.resend ? (converter.length <= 80 ? 2000 : 500) : 5000
 				message_id = await new Promise((resolve, reject) => {
 					const timeout = setTimeout(() => {
-						this.c.removeListener(e)
+						this.c.removeAllListeners(e)
 						reject()
 					}, time)
 					this.c.once(e, (id) => {
@@ -411,7 +405,7 @@ export class Group extends Discuss {
 		try {
 			return await new Promise((resolve: (id: string) => void, reject) => {
 				const timeout = setTimeout(() => {
-					this.c.removeListener(e)
+					this.c.removeAllListeners(e)
 					reject()
 				}, 5000)
 				this.c.once(e, (id) => {

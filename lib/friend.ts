@@ -15,7 +15,6 @@ import {
 	PrivateMessageEvent
 } from "./events"
 import { FriendInfo } from "./entities"
-import EventDeliver from "event-deliver";
 
 type Client = import("./client").Client
 
@@ -315,20 +314,18 @@ export class User extends Contactable {
 	}
 }
 export interface Friend {
-	on<E extends keyof FriendEventMap>(event:E,listener:FriendEventMap[E]):EventDeliver.Dispose
-	on<S extends EventDeliver.EventName>(event:S & Exclude<S, keyof FriendEventMap>,listener:EventDeliver.Listener):EventDeliver.Dispose
-	once<E extends keyof FriendEventMap>(event:E,listener:FriendEventMap[E]):EventDeliver.Dispose
-	once<S extends EventDeliver.EventName>(event:S & Exclude<S, keyof FriendEventMap>,listener:EventDeliver.Listener):EventDeliver.Dispose
-	addEventListener<E extends keyof FriendEventMap>(event:E,listener:FriendEventMap[E]):EventDeliver.Dispose
-	addEventListener<S extends EventDeliver.EventName>(event:S & Exclude<S, keyof FriendEventMap>,listener:EventDeliver.Listener):EventDeliver.Dispose
-	emit<E extends keyof FriendEventMap>(event:E,...args:Parameters<FriendEventMap[E]>):void
-	emit<S extends EventDeliver.EventName>(event:S & Exclude<S, keyof FriendEventMap>,...args:any[]):void
-	emitSync<E extends keyof FriendEventMap>(event:E,...args:Parameters<FriendEventMap[E]>):Promise<void>
-	emitSync<S extends EventDeliver.EventName>(event:S & Exclude<S, keyof FriendEventMap>,...args:any[]):Promise<void>
-	removeListener<E extends keyof FriendEventMap>(event?:E,listener?:FriendEventMap[E]):boolean
-	removeListener<S extends EventDeliver.EventName>(event?:S & Exclude<S, keyof FriendEventMap>,listener?:EventDeliver.Listener):boolean
-	off<E extends keyof FriendEventMap>(event?:E,listener?:FriendEventMap[E]):boolean
-	off<S extends EventDeliver.EventName>(event?:S & Exclude<S, keyof FriendEventMap>,listener?:EventDeliver.Listener):boolean
+	on<E extends keyof FriendEventMap>(event:E,listener:FriendEventMap[E]):this
+	on<S extends string|symbol>(event:S & Exclude<S, keyof FriendEventMap>,listener:(...args:any[])=>any):this
+	once<E extends keyof FriendEventMap>(event:E,listener:FriendEventMap[E]):this
+	once<S extends string|symbol>(event:S & Exclude<S, keyof FriendEventMap>,listener:(...args:any[])=>any):this
+	addEventListener<E extends keyof FriendEventMap>(event:E,listener:FriendEventMap[E]):this
+	addEventListener<S extends string|symbol>(event:S & Exclude<S, keyof FriendEventMap>,listener:(...args:any[])=>any):this
+	emit<E extends keyof FriendEventMap>(event:E,...args:Parameters<FriendEventMap[E]>):boolean
+	emit<S extends string|symbol>(event:S & Exclude<S, keyof FriendEventMap>,...args:any[]):boolean
+	removeListener<E extends keyof FriendEventMap>(event?:E,listener?:FriendEventMap[E]):this
+	removeListener<S extends string|symbol>(event?:S & Exclude<S, keyof FriendEventMap>,listener?:(...args:any[])=>any):this
+	off<E extends keyof FriendEventMap>(event?:E,listener?:FriendEventMap[E]):this
+	off<S extends string|symbol>(event?:S & Exclude<S, keyof FriendEventMap>,listener?:(...args:any[])=>any):this
 }
 
 export interface PrivateMessageEventMap{

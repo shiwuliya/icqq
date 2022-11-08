@@ -6,27 +6,28 @@ const pkg = require("../package.json")
 import { md5, timestamp, NOOP, lock, Gender, OnlineStatus, hide } from "./common"
 import { bindInternalListeners, parseFriendRequestFlag, parseGroupRequestFlag,
 	getSysMsg, setAvatar, setSign, setStatus, addClass, delClass, renameClass,
-	loadBL, loadFL, loadGL, loadSL, getStamp, delStamp, imageOcr, OcrResult } from "./internal"
+	loadBL, loadFL, loadGL, loadSL, getStamp, delStamp, imageOcr } from "./internal"
 import { StrangerInfo, FriendInfo, GroupInfo, MemberInfo } from "./entities"
 import { EventMap } from "./events"
 import { User, Friend } from "./friend"
 import { Discuss, Group } from "./group"
-import { Member } from "./member"
+import {Member} from "./member"
 import { Forwardable, Quotable, Sendable, parseDmMessageId, parseGroupMessageId, Image, ImageElem} from "./message"
-import EventDeliver from "event-deliver";
 
 /** 事件接口 */
 export interface Client extends BaseClient {
-	on<T extends keyof EventMap>(event: T, listener: EventMap[T]): EventDeliver.Dispose
-	on<S extends string | symbol>(event: S & Exclude<S, keyof EventMap>, listener: (this: this, ...args: any[]) => void): EventDeliver.Dispose
-	once<T extends keyof EventMap>(event: T, listener: EventMap[T]): EventDeliver.Dispose
-	once<S extends string | symbol>(event: S & Exclude<S, keyof EventMap>, listener: (this: this, ...args: any[]) => void): EventDeliver.Dispose
-	prependListener<T extends keyof EventMap>(event: T, listener: EventMap[T]): EventDeliver.Dispose
-	prependListener(event: string | symbol, listener: (this: this, ...args: any[]) => void): EventDeliver.Dispose
-	prependOnceListener<T extends keyof EventMap>(event: T, listener: EventMap[T]): EventDeliver.Dispose
-	prependOnceListener(event: string | symbol, listener: (this: this, ...args: any[]) => void): EventDeliver.Dispose
-	off<T extends keyof EventMap>(event: T, listener: EventMap[T]): boolean
-	off<S extends string | symbol>(event: S & Exclude<S, keyof EventMap>, listener: (this: this, ...args: any[]) => void): boolean
+	on<T extends keyof EventMap>(event: T, listener: EventMap[T]): this
+	on<S extends string | symbol>(event: S & Exclude<S, keyof EventMap>, listener: (this: this, ...args: any[]) => void): this
+	emit<E extends keyof EventMap>(event:E,...args:Parameters<EventMap[E]>):boolean
+	emit<S extends string|symbol>(event:S & Exclude<S, keyof EventMap>,...args:any[]):boolean
+	once<T extends keyof EventMap>(event: T, listener: EventMap[T]): this
+	once<S extends string | symbol>(event: S & Exclude<S, keyof EventMap>, listener: (this: this, ...args: any[]) => void): this
+	prependListener<T extends keyof EventMap>(event: T, listener: EventMap[T]): this
+	prependListener(event: string | symbol, listener: (this: this, ...args: any[]) => void): this
+	prependOnceListener<T extends keyof EventMap>(event: T, listener: EventMap[T]): this
+	prependOnceListener(event: string | symbol, listener: (this: this, ...args: any[]) => void): this
+	off<T extends keyof EventMap>(event: T, listener: EventMap[T]): this
+	off<S extends string | symbol>(event: S & Exclude<S, keyof EventMap>, listener: (this: this, ...args: any[]) => void): this
 }
 
 /** 一个客户端 */

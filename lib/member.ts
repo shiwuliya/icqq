@@ -2,29 +2,25 @@ import { pb, jce } from "./core"
 import { ErrorCode, drop } from "./errors"
 import { timestamp, parseFunString, NOOP, lock, hide } from "./common"
 import { MemberInfo } from "./entities"
-import {Friend, User} from "./friend"
-import {GroupMessageEvent, GroupNoticeEvent} from "./events";
-import EventDeliver from "event-deliver";
+import { User} from "./friend"
 import {GroupEventMap} from "./group";
 
 type Client = import("./client").Client
 
 const weakmap = new WeakMap<MemberInfo, Member>()
 export interface Member{
-	on<E extends keyof MemberEventMap>(event:E,listener:MemberEventMap[E]):EventDeliver.Dispose
-	on<S extends EventDeliver.EventName>(event:S & Exclude<S, keyof MemberEventMap>,listener:EventDeliver.Listener):EventDeliver.Dispose
-	once<E extends keyof MemberEventMap>(event:E,listener:MemberEventMap[E]):EventDeliver.Dispose
-	once<S extends EventDeliver.EventName>(event:S & Exclude<S, keyof MemberEventMap>,listener:EventDeliver.Listener):EventDeliver.Dispose
-	addEventListener<E extends keyof MemberEventMap>(event:E,listener:MemberEventMap[E]):EventDeliver.Dispose
-	addEventListener<S extends EventDeliver.EventName>(event:S & Exclude<S, keyof MemberEventMap>,listener:EventDeliver.Listener):EventDeliver.Dispose
-	emit<E extends keyof MemberEventMap>(event:E,...args:Parameters<MemberEventMap[E]>):void
-	emit<S extends EventDeliver.EventName>(event:S & Exclude<S, keyof MemberEventMap>,...args:any[]):void
-	emitSync<E extends keyof MemberEventMap>(event:E,...args:Parameters<MemberEventMap[E]>):Promise<void>
-	emitSync<S extends EventDeliver.EventName>(event:S & Exclude<S, keyof MemberEventMap>,...args:any[]):Promise<void>
-	removeListener<E extends keyof MemberEventMap>(event?:E,listener?:MemberEventMap[E]):boolean
-	removeListener<S extends EventDeliver.EventName>(event?:S & Exclude<S, keyof MemberEventMap>,listener?:EventDeliver.Listener):boolean
-	off<E extends keyof MemberEventMap>(event?:E,listener?:MemberEventMap[E]):boolean
-	off<S extends EventDeliver.EventName>(event?:S & Exclude<S, keyof MemberEventMap>,listener?:EventDeliver.Listener):boolean
+	on<E extends keyof MemberEventMap>(event:E,listener:MemberEventMap[E]):this
+	on<S extends string|symbol>(event:S & Exclude<S, keyof MemberEventMap>,listener:(...args:any[])=>any):this
+	once<E extends keyof MemberEventMap>(event:E,listener:MemberEventMap[E]):this
+	once<S extends string|symbol>(event:S & Exclude<S, keyof MemberEventMap>,listener:(...args:any[])=>any):this
+	addEventListener<E extends keyof MemberEventMap>(event:E,listener:MemberEventMap[E]):this
+	addEventListener<S extends string|symbol>(event:S & Exclude<S, keyof MemberEventMap>,listener:(...args:any[])=>any):this
+	emit<E extends keyof MemberEventMap>(event:E,...args:Parameters<MemberEventMap[E]>):boolean
+	emit<S extends string|symbol>(event:S & Exclude<S, keyof MemberEventMap>,...args:any[]):boolean
+	removeListener<E extends keyof MemberEventMap>(event?:E,listener?:MemberEventMap[E]):this
+	removeListener<S extends string|symbol>(event?:S & Exclude<S, keyof MemberEventMap>,listener?:(...args:any[])=>any):this
+	off<E extends keyof MemberEventMap>(event?:E,listener?:MemberEventMap[E]):this
+	off<S extends string|symbol>(event?:S & Exclude<S, keyof MemberEventMap>,listener?:(...args:any[])=>any):this
 }
 export interface MemberEventMap extends GroupEventMap{}
 /** @ts-ignore ts(2417) 群员(继承User) */
