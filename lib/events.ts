@@ -1,8 +1,8 @@
 import { Gender, GroupRole } from "./common"
 import { PrivateMessage, GroupMessage, DiscussMessage, Sendable } from "./message"
 import { GuildMessageEvent } from "./internal/guild"
-import { Friend } from "./friend"
-import { Group, Discuss } from "./group"
+import {Friend, FriendNoticeEventMap, FriendRequestEventMap, PrivateMessageEventMap} from "./friend"
+import {Group, Discuss, GroupRequestEventMap, GroupNoticeEventMap, GroupMessageEventMap} from "./group"
 import { Member } from "./member"
 import { MemberInfo } from "./entities"
 import { LoginErrorCode } from "./errors"
@@ -187,117 +187,65 @@ export interface GroupTransferEvent extends GroupNoticeEvent {
 	user_id: number
 }
 
+export type PushStrToNextStr<S extends string,NS extends string>=NS extends `${infer L}.${infer R}`?`${L}.${S}.${R}`:`${NS}.${S}`
+export type MessageEventMap={
+	'message'(event:PrivateMessageEvent|GroupMessageEvent|DiscussMessageEvent):void
+	'message.discuss'(event:DiscussMessageEvent):void
+} & {
+	[P in keyof PrivateMessageEventMap as PushStrToNextStr<'private',P>]:PrivateMessageEventMap[P]
+} & {
+	[P in keyof GroupMessageEventMap as PushStrToNextStr<'group',P>]:GroupMessageEventMap[P]
+}
+export type NoticeEventMap={
+	'notice'(event:Parameters<MergeEventMap['notice.friend']> | Parameters<MergeEventMap['notice.group']> ):void
+} & {
+	[P in keyof FriendNoticeEventMap as PushStrToNextStr<'friend',P>]:FriendNoticeEventMap[P]
+} & {
+	[P in keyof GroupNoticeEventMap as PushStrToNextStr<'group',P>]:GroupNoticeEventMap[P]
+}
+export type RequestEventMap={
+	'request'(event:Parameters<MergeEventMap['request.friend']> | Parameters<MergeEventMap['request.group']> ):void
+} & {
+	[P in keyof FriendRequestEventMap as PushStrToNextStr<'friend',P>]:FriendRequestEventMap[P]
+} & {
+	[P in keyof GroupRequestEventMap as PushStrToNextStr<'group',P>]:GroupRequestEventMap[P]
+}
+export type MergeEventMap= MessageEventMap & NoticeEventMap & RequestEventMap
 /** 事件地图 */
-export interface EventMap<T = any> {
+export interface EventMap extends MergeEventMap{
+
 
 	/** 收到二维码 */
-	"system.login.qrcode": (this: T, event: { image: Buffer }) => void
+	"system.login.qrcode": (event: { image: Buffer }) => void
 	/** 收到滑动验证码 */
-	"system.login.slider": (this: T, event: { url: string }) => void
+	"system.login.slider": (event: { url: string }) => void
 	/** 设备锁验证事件 */
-	"system.login.device": (this: T, event: { url: string, phone: string }) => void
+	"system.login.device": (event: { url: string, phone: string }) => void
 	/** 登录遇到错误 */
-	"system.login.error": (this: T, event: { code: LoginErrorCode | number, message: string }) => void
+	"system.login.error": (event: { code: LoginErrorCode | number, message: string }) => void
 	/** 上线事件 */
-	"system.online": (this: T, event: undefined) => void
+	"system.online": (event: undefined) => void
 
 	/**下线事件（网络原因，默认自动重连） */
-	"system.offline.network": (this: T, event: { message: string }) => void
+	"system.offline.network": (event: { message: string }) => void
 	/**下线事件（服务器踢） */
-	"system.offline.kickoff": (this: T, event: { message: string }) => void
-	"system.offline": (this: T, event: { message: string }) => void
-
-	//^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-
-	/** 好友申请 */
-	"request.friend.add": (this: T, event: FriendRequestEvent) => void
-	/** 对方已将你加为单向好友，可回添对方 */
-	"request.friend.single": (this: T, event: FriendRequestEvent) => void
-
-	"request.friend": (this: T, event: FriendRequestEvent) => void
-
-	/** 加群申请 */
-	"request.group.add": (this: T, event: GroupRequestEvent) => void
-	/** 群邀请 */
-	"request.group.invite": (this: T, event: GroupInviteEvent) => void
-
-	"request.group": (this: T, event: GroupRequestEvent | GroupInviteEvent) => void
-
-	/** 所有request */
-	"request": (this: T, event: FriendRequestEvent | GroupRequestEvent | GroupInviteEvent) => void
-
-	//^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-
-	/** 所有私聊消息 */
-	"message.private": (this: T, event: PrivateMessageEvent) => void
-	/** 从好友 */
-	"message.private.friend": (this: T, event: PrivateMessageEvent) => void
-	/** 从群临时会话 */
-	"message.private.group": (this: T, event: PrivateMessageEvent) => void
-	/** 从其他途径 */
-	"message.private.other": (this: T, event: PrivateMessageEvent) => void
-	/** 从我的设备 */
-	"message.private.self": (this: T, event: PrivateMessageEvent) => void
-
-	/** 所有群消息 */
-	"message.group": (this: T, event: GroupMessageEvent) => void
-	/** 普通群消息 */
-	"message.group.normal": (this: T, event: GroupMessageEvent) => void
-	/** 匿名群消息 */
-	"message.group.anonymous": (this: T, event: GroupMessageEvent) => void
-
-	/** 讨论组消息 */
-	"message.discuss": (this: T, event: DiscussMessageEvent) => void
-
-	/** 所有消息 */
-	"message": (this: T, event: PrivateMessageEvent | GroupMessageEvent | DiscussMessageEvent) => void
-
-	//^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-
-	/** 新增好友事件 */
-	"notice.friend.increase": (this: T, event: FriendIncreaseEvent) => void
-	/** 好友(被)删除事件 */
-	"notice.friend.decrease": (this: T, event: FriendDecreaseEvent) => void
-	/** 好友消息撤回事件 */
-	"notice.friend.recall": (this: T, event: FriendRecallEvent) => void
-	/** 好友戳一戳事件 */
-	"notice.friend.poke": (this: T, event: FriendPokeEvent) => void
-	/** 入群・群员增加事件 */
-	"notice.group.increase": (this: T, event: MemberIncreaseEvent) => void
-	/** 踢群・退群事件 */
-	"notice.group.decrease": (this: T, event: MemberDecreaseEvent) => void
-	/** 群消息撤回事件 */
-	"notice.group.recall": (this: T, event: GroupRecallEvent) => void
-	/** 管理员变更事件 */
-	"notice.group.admin": (this: T, event: GroupAdminEvent) => void
-	/** 群禁言事件 */
-	"notice.group.ban": (this: T, event: GroupMuteEvent) => void
-	/** 群转让事件 */
-	"notice.group.transfer": (this: T, event: GroupTransferEvent) => void
-	/** 群戳一戳事件 */
-	"notice.group.poke": (this: T, event: GroupPokeEvent) => void
-	/** 所有好友notice事件 */
-	"notice.friend": (this: T, event: FriendIncreaseEvent | FriendDecreaseEvent | FriendRecallEvent | FriendPokeEvent) => void
-	/** 所有群notice事件 */
-	"notice.group": (this: T, event: MemberIncreaseEvent | MemberDecreaseEvent | GroupRecallEvent | GroupAdminEvent | GroupMuteEvent | GroupTransferEvent | GroupPokeEvent) => void
-	/** 所有notice事件 */
-	"notice": (this: T, event: Parameters<EventMap["notice.friend"]>[0] | Parameters<EventMap["notice.group"]>[0]) => void
-
-	//^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+	"system.offline.kickoff": (event: { message: string }) => void
+	"system.offline": (event: { message: string }) => void
 
 	/** 私聊同步 */
-	"sync.message": (this: T, event: PrivateMessage) => void
+	"sync.message": (event: PrivateMessage) => void
 
 	/** 消息已读同步 */
-	"sync.read.private": (this: T, event: { user_id: number, time: number }) => void
-	"sync.read.group": (this: T, event: { group_id: number, seq: number }) => void
-	"sync.read": (this: T, event: { user_id: number, time: number } | { group_id: number, seq: number }) => void
+	"sync.read.private": (event: { user_id: number, time: number }) => void
+	"sync.read.group": (event: { group_id: number, seq: number }) => void
+	"sync.read": (event: { user_id: number, time: number } | { group_id: number, seq: number }) => void
 
 	/** 隐藏事件: 监听所有收到的包 */
-	"internal.sso": (this: T, cmd: string, payload: Buffer, seq: number) => void
+	"internal.sso": (cmd: string, payload: Buffer, seq: number) => void
 	/** 隐藏事件: 对方正在输入 */
-	"internal.input": (this: T, event: { user_id: number, end: boolean }) => void
+	"internal.input": (event: { user_id: number, end: boolean }) => void
 
 	/** 频道相关: 频道消息 */
-	"guild.message": (this: T, event: GuildMessageEvent) => void
+	"guild.message": (event: GuildMessageEvent) => void
+	"send":(messageRet:MessageRet)=>void
 }

@@ -2,12 +2,27 @@ import { pb, jce } from "./core"
 import { ErrorCode, drop } from "./errors"
 import { timestamp, parseFunString, NOOP, lock, hide } from "./common"
 import { MemberInfo } from "./entities"
-import { User } from "./friend"
+import { User} from "./friend"
+import {GroupEventMap} from "./group";
 
 type Client = import("./client").Client
 
 const weakmap = new WeakMap<MemberInfo, Member>()
-
+export interface Member{
+	on<E extends keyof MemberEventMap>(event:E,listener:MemberEventMap[E]):this
+	on<S extends string|symbol>(event:S & Exclude<S, keyof MemberEventMap>,listener:(...args:any[])=>any):this
+	once<E extends keyof MemberEventMap>(event:E,listener:MemberEventMap[E]):this
+	once<S extends string|symbol>(event:S & Exclude<S, keyof MemberEventMap>,listener:(...args:any[])=>any):this
+	addEventListener<E extends keyof MemberEventMap>(event:E,listener:MemberEventMap[E]):this
+	addEventListener<S extends string|symbol>(event:S & Exclude<S, keyof MemberEventMap>,listener:(...args:any[])=>any):this
+	emit<E extends keyof MemberEventMap>(event:E,...args:Parameters<MemberEventMap[E]>):boolean
+	emit<S extends string|symbol>(event:S & Exclude<S, keyof MemberEventMap>,...args:any[]):boolean
+	removeListener<E extends keyof MemberEventMap>(event?:E,listener?:MemberEventMap[E]):this
+	removeListener<S extends string|symbol>(event?:S & Exclude<S, keyof MemberEventMap>,listener?:(...args:any[])=>any):this
+	off<E extends keyof MemberEventMap>(event?:E,listener?:MemberEventMap[E]):this
+	off<S extends string|symbol>(event?:S & Exclude<S, keyof MemberEventMap>,listener?:(...args:any[])=>any):this
+}
+export interface MemberEventMap extends GroupEventMap{}
 /** @ts-ignore ts(2417) 群员(继承User) */
 export class Member extends User {
 
@@ -18,7 +33,7 @@ export class Member extends User {
 		let member = weakmap.get(info!)
 		if (member) return member
 		member = new Member(this, Number(gid), Number(uid), info)
-		if (info) 
+		if (info)
 			weakmap.set(info, member)
 		return member
 	}

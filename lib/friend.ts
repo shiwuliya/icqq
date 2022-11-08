@@ -7,7 +7,13 @@ import { ErrorCode, drop } from "./errors"
 import { Gender, PB_CONTENT, code2uin, timestamp, lock, hide, fileHash, md5, sha, log } from "./common"
 import { Sendable, PrivateMessage, buildMusic, MusicPlatform, Quotable, rand2uuid, genDmMessageId, parseDmMessageId, FileElem } from "./message"
 import { buildSyncCookie, Contactable, highwayHttpUpload, CmdID } from "./internal"
-import { MessageRet } from "./events"
+import {
+	FriendDecreaseEvent,
+	FriendIncreaseEvent,
+	FriendPokeEvent, FriendRecallEvent, FriendRequestEvent, GroupInviteEvent,
+	MessageRet,
+	PrivateMessageEvent
+} from "./events"
 import { FriendInfo } from "./entities"
 
 type Client = import("./client").Client
@@ -159,6 +165,7 @@ export class User extends Contactable {
 
 	/**
 	 * 发送一条消息
+	 * @param content
 	 * @param source 引用回复的消息
 	 */
 	async sendMsg(content: Sendable, source?: Quotable): Promise<MessageRet> {
@@ -184,9 +191,12 @@ export class User extends Contactable {
 			drop(rsp[1], rsp[2])
 		}
 		this.c.logger.info(`succeed to send: [Private(${this.uid})] ` + brief)
+		this.c.stat.sent_msg_cnt++
 		const time = rsp[3]
 		const message_id = genDmMessageId(this.uid, seq, rand, rsp[3], 1)
-		return { message_id, seq, rand, time }
+		const messageRet:MessageRet={ message_id, seq, rand, time }
+		this.c.emit('send',messageRet)
+		return messageRet
 	}
 
 	/** 回添双向好友 */
@@ -303,7 +313,43 @@ export class User extends Contactable {
 		return (await this.getFileInfo(fid)).url
 	}
 }
+export interface Friend {
+	on<E extends keyof FriendEventMap>(event:E,listener:FriendEventMap[E]):this
+	on<S extends string|symbol>(event:S & Exclude<S, keyof FriendEventMap>,listener:(...args:any[])=>any):this
+	once<E extends keyof FriendEventMap>(event:E,listener:FriendEventMap[E]):this
+	once<S extends string|symbol>(event:S & Exclude<S, keyof FriendEventMap>,listener:(...args:any[])=>any):this
+	addEventListener<E extends keyof FriendEventMap>(event:E,listener:FriendEventMap[E]):this
+	addEventListener<S extends string|symbol>(event:S & Exclude<S, keyof FriendEventMap>,listener:(...args:any[])=>any):this
+	emit<E extends keyof FriendEventMap>(event:E,...args:Parameters<FriendEventMap[E]>):boolean
+	emit<S extends string|symbol>(event:S & Exclude<S, keyof FriendEventMap>,...args:any[]):boolean
+	removeListener<E extends keyof FriendEventMap>(event?:E,listener?:FriendEventMap[E]):this
+	removeListener<S extends string|symbol>(event?:S & Exclude<S, keyof FriendEventMap>,listener?:(...args:any[])=>any):this
+	off<E extends keyof FriendEventMap>(event?:E,listener?:FriendEventMap[E]):this
+	off<S extends string|symbol>(event?:S & Exclude<S, keyof FriendEventMap>,listener?:(...args:any[])=>any):this
+}
 
+export interface PrivateMessageEventMap{
+	'message'(event:PrivateMessageEvent):void
+	'message.friend'(event:PrivateMessageEvent):void
+	'message.group'(event:PrivateMessageEvent):void
+	'message.other'(event:PrivateMessageEvent):void
+	'message.self'(event:PrivateMessageEvent):void
+}
+export interface FriendNoticeEventMap{
+	'notice'(event:FriendIncreaseEvent | FriendDecreaseEvent | FriendRecallEvent | FriendPokeEvent):void
+	'notice.increase'(event:FriendIncreaseEvent):void
+	'notice.decrease'(event:FriendDecreaseEvent):void
+	'notice.recall'(event:FriendRecallEvent):void
+	'notice.poke'(event:FriendPokeEvent):void
+}
+export interface FriendRequestEventMap{
+	'request'(event:FriendRequestEvent):void
+	'request.invite'(event:GroupInviteEvent):void
+	'request.add'(event:FriendRequestEvent):void
+	'request.single'(event:FriendRequestEvent):void
+}
+export interface FriendEventMap extends PrivateMessageEventMap,FriendNoticeEventMap,FriendRequestEventMap{
+}
 /** 好友(继承User) */
 export class Friend extends User {
 
@@ -314,7 +360,7 @@ export class Friend extends User {
 		let friend = weakmap.get(info!)
 		if (friend) return friend
 		friend = new Friend(this, Number(uid), info)
-		if (info) 
+		if (info)
 			weakmap.set(info, friend)
 		return friend
 	}

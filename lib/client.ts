@@ -6,25 +6,27 @@ const pkg = require("../package.json")
 import { md5, timestamp, NOOP, lock, Gender, OnlineStatus, hide } from "./common"
 import { bindInternalListeners, parseFriendRequestFlag, parseGroupRequestFlag,
 	getSysMsg, setAvatar, setSign, setStatus, addClass, delClass, renameClass,
-	loadBL, loadFL, loadGL, loadSL, getStamp, delStamp, imageOcr, OcrResult } from "./internal"
+	loadBL, loadFL, loadGL, loadSL, getStamp, delStamp, imageOcr } from "./internal"
 import { StrangerInfo, FriendInfo, GroupInfo, MemberInfo } from "./entities"
 import { EventMap } from "./events"
 import { User, Friend } from "./friend"
 import { Discuss, Group } from "./group"
-import { Member } from "./member"
+import {Member} from "./member"
 import { Forwardable, Quotable, Sendable, parseDmMessageId, parseGroupMessageId, Image, ImageElem} from "./message"
 
 /** 事件接口 */
 export interface Client extends BaseClient {
-	on<T extends keyof EventMap>(event: T, listener: EventMap<this>[T]): this
+	on<T extends keyof EventMap>(event: T, listener: EventMap[T]): this
 	on<S extends string | symbol>(event: S & Exclude<S, keyof EventMap>, listener: (this: this, ...args: any[]) => void): this
-	once<T extends keyof EventMap>(event: T, listener: EventMap<this>[T]): this
+	emit<E extends keyof EventMap>(event:E,...args:Parameters<EventMap[E]>):boolean
+	emit<S extends string|symbol>(event:S & Exclude<S, keyof EventMap>,...args:any[]):boolean
+	once<T extends keyof EventMap>(event: T, listener: EventMap[T]): this
 	once<S extends string | symbol>(event: S & Exclude<S, keyof EventMap>, listener: (this: this, ...args: any[]) => void): this
-	prependListener<T extends keyof EventMap>(event: T, listener: EventMap<this>[T]): this
+	prependListener<T extends keyof EventMap>(event: T, listener: EventMap[T]): this
 	prependListener(event: string | symbol, listener: (this: this, ...args: any[]) => void): this
-	prependOnceListener<T extends keyof EventMap>(event: T, listener: EventMap<this>[T]): this
+	prependOnceListener<T extends keyof EventMap>(event: T, listener: EventMap[T]): this
 	prependOnceListener(event: string | symbol, listener: (this: this, ...args: any[]) => void): this
-	off<T extends keyof EventMap>(event: T, listener: EventMap<this>[T]): this
+	off<T extends keyof EventMap>(event: T, listener: EventMap[T]): this
 	off<S extends string | symbol>(event: S & Exclude<S, keyof EventMap>, listener: (this: this, ...args: any[]) => void): this
 }
 
@@ -116,8 +118,6 @@ export class Client extends BaseClient {
 		(this.logger as log4js.Logger).level = level
 		this.config.log_level = level
 	}
-
-	//@ts-ignore ts2376??
 	constructor(uin: number, conf?: Config) {
 
 		const config = {
@@ -150,8 +150,8 @@ export class Client extends BaseClient {
 		if (_)
 			this.logger.mark("创建了新的设备文件：" + file)
 		this.logger.mark("----------")
-		this.logger.mark(`Package Version: oicq@${pkg.version} (Released on ${pkg.upday})`)
-		this.logger.mark("View Changelogs：https://github.com/takayama-lily/oicq/releases")
+		this.logger.mark(`Package Version: icqq@${pkg.version} (Released on ${pkg.upday})`)
+		this.logger.mark("View Changelogs：https://github.com/icqqjs/icqq/releases")
 		this.logger.mark("----------")
 
 		this.dir = dir

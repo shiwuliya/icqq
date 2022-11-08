@@ -1,6 +1,7 @@
 import { EventEmitter } from "events"
 import { randomBytes } from "crypto"
 import { Readable } from "stream"
+import EventDeliver from "event-deliver";
 import Network from "./network"
 import Ecdh from "./ecdh"
 import Writer from "./writer"
@@ -72,6 +73,9 @@ export class BaseClient extends EventEmitter {
 
 	private [IS_ONLINE] = false
 	private [LOGIN_LOCK] = false
+	// 心跳定时器
+	// @ts-ignore
+	private [HEARTBEAT]: NodeJS.Timeout
 	private [ECDH] = new Ecdh
 	private readonly [NET] = new Network
 	// 回包的回调函数
@@ -119,8 +123,6 @@ export class BaseClient extends EventEmitter {
 	protected interval = 30
 	/** 随心跳一起触发的函数，可以随意设定 */
 	protected heartbeat = NOOP
-	// 心跳定时器
-	private [HEARTBEAT]: NodeJS.Timeout
 	/** 数据统计 */
 	protected readonly statistics = {
 		start_time: timestamp(),

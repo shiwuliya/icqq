@@ -6,7 +6,12 @@ import { timestamp, code2uin, PB_CONTENT, NOOP, lock, hide } from "./common"
 import { Contactable } from "./internal"
 import { Sendable, GroupMessage, Image, ImageElem, buildMusic, MusicPlatform, Anonymous, parseGroupMessageId, Quotable, Converter } from "./message"
 import { Gfs } from "./gfs"
-import { MessageRet } from "./events"
+import {
+	DiscussMessageEvent, GroupAdminEvent, GroupInviteEvent,
+	GroupMessageEvent, GroupMuteEvent, GroupPokeEvent, GroupRecallEvent,
+	GroupRequestEvent, GroupTransferEvent, MemberDecreaseEvent, MemberIncreaseEvent,
+	MessageRet,
+} from "./events"
 import { GroupInfo, MemberInfo } from "./entities"
 
 type Client = import("./client").Client
@@ -30,7 +35,25 @@ const GI_BUF = pb.encode({
 	54: 0,
 	89: "",
 })
-
+export interface Discuss{
+	on<E extends keyof Discuss.EventMap>(event:E,listener:Discuss.EventMap[E]):this
+	on<S extends string|symbol>(event:S & Exclude<S, keyof Discuss.EventMap>,listener:(...args:any[])=>any):this
+	once<E extends keyof Discuss.EventMap>(event:E,listener:Discuss.EventMap[E]):this
+	once<S extends string|symbol>(event:S & Exclude<S, keyof Discuss.EventMap>,listener:(...args:any[])=>any):this
+	addEventListener<E extends keyof Discuss.EventMap>(event:E,listener:Discuss.EventMap[E]):this
+	addEventListener<S extends string|symbol>(event:S & Exclude<S, keyof Discuss.EventMap>,listener:(...args:any[])=>any):this
+	emit<E extends keyof Discuss.EventMap>(event:E,...args:Parameters<Discuss.EventMap[E]>):boolean
+	emit<S extends string|symbol>(event:S & Exclude<S, keyof Discuss.EventMap>,...args:any[]):boolean
+	removeListener<E extends keyof Discuss.EventMap>(event?:E,listener?:Discuss.EventMap[E]):this
+	removeListener<S extends string|symbol>(event?:S & Exclude<S, keyof Discuss.EventMap>,listener?:(...args:any[])=>any):this
+	off<E extends keyof Discuss.EventMap>(event?:E,listener?:Discuss.EventMap[E]):this
+	off<S extends string|symbol>(event?:S & Exclude<S, keyof Discuss.EventMap>,listener?:(...args:any[])=>any):this
+}
+export namespace Discuss{
+	export interface EventMap{
+		message(e:DiscussMessageEvent):void
+	}
+}
 /** 讨论组 */
 export class Discuss extends Contactable {
 
@@ -62,6 +85,7 @@ export class Discuss extends Contactable {
 			this.c.logger.error(`failed to send: [Discuss(${this.gid})] ${rsp[2]}(${rsp[1]})`)
 			drop(rsp[1], rsp[2])
 		}
+		this.c.stat.sent_msg_cnt++
 		this.c.logger.info(`succeed to send: [Discuss(${this.gid})] ` + brief)
 		return {
 			message_id: "",
@@ -72,14 +96,48 @@ export class Discuss extends Contactable {
 	}
 }
 
+export interface GroupMessageEventMap{
+	'message'(event:GroupMessageEvent):void
+	'message.normal'(event:GroupMessageEvent):void
+	'message.anonymous'(event:GroupMessageEvent):void
+}
+export interface GroupNoticeEventMap{
+	'notice'(event:MemberIncreaseEvent | MemberDecreaseEvent | GroupRecallEvent | GroupAdminEvent | GroupMuteEvent | GroupTransferEvent | GroupPokeEvent):void
+	'notice.increase'(event:MemberIncreaseEvent):void
+	'notice.decrease'(event:MemberDecreaseEvent):void
+	'notice.recall'(event:GroupRecallEvent):void
+	'notice.admin'(event:GroupAdminEvent):void
+	'notice.ban'(event:GroupMuteEvent):void
+	'notice.transfer'(event:GroupTransferEvent):void
+	'notice.poke'(event:GroupPokeEvent):void
+}
+export interface GroupRequestEventMap{
+	'request'(event:GroupRequestEvent | GroupInviteEvent):void
+	'request.add'(event:GroupRequestEvent):void
+	'request.invite'(event:GroupInviteEvent):void
+}
+export interface GroupEventMap extends GroupMessageEventMap,GroupNoticeEventMap,GroupRequestEventMap{
+}
+
 /** 群 */
 export interface Group {
 	/** 撤回消息 */
 	recallMsg(msg: GroupMessage): Promise<boolean>
 	recallMsg(msgid: string): Promise<boolean>
 	recallMsg(seq: number, rand: number, pktnum?: number): Promise<boolean>
+	on<E extends keyof GroupEventMap>(event:E,listener:GroupEventMap[E]):this
+	on<S extends string|symbol>(event:S & Exclude<S, keyof GroupEventMap>,listener:(...args:any[])=>any):this
+	once<E extends keyof GroupEventMap>(event:E,listener:GroupEventMap[E]):this
+	once<S extends string|symbol>(event:S & Exclude<S, keyof GroupEventMap>,listener:(...args:any[])=>any):this
+	addEventListener<E extends keyof GroupEventMap>(event:E,listener:GroupEventMap[E]):this
+	addEventListener<S extends string|symbol>(event:S & Exclude<S, keyof GroupEventMap>,listener:(...args:any[])=>any):this
+	emit<E extends keyof GroupEventMap>(event:E,...args:Parameters<GroupEventMap[E]>):boolean
+	emit<S extends string|symbol>(event:S & Exclude<S, keyof GroupEventMap>,...args:any[]):boolean
+	removeListener<E extends keyof GroupEventMap>(event?:E,listener?:GroupEventMap[E]):this
+	removeListener<S extends string|symbol>(event?:S & Exclude<S, keyof GroupEventMap>,listener?:(...args:any[])=>any):this
+	off<E extends keyof GroupEventMap>(event?:E,listener?:GroupEventMap[E]):this
+	off<S extends string|symbol>(event?:S & Exclude<S, keyof GroupEventMap>,listener?:(...args:any[])=>any):this
 }
-
 /** 群 */
 export class Group extends Discuss {
 
@@ -309,10 +367,14 @@ export class Group extends Discuss {
 		} catch {
 			message_id = await this._sendMsgByFrag(converter)
 		}
+		this.c.stat.sent_msg_cnt++
 		this.c.logger.info(`succeed to send: [Group(${this.gid})] ` + converter.brief)
 		{
 			const { seq, rand, time } = parseGroupMessageId(message_id)
-			return { seq, rand, time, message_id}
+			const messageRet:MessageRet={ seq, rand, time, message_id}
+			this.c.emit('send',messageRet)
+
+			return messageRet
 		}
 	}
 

@@ -10,11 +10,12 @@ import { ErrorCode, drop } from "../errors"
 import { escapeXml, md5, NOOP, timestamp, uuid, md5Stream, IS_WIN, TMP_DIR, gzip, unzip, int32ip2str, lock, pipeline, DownloadTransform, log } from "../common"
 import { Sendable, PrivateMessage, MessageElem, ForwardMessage, Forwardable, Quotable, Image, ImageElem, VideoElem, PttElem, Converter, XmlElem, rand2uuid } from "../message"
 import { CmdID, highwayUpload } from "./highway"
-
+import {fromCqcode} from "../message/cqCode";
+import {EventEmitter} from "events";
 type Client = import("../client").Client
 
 /** 所有用户和群的基类 */
-export abstract class Contactable {
+export abstract class Contactable extends EventEmitter{
 
 	/** 对方QQ号 */
 	protected uid?: number
@@ -37,6 +38,7 @@ export abstract class Contactable {
 	}
 
 	protected constructor(protected readonly c: Client) {
+		super()
 		lock(this, "c")
 	}
 
@@ -177,6 +179,7 @@ export abstract class Contactable {
 		try {
 			if (!Array.isArray(content))
 				content = [content]
+			content=content.map(item=>typeof item==="string"?fromCqcode(item):item).flat()
 			if ((content[0] as MessageElem).type === "video")
 				content[0] = await this.uploadVideo(content[0] as VideoElem)
 			else if ((content[0] as MessageElem).type === "record")
@@ -212,10 +215,10 @@ export abstract class Contactable {
 				})
 			})
 		})
-		const [width, height, seconds] = await new Promise((resolve) => {
+		const [width, height, seconds] = await new Promise<number[]>((resolve) => {
 			exec(`${this.c.config.ffprobe_path || "ffprobe"} -i "${file}" -show_streams`, (error, stdout, stderr) => {
 				const lines = (stdout || stderr || "").split("\n")
-				let width = 1280, height = 720, seconds = 120
+				let width: number = 1280, height: number = 720, seconds: number = 120
 				for (const line of lines) {
 					if (line.startsWith("width=")) {
 						width = parseInt(line.slice(6))

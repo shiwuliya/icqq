@@ -1,4 +1,4 @@
-# oicq-core
+# icqq-core
 
 **此模块仅提供以下功能：**
 

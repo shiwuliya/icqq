@@ -3,6 +3,7 @@ import { pb } from "../core"
 import { lock, parseFunString, GroupRole, Gender, log } from "../common"
 import { Parser, parse} from "./parser"
 import { Quotable, Forwardable, MessageElem, FileElem } from "./elements"
+import querystring from "querystring";
 
 /** 匿名情报 */
 export interface Anonymous {
@@ -167,7 +168,7 @@ export abstract class Message implements Quotable, Forwardable {
 				message: parse(Array.isArray(q[5]) ? q[5] : [q[5]]).brief,
 			}
 		}
-		
+
 		lock(this, "proto")
 		lock(this, "parsed")
 		lock(this, "pktnum")
@@ -184,10 +185,44 @@ export abstract class Message implements Quotable, Forwardable {
 	toString() {
 		return this.parsed.content
 	}
+	toJSON(keys:string[]):Record<string, any>{
+		return Object.fromEntries(Object.keys(this).filter((key)=>{
+			return typeof this[key as keyof this]!=="function" && !keys.includes(key as any)
+		}).map(key=>{
+			return [key,this[key as keyof this]]
+		}))
+	}
 
 	/** @deprecated 转换为CQ码 */
 	toCqcode() {
-		return genCqcode(this.message)
+		const mCQInside = {
+			"&": "&amp;",
+			",": "&#44;",
+			"[": "&#91;",
+			"]": "&#93;",
+		};
+		let cqcode = "";
+
+		if (this.source) {
+			const quote = { ...this.source, flag: 1 };
+			const mid = genDmMessageId(this.user_id, quote.seq, quote.rand, quote.time, quote.flag);
+
+			cqcode += `[CQ:reply,id=${mid}]`;
+		}
+		(this.message || []).forEach((c) => {
+			if ("text" === c.type) {
+				cqcode += c.text;
+				return;
+			}
+			const s = querystring.stringify(c as any, ",", "=", {
+				encodeURIComponent: (s) =>
+					s.replace(new RegExp(Object.keys(mCQInside).join("|"), "g"), ((s:'&'|','|'['|']') => mCQInside[s] || "") as any),
+			});
+			const cq = `[CQ:${c.type}${s ? "," : ""}${s}]`;
+
+			cqcode += cq;
+		});
+		return cqcode;
 	}
 }
 

@@ -1,6 +1,6 @@
 import { randomBytes } from "crypto"
 import { pb } from "../core"
-import { lock, log } from "../common"
+import { lock } from "../common"
 import { parse, MessageElem, Sendable, Converter } from "../message"
 
 type Client = import("../client").Client

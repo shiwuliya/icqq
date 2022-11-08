@@ -1,38 +1,42 @@
 {
-  "name": "oicq",
-  "version": "2.3.1",
-  "upday": "2022/6/21",
+  "name": "icqq",
+  "version": "0.0.8",
+  "upday": "2022/10/15",
   "description": "QQ protocol!",
   "main": "lib/index.js",
   "types": "lib/index.d.ts",
   "scripts": {
-    "test": "tsc && node ./bin/oicq"
+    "build": "tsc",
+    "docs": "typedoc lib/index.ts",
+    "pub": "npm publish --access public"
   },
   "engines": {
     "node": ">= v14"
   },
-  "repository": "https://github.com/takayama-lily/oicq",
+  "repository": "https://github.com/icqqjs/icqq",
   "keywords": [
     "qq",
-    "oicq",
+    "icqq",
     "protocol",
     "android",
     "bot",
     "coolq"
   ],
-  "author": "takayama",
+  "author": "icqqjs",
   "license": "MPL-2.0",
-  "bugs": "https://github.com/takayama-lily/oicq/issues",
-  "homepage": "https://github.com/takayama-lily/oicq#readme",
-  "changelogs": "https://github.com/takayama-lily/oicq/releases",
+  "bugs": "https://github.com/icqqjs/icqq/issues",
+  "homepage": "https://github.com/icqqjs/icqq#readme",
+  "changelogs": "https://github.com/icqqjs/icqq/releases",
   "dependencies": {
     "axios": "^1.1.2",
+    "lodash": "^4.17.21",
     "log4js": "^6.3.0",
     "long": "^4.0.0",
     "pngjs": "^6.0.0",
     "probe-image-size": "^7.2.2"
   },
   "devDependencies": {
+    "@types/lodash": "^4.14.186",
     "@types/node": "^16.7.2",
     "@types/pngjs": "^6.0.1",
     "@types/probe-image-size": "^7.0.1",
