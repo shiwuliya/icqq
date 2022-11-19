@@ -8,23 +8,23 @@ import { bindInternalListeners, parseFriendRequestFlag, parseGroupRequestFlag,
 	getSysMsg, setAvatar, setSign, setStatus, addClass, delClass, renameClass,
 	loadBL, loadFL, loadGL, loadSL, getStamp, delStamp, imageOcr } from "./internal"
 import { StrangerInfo, FriendInfo, GroupInfo, MemberInfo } from "./entities"
-import { EventMap } from "./events"
+import {EventMap, GroupInviteEvent, GroupMessageEvent, PrivateMessageEvent} from "./events"
 import { User, Friend } from "./friend"
 import { Discuss, Group } from "./group"
 import {Member} from "./member"
 import { Forwardable, Quotable, Sendable, parseDmMessageId, parseGroupMessageId, Image, ImageElem} from "./message"
-import {Trapper} from "triptrap";
+import {Matcher, Trapper} from "triptrap";
 
 /** 事件接口 */
 export interface Client extends BaseClient {
 	trap<T extends keyof EventMap>(event: T, listener: EventMap[T]): Trapper.Dispose<this>
-	trap<S extends string | symbol>(event: S & Exclude<S, keyof EventMap>, listener: (this: this, ...args: any[]) => void): Trapper.Dispose<this>
+	trap<S extends Matcher>(event: S & Exclude<S, keyof EventMap>, listener: (this: this, ...args: any[]) => void): Trapper.Dispose<this>
 	trip<E extends keyof EventMap>(event:E,...args:Parameters<EventMap[E]>):boolean
 	trip<S extends string|symbol>(event:S & Exclude<S, keyof EventMap>,...args:any[]):boolean
 	trapOnce<T extends keyof EventMap>(event: T, listener: EventMap[T]): Trapper.Dispose<this>
-	trapOnce<S extends string | symbol>(event: S & Exclude<S, keyof EventMap>, listener: (this: this, ...args: any[]) => void): Trapper.Dispose<this>
+	trapOnce<S extends Matcher>(event: S & Exclude<S, keyof EventMap>, listener: (this: this, ...args: any[]) => void): Trapper.Dispose<this>
 	off<T extends keyof EventMap>(event: T, listener: EventMap[T]): Trapper.Dispose<this>
-	off<S extends string | symbol>(event: S & Exclude<S, keyof EventMap>, listener: (this: this, ...args: any[]) => void): Trapper.Dispose<this>
+	off<S extends Matcher>(event: S & Exclude<S, keyof EventMap>, listener: (this: this, ...args: any[]) => void): Trapper.Dispose<this>
 }
 
 /** 一个客户端 */
@@ -515,7 +515,20 @@ export class Client extends BaseClient {
 		})
 		return this.sendUni(cmd, body, timeout)
 	}
-
+	group(...group_ids:number[]){
+		return (listener:(event:GroupInviteEvent|GroupMessageEvent)=>void)=>{
+			return this.trap((eventName,event)=>{
+				return group_ids.includes(event.group_id)
+			},listener)
+		}
+	}
+	user(...user_ids:number[]){
+		return (listener:(event:PrivateMessageEvent|GroupMessageEvent)=>void)=>{
+			return this.trap((eventName,event)=>{
+				return user_ids.includes(event.user_id)
+			},listener)
+		}
+	}
 	/** emit an event */
 	em(name = "", data?: any) {
 		data = Object.defineProperty(data || { }, "self_id", {
