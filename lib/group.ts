@@ -35,20 +35,6 @@ const GI_BUF = pb.encode({
 	54: 0,
 	89: "",
 })
-export interface Discuss{
-	on<E extends keyof Discuss.EventMap>(event:E,listener:Discuss.EventMap[E]):this
-	on<S extends string|symbol>(event:S & Exclude<S, keyof Discuss.EventMap>,listener:(...args:any[])=>any):this
-	once<E extends keyof Discuss.EventMap>(event:E,listener:Discuss.EventMap[E]):this
-	once<S extends string|symbol>(event:S & Exclude<S, keyof Discuss.EventMap>,listener:(...args:any[])=>any):this
-	addEventListener<E extends keyof Discuss.EventMap>(event:E,listener:Discuss.EventMap[E]):this
-	addEventListener<S extends string|symbol>(event:S & Exclude<S, keyof Discuss.EventMap>,listener:(...args:any[])=>any):this
-	emit<E extends keyof Discuss.EventMap>(event:E,...args:Parameters<Discuss.EventMap[E]>):boolean
-	emit<S extends string|symbol>(event:S & Exclude<S, keyof Discuss.EventMap>,...args:any[]):boolean
-	removeListener<E extends keyof Discuss.EventMap>(event?:E,listener?:Discuss.EventMap[E]):this
-	removeListener<S extends string|symbol>(event?:S & Exclude<S, keyof Discuss.EventMap>,listener?:(...args:any[])=>any):this
-	off<E extends keyof Discuss.EventMap>(event?:E,listener?:Discuss.EventMap[E]):this
-	off<S extends string|symbol>(event?:S & Exclude<S, keyof Discuss.EventMap>,listener?:(...args:any[])=>any):this
-}
 export namespace Discuss{
 	export interface EventMap{
 		message(e:DiscussMessageEvent):void
@@ -125,18 +111,6 @@ export interface Group {
 	recallMsg(msg: GroupMessage): Promise<boolean>
 	recallMsg(msgid: string): Promise<boolean>
 	recallMsg(seq: number, rand: number, pktnum?: number): Promise<boolean>
-	on<E extends keyof GroupEventMap>(event:E,listener:GroupEventMap[E]):this
-	on<S extends string|symbol>(event:S & Exclude<S, keyof GroupEventMap>,listener:(...args:any[])=>any):this
-	once<E extends keyof GroupEventMap>(event:E,listener:GroupEventMap[E]):this
-	once<S extends string|symbol>(event:S & Exclude<S, keyof GroupEventMap>,listener:(...args:any[])=>any):this
-	addEventListener<E extends keyof GroupEventMap>(event:E,listener:GroupEventMap[E]):this
-	addEventListener<S extends string|symbol>(event:S & Exclude<S, keyof GroupEventMap>,listener:(...args:any[])=>any):this
-	emit<E extends keyof GroupEventMap>(event:E,...args:Parameters<GroupEventMap[E]>):boolean
-	emit<S extends string|symbol>(event:S & Exclude<S, keyof GroupEventMap>,...args:any[]):boolean
-	removeListener<E extends keyof GroupEventMap>(event?:E,listener?:GroupEventMap[E]):this
-	removeListener<S extends string|symbol>(event?:S & Exclude<S, keyof GroupEventMap>,listener?:(...args:any[])=>any):this
-	off<E extends keyof GroupEventMap>(event?:E,listener?:GroupEventMap[E]):this
-	off<S extends string|symbol>(event?:S & Exclude<S, keyof GroupEventMap>,listener?:(...args:any[])=>any):this
 }
 /** 群 */
 export class Group extends Discuss {
@@ -346,7 +320,7 @@ export class Group extends Discuss {
 				drop(rsp[1], rsp[2])
 			}
 		} finally {
-			this.c.removeAllListeners(e)
+			this.c.offTrap(e)
 		}
 
 		// 分片专属屎山
@@ -355,7 +329,7 @@ export class Group extends Discuss {
 				const time = this.c.config.resend ? (converter.length <= 80 ? 2000 : 500) : 5000
 				message_id = await new Promise((resolve, reject) => {
 					const timeout = setTimeout(() => {
-						this.c.removeAllListeners(e)
+						this.c.offTrap(e)
 						reject()
 					}, time)
 					this.c.once(e, (id) => {
@@ -372,7 +346,7 @@ export class Group extends Discuss {
 		{
 			const { seq, rand, time } = parseGroupMessageId(message_id)
 			const messageRet:MessageRet={ seq, rand, time, message_id}
-			this.c.emit('send',messageRet)
+			this.c.trip('send',messageRet)
 
 			return messageRet
 		}
@@ -405,7 +379,7 @@ export class Group extends Discuss {
 		try {
 			return await new Promise((resolve: (id: string) => void, reject) => {
 				const timeout = setTimeout(() => {
-					this.c.removeAllListeners(e)
+					this.c.offTrap(e)
 					reject()
 				}, 5000)
 				this.c.once(e, (id) => {

@@ -159,7 +159,7 @@ const push528: {[k: number]: (this: Client, buf: Buffer) => OnlinePushEvent | vo
 		const data = pb.decode(buf)
 		const user_id = data[1]
 		const end = data[3][4] === 2
-		this.emit("internal.input", { user_id, end })
+		this.trip("internal.input", { user_id, end })
 	},
 }
 
@@ -260,7 +260,6 @@ function emitFriendNoticeEvent(c: Client, uid: number, e: OnlinePushEvent | void
 		user_id: uid,
 		friend: f
 	}, e) as FriendNoticeEvent
-	f.emit('notice',event as any)
 	c.em(name, event)
 }
 
@@ -274,7 +273,6 @@ export function emitGroupNoticeEvent(c: Client, gid: number, e: OnlinePushEvent 
 		group_id: gid,
 		group: group
 	}, e) as GroupNoticeEvent
-	group.emit('notice',event as any)
 	c.em(name, event)
 }
 
@@ -372,7 +370,7 @@ export function groupMsgListener(this: Client, payload: Buffer) {
 	this.stat.recv_msg_cnt++
 	if (!this._sync_cookie) return
 	let msg = new GroupMessage(pb.decode(payload)[1]) as GroupMessageEvent
-	this.emit(`internal.${msg.group_id}.${msg.rand}`, msg.message_id)
+	this.trip(`internal.${msg.group_id}.${msg.rand}`, msg.message_id)
 
 	if (msg.user_id === this.uin && this.config.ignore_self)
 		return
@@ -412,11 +410,8 @@ export function groupMsgListener(this: Client, payload: Buffer) {
 			info.title = sender.title
 			info.level = sender.level
 			info.last_sent_time = timestamp()
-			member.emit('message.'+msg.sub_type,msg)
 		}
 		this.logger.info(`recv from: [Group: ${msg.group_name}(${msg.group_id}), Member: ${sender.card || sender.nickname}(${sender.user_id})] ` + msg)
-		group.emit('message',msg)
-		group.emit('message.'+msg.sub_type,msg)
 		this.em("message.group." + msg.sub_type, msg)
 		msg.group.info!.last_sent_time = timestamp()
 	}
@@ -431,11 +426,9 @@ export function discussMsgListener(this: Client, payload: Buffer, seq: number) {
 	if (msg.user_id === this.uin && this.config.ignore_self)
 		return
 	if (msg.raw_message) {
-		const discuss=this.pickDiscuss(msg.discuss_id)
-		msg.discuss = discuss
+		msg.discuss = this.pickDiscuss(msg.discuss_id)
 		msg.reply = msg.discuss.sendMsg.bind(msg.discuss)
 		this.logger.info(`recv from: [Discuss: ${msg.discuss_name}(${msg.discuss_id}), Member: ${msg.sender.card}(${msg.sender.user_id})] ` + msg)
-		discuss.emit('message',msg)
 		this.em("message.discuss", msg)
 	}
 }

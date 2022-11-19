@@ -195,7 +195,7 @@ export class User extends Contactable {
 		const time = rsp[3]
 		const message_id = genDmMessageId(this.uid, seq, rand, rsp[3], 1)
 		const messageRet:MessageRet={ message_id, seq, rand, time }
-		this.c.emit('send',messageRet)
+		this.c.trip('send',messageRet)
 		return messageRet
 	}
 
@@ -313,20 +313,6 @@ export class User extends Contactable {
 		return (await this.getFileInfo(fid)).url
 	}
 }
-export interface Friend {
-	on<E extends keyof FriendEventMap>(event:E,listener:FriendEventMap[E]):this
-	on<S extends string|symbol>(event:S & Exclude<S, keyof FriendEventMap>,listener:(...args:any[])=>any):this
-	once<E extends keyof FriendEventMap>(event:E,listener:FriendEventMap[E]):this
-	once<S extends string|symbol>(event:S & Exclude<S, keyof FriendEventMap>,listener:(...args:any[])=>any):this
-	addEventListener<E extends keyof FriendEventMap>(event:E,listener:FriendEventMap[E]):this
-	addEventListener<S extends string|symbol>(event:S & Exclude<S, keyof FriendEventMap>,listener:(...args:any[])=>any):this
-	emit<E extends keyof FriendEventMap>(event:E,...args:Parameters<FriendEventMap[E]>):boolean
-	emit<S extends string|symbol>(event:S & Exclude<S, keyof FriendEventMap>,...args:any[]):boolean
-	removeListener<E extends keyof FriendEventMap>(event?:E,listener?:FriendEventMap[E]):this
-	removeListener<S extends string|symbol>(event?:S & Exclude<S, keyof FriendEventMap>,listener?:(...args:any[])=>any):this
-	off<E extends keyof FriendEventMap>(event?:E,listener?:FriendEventMap[E]):this
-	off<S extends string|symbol>(event?:S & Exclude<S, keyof FriendEventMap>,listener?:(...args:any[])=>any):this
-}
 
 export interface PrivateMessageEventMap{
 	'message'(event:PrivateMessageEvent):void
@@ -417,7 +403,7 @@ export class Friend extends User {
 		await this.c.sendUni("friendlist.MovGroupMemReq", body)
 	}
 
-	/** 点赞，默认一次 
+	/** 点赞，默认一次
 	 * 支持陌生人点赞
 	*/
 	async thumbUp(times = 1) {

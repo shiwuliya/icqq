@@ -13,21 +13,18 @@ import { User, Friend } from "./friend"
 import { Discuss, Group } from "./group"
 import {Member} from "./member"
 import { Forwardable, Quotable, Sendable, parseDmMessageId, parseGroupMessageId, Image, ImageElem} from "./message"
+import {Trapper} from "triptrap";
 
 /** 事件接口 */
 export interface Client extends BaseClient {
-	on<T extends keyof EventMap>(event: T, listener: EventMap[T]): this
-	on<S extends string | symbol>(event: S & Exclude<S, keyof EventMap>, listener: (this: this, ...args: any[]) => void): this
-	emit<E extends keyof EventMap>(event:E,...args:Parameters<EventMap[E]>):boolean
-	emit<S extends string|symbol>(event:S & Exclude<S, keyof EventMap>,...args:any[]):boolean
-	once<T extends keyof EventMap>(event: T, listener: EventMap[T]): this
-	once<S extends string | symbol>(event: S & Exclude<S, keyof EventMap>, listener: (this: this, ...args: any[]) => void): this
-	prependListener<T extends keyof EventMap>(event: T, listener: EventMap[T]): this
-	prependListener(event: string | symbol, listener: (this: this, ...args: any[]) => void): this
-	prependOnceListener<T extends keyof EventMap>(event: T, listener: EventMap[T]): this
-	prependOnceListener(event: string | symbol, listener: (this: this, ...args: any[]) => void): this
-	off<T extends keyof EventMap>(event: T, listener: EventMap[T]): this
-	off<S extends string | symbol>(event: S & Exclude<S, keyof EventMap>, listener: (this: this, ...args: any[]) => void): this
+	trap<T extends keyof EventMap>(event: T, listener: EventMap[T]): Trapper.Dispose<this>
+	trap<S extends string | symbol>(event: S & Exclude<S, keyof EventMap>, listener: (this: this, ...args: any[]) => void): Trapper.Dispose<this>
+	trip<E extends keyof EventMap>(event:E,...args:Parameters<EventMap[E]>):boolean
+	trip<S extends string|symbol>(event:S & Exclude<S, keyof EventMap>,...args:any[]):boolean
+	trapOnce<T extends keyof EventMap>(event: T, listener: EventMap[T]): Trapper.Dispose<this>
+	trapOnce<S extends string | symbol>(event: S & Exclude<S, keyof EventMap>, listener: (this: this, ...args: any[]) => void): Trapper.Dispose<this>
+	off<T extends keyof EventMap>(event: T, listener: EventMap[T]): Trapper.Dispose<this>
+	off<S extends string | symbol>(event: S & Exclude<S, keyof EventMap>, listener: (this: this, ...args: any[]) => void): Trapper.Dispose<this>
 }
 
 /** 一个客户端 */
@@ -528,7 +525,7 @@ export class Client extends BaseClient {
 			configurable: true,
 		})
 		while (true) {
-			this.emit(name, data)
+			this.trip(name, data)
 			let i = name.lastIndexOf(".")
 			if (i === -1)
 				break
