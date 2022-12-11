@@ -32,28 +32,58 @@ function generateImei(uin: number) {
 }
 
 /** 生成短设备信息 */
-export function generateShortDevice(uin: number) {
+export function generateShortDevice(uin: number, rand?: boolean) {
 	const hash = md5(String(uin))
 	const hex = hash.toString("hex")
-	return {
-		"--begin--": "该设备由账号作为seed固定生成，账号不变则永远相同",
-		product: "MRS4S",
-		device: "HIM188MOE",
-		board: "MIRAI-YYDS",
-		brand: "OICQX",
-		model: "Konata 2020",
-		wifi_ssid: `TP-LINK-${uin.toString(16)}`,
-		bootloader: "U-boot",
-		android_id: `OICQX.${hash.readUInt16BE()}${hash[2]}.${hash[3]}${String(uin)[0]}`,
-		boot_id: hex.substr(0, 8) + "-" + hex.substr(8, 4) + "-" + hex.substr(12, 4) + "-" + hex.substr(16, 4) + "-" + hex.substr(20),
-		proc_version: `Linux version 4.19.71-${hash.readUInt16BE(4)} (konata@takayama.github.com)`,
-		mac_address: `00:50:${hash[6].toString(16).toUpperCase()}:${hash[7].toString(16).toUpperCase()}:${hash[8].toString(16).toUpperCase()}:${hash[9].toString(16).toUpperCase()}`,
-		ip_address: `10.0.${hash[10]}.${hash[11]}`,
-		imei: generateImei(uin),
-		incremental: hash.readUInt32BE(12),
-		"--end--": "修改后可能需要重新验证设备",
+
+	if (rand) {
+		const randstr = (length: number, num: boolean = false) => {
+	        let result = ''
+	        const map = num ? '0123456789' : '0123456789abcdef'
+	        for (let i = length; i > 0; --i) result += map[Math.floor(Math.random() * map.length)]
+	        return result
+	    }
+
+	    return {
+	        "--begin--":  "该设备为随机生成，丢失后不能得到原先配置",
+	        product:      `ILPP-${randstr(5).toUpperCase()}`,
+	        device:       `${randstr(5).toUpperCase()}`,
+	        board:        `${randstr(5).toUpperCase()}`,
+	        brand:        `${randstr(4).toUpperCase()}`,
+	        model:        `ILPP ${randstr(4).toUpperCase()}`,
+	        wifi_ssid:    `HUAWEI-${randstr(7)}`,
+	        bootloader:   `U-boot`,
+	        android_id:   `IL.${randstr(7, true)}.${randstr(4, true)}`,
+	        boot_id:      `${randstr(8)}-${randstr(4)}-${randstr(4)}-${randstr(4)}-${randstr(12,)}`,
+	        proc_version: `Linux version 5.10.101-android12-${randstr(8)}`,
+	        mac_address:  `2D:${randstr(2).toUpperCase()}:${randstr(2).toUpperCase()}:${randstr(2,).toUpperCase()}:${randstr(2).toUpperCase()}:${randstr(2).toUpperCase()}`,
+	        ip_address:   `192.168.${randstr(2, true)}.${randstr(2, true)}`,
+	        imei:         `86${randstr(13, true)}`,
+	        incremental:  `${randstr(10).toUpperCase()}`,
+	        "--end--":    "修改后可能需要重新验证设备。"
+	    }
+	} else {
+		return {
+			"--begin--": "该设备由账号作为seed固定生成，账号不变则永远相同",
+			product: "MRS4S",
+			device: "HIM188MOE",
+			board: "MIRAI-YYDS",
+			brand: "OICQX",
+			model: "Konata 2020",
+			wifi_ssid: `TP-LINK-${uin.toString(16)}`,
+			bootloader: "U-boot",
+			android_id: `OICQX.${hash.readUInt16BE()}${hash[2]}.${hash[3]}${String(uin)[0]}`,
+			boot_id: hex.substr(0, 8) + "-" + hex.substr(8, 4) + "-" + hex.substr(12, 4) + "-" + hex.substr(16, 4) + "-" + hex.substr(20),
+			proc_version: `Linux version 4.19.71-${hash.readUInt16BE(4)} (konata@takayama.github.com)`,
+			mac_address: `00:50:${hash[6].toString(16).toUpperCase()}:${hash[7].toString(16).toUpperCase()}:${hash[8].toString(16).toUpperCase()}:${hash[9].toString(16).toUpperCase()}`,
+			ip_address: `10.0.${hash[10]}.${hash[11]}`,
+			imei: generateImei(uin),
+			incremental: hash.readUInt32BE(12),
+			"--end--": "修改后可能需要重新验证设备",
+		}
 	}
 }
+
 
 /** 生成完整设备信息 */
 export function generateFullDevice(d: ShortDevice | number) {

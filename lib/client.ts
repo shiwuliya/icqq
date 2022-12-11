@@ -126,6 +126,7 @@ export class Client extends BaseClient {
 			cache_group_member: true,
 			reconn_interval: 5,
 			data_dir: path.join(require?.main?.path || process.cwd(), "data"),
+			random_device: false,
 			...conf,
 		}
 
@@ -135,7 +136,7 @@ export class Client extends BaseClient {
 			var device = require(file) as ShortDevice
 			var _ = false
 		} catch {
-			var device = generateShortDevice(uin)
+			var device = generateShortDevice(uin, config.random_device)
 			var _ = true
 			fs.writeFile(file, JSON.stringify(device, null, 2), NOOP)
 		}
@@ -639,6 +640,8 @@ export interface Config {
 	cache_group_member?: boolean
 	/** 自动选择最优服务器(默认true)，关闭后会一直使用`msfwifi.3g.qq.com:8080`进行连接 */
 	auto_server?: boolean
+	/** 是否生成随机设备文件(默认false)，开启后可能缓解风控问题 */
+	random_device?: boolean
 	/** ffmpeg */
 	ffmpeg_path?: string
 	ffprobe_path?: string
