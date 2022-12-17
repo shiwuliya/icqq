@@ -16,7 +16,13 @@ async function getQQSong(id: string) {
 }
 
 async function get163Song(id: string) {
-	let rsp: any = await axios.get(`http://music.163.com/api/song/detail/?id=${id}&ids=[${id}]`, { responseType: "json" })
+	let rsp: any = await axios.get(`http://music.163.com/api/song/detail/?id=${id}&ids=[${id}]`, {
+	    responseType: "json",
+	    headers: {
+            "Content-Type": "application/x-www-form-urlencoded",
+            "Accept-Encoding": "*",
+        }
+	})
 	rsp = rsp.data.songs[0]
 	return {
 		title: rsp.name,
