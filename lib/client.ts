@@ -134,7 +134,8 @@ export class Client extends BaseClient {
 			...conf,
 		}
 
-		const dir = config.data_dir
+		const dir = path.resolve(config.data_dir)
+		createDataDir(dir)
 		const file = path.join(dir, `device.json`)
 		let device:ShortDevice,isNew:boolean=false
 		try {
@@ -306,7 +307,7 @@ export class Client extends BaseClient {
 	}
 	/** 清空缓存文件 fs.rm need v14.14 */
 	cleanCache() {
-		const dir = path.join(this.dir, "../image")
+		const dir = path.join(this.dir, "image")
 		fs.rm?.(dir, { recursive: true }, () => {
 			fs.mkdir(dir, NOOP)
 		})
@@ -660,16 +661,12 @@ export interface Config {
 /** 数据统计 */
 export type Statistics = Client["stat"]
 
-function createDataDir(dir: string, uin: number) {
+function createDataDir(dir: string) {
 	if (!fs.existsSync(dir))
 		fs.mkdirSync(dir, { mode: 0o755, recursive: true })
 	const img_path = path.join(dir, "image")
-	const uin_path = path.join(dir, String(uin))
 	if (!fs.existsSync(img_path))
 		fs.mkdirSync(img_path)
-	if (!fs.existsSync(uin_path))
-		fs.mkdirSync(uin_path, { mode: 0o755 })
-	return uin_path
 }
 
 /** 创建一个客户端 (=new Client) */

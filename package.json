@@ -10,7 +10,7 @@
     "docs": "typedoc lib/index.ts",
     "dev": "ts-node ./lib/test.ts",
     "pub": "npm publish --access public",
-    "clean": "rm -rf ./lib/**/*.js && rm -rf ./lib/**/*.d.ts"
+    "clean": "rm -rf ./lib/*.js && rm -rf ./lib/**/*.js && rm -rf ./lib/*.d.ts && rm -rf ./lib/**/*.d.ts"
   },
   "engines": {
     "node": ">= v14"

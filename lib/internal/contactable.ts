@@ -184,7 +184,7 @@ export abstract class Contactable{
 				content[0] = await this.uploadPtt(content[0] as PttElem)
 			const converter = new Converter(content, {
 				dm: this.dm,
-				cachedir: path.join(this.c.dir, "../image"),
+				cachedir: path.join(this.c.dir, "image"),
 				mlist: this.c.gml.get(this.gid!)
 			})
 			if (source)
