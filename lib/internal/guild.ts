@@ -1,5 +1,4 @@
 import { randomBytes } from "crypto"
-import {Guild} from "../guild";
 import { pb } from "../core"
 import { lock, log } from "../common"
 import { parse, MessageElem, Sendable, Converter } from "../message"
