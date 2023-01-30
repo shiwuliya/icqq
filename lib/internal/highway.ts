@@ -3,7 +3,7 @@ import * as net from "net"
 import { randomBytes } from "crypto"
 import http from "http"
 import axios, { CancelTokenSource } from "axios"
-import { tea, pb, ApiRejection } from "../core"
+import {tea, pb, ApiRejection, logger} from "../core"
 import { ErrorCode } from "../errors"
 import { md5, NOOP, BUF0, int32ip2str, log } from "../common"
 
@@ -95,7 +95,7 @@ export function highwayUpload(this: Client, readable: stream.Readable, obj: High
 	port = port || this.sig.bigdata.port
 	if (!port) throw new ApiRejection(ErrorCode.NoUploadChannel, "没有上传通道，如果你刚刚登录，请等待几秒")
 	if (!readable) throw new ApiRejection(ErrorCode.HighwayFileTypeError, "不支持的file类型")
-	this.logger.debug(`highway ip:${ip} port:${port}`)
+	logger.debug(`highway ip:${ip} port:${port}`)
 	return new Promise((resolve, reject) => {
 		const highway = new HighwayTransform(this, obj)
 		const socket = net.connect(
@@ -105,14 +105,14 @@ export function highwayUpload(this: Client, readable: stream.Readable, obj: High
 		const handleRspHeader = (header: Buffer) => {
 			const rsp = pb.decode(header)
 			if (typeof rsp[3] === "number" && rsp[3] !== 0) {
-				this.logger.warn(`highway upload failed (code: ${rsp[3]})`)
+				logger.warn(`highway upload failed (code: ${rsp[3]})`)
 				readable.unpipe(highway).destroy()
 				highway.unpipe(socket).destroy()
 				socket.end()
 				reject(new ApiRejection(rsp[3], "unknown highway error"))
 			} else {
 				const percentage = ((rsp[2][3] + rsp[2][4]) / rsp[2][2] * 100).toFixed(2)
-				this.logger.debug(`highway chunk uploaded (${percentage}%)`)
+				logger.debug(`highway chunk uploaded (${percentage}%)`)
 				if (typeof obj.callback === "function")
 					obj.callback(percentage)
 				if (Number(percentage) >= 100) {
@@ -135,17 +135,17 @@ export function highwayUpload(this: Client, readable: stream.Readable, obj: High
 					}
 				}
 			} catch (err) {
-				this.logger.error(err)
+				logger.error(err)
 			}
 		})
 		socket.on("close", () => {
 			reject(new ApiRejection(ErrorCode.HighwayNetworkError, "上传遇到网络错误"))
 		})
 		socket.on("error", (err: Error) => {
-			this.logger.error(err)
+			logger.error(err)
 		})
 		readable.on("error", (err) => {
-			this.logger.error(err)
+			logger.error(err)
 			socket.end()
 		})
 		if (obj.timeout! > 0) {
@@ -164,7 +164,7 @@ export function highwayHttpUpload(this: Client, readable: stream.Readable, obj: 
 	const port = this.sig.bigdata.port
 	if (!port) throw new ApiRejection(ErrorCode.NoUploadChannel, "没有上传通道，如果你刚刚登录，请等待几秒")
 
-	this.logger.debug(`highway(http) ip:${ip} port:${port}`)
+	logger.debug(`highway(http) ip:${ip} port:${port}`)
 	const url = "http://" + ip + ":" + port + "/cgi-bin/httpconn?htcmd=0x6FF0087&uin=" + this.uin
 	let seq = 1
 	let offset = 0, limit = 524288
@@ -225,7 +225,7 @@ export function highwayHttpUpload(this: Client, readable: stream.Readable, obj: 
 						const header = buf.slice(9, buf.length - 1)
 						rsp = pb.decode(header)
 					} catch (err) {
-						this.logger.error(err)
+						logger.error(err)
 						reject(err)
 						return
 					}
@@ -235,12 +235,12 @@ export function highwayHttpUpload(this: Client, readable: stream.Readable, obj: 
 					}
 					++finished
 					percentage = (finished / tasks.size * 100).toFixed(2)
-					this.logger.debug(`highway(http) chunk uploaded (${percentage}%)`)
+					logger.debug(`highway(http) chunk uploaded (${percentage}%)`)
 					if (typeof obj.callback === "function" && percentage)
 						obj.callback(percentage)
 					if (finished < tasks.size && rsp[7]?.toBuffer().length > 0) {
 						cancels.forEach(c => c.cancel())
-						this.logger.debug(`highway(http) chunk uploaded (100.00%)`)
+						logger.debug(`highway(http) chunk uploaded (100.00%)`)
 						if (typeof obj.callback === "function")
 							obj.callback("100.00")
 					}

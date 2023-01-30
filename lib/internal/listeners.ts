@@ -1,12 +1,13 @@
 import * as fs from "fs"
 import * as path from "path"
 import { PNG } from "pngjs"
-import { jce, pb } from "../core"
+import {jce, logger, pb} from "../core"
 import { NOOP, OnlineStatus } from "../common"
 import { getFrdSysMsg, getGrpSysMsg } from "./sysmsg"
 import { pbGetMsg, pushReadedListener } from "./pbgetmsg"
 import { dmMsgSyncListener, groupMsgListener, discussMsgListener, onlinePushListener, onlinePushTransListener } from "./onlinepush"
 import { guildMsgListener } from "./guild"
+import * as log4js from "log4js";
 
 type Client = import("../client").Client
 
@@ -56,7 +57,7 @@ async function eventsListener(this: Client, cmd: string, payload: Buffer, seq: n
 	try {
 		await Reflect.get(events, cmd)?.call(this, payload, seq)
 	} catch (e) {
-		this.logger.trace(e)
+		logger.trace(e)
 	}
 }
 
@@ -70,6 +71,8 @@ async function onlineListener(this: Client, token: Buffer, nickname: string, gen
 	this.setOnlineStatus(this.status).catch(NOOP)
 	// 存token
 	tokenUpdatedListener.call(this, token)
+	this.logger=log4js.getLogger(`[${this.apk.display}:${this.uin}]`);
+	this.log_level=this.config.log_level;
 	this.logger.mark(`Welcome, ${this.nickname} ! 正在加载资源...`)
 	await Promise.allSettled([
 		this.reloadFriendList(),
@@ -86,13 +89,13 @@ async function onlineListener(this: Client, token: Buffer, nickname: string, gen
 }
 
 function tokenUpdatedListener(this: Client, token: Buffer) {
-	fs.writeFile(path.join(this.dir, "token"), token, NOOP)
+	fs.writeFile(path.join(this.dir,this.uin+'_token'), token, NOOP)
 }
 
 function kickoffListener(this: Client, message: string) {
-	this.logger.warn(message)
+	logger.warn(message)
 	this.terminate()
-	fs.unlink(path.join(this.dir, "token"), () => {
+	fs.unlink(path.join(this.dir,this.uin+'_token'), () => {
 		this.em("system.offline.kickoff", { message })
 	})
 }
@@ -125,20 +128,20 @@ function qrcodeListener(this: Client, image: Buffer) {
 		try {
 			logQrcode(image)
 		} catch { }
-		this.logger.mark("二维码图片已保存到：" + file)
+		logger.mark("二维码图片已保存到：" + file)
 		this.em("system.login.qrcode", { image })
 	})
 }
 
 function sliderListener(this: Client, url: string) {
-	this.logger.mark("收到滑动验证码，请访问以下地址完成滑动，并从网络响应中取出ticket输入：" + url)
+	logger.mark("收到滑动验证码，请访问以下地址完成滑动，并从网络响应中取出ticket输入：" + url)
 	this.em("system.login.slider", { url })
 }
 
 function verifyListener(this: Client, url: string, phone: string) {
-	this.logger.mark("收到登录保护，只需验证一次便长期有效，可以访问URL验证或发短信验证。访问URL完成验证后调用login()可直接登录。发短信验证需要调用sendSmsCode()和submitSmsCode()方法。")
-	this.logger.mark("登录保护验证URL：" + url.replace("verify", "qrcode"))
-	this.logger.mark("密保手机号：" + phone)
+	logger.mark("收到登录保护，只需验证一次便长期有效，可以访问URL验证或发短信验证。访问URL完成验证后调用login()可直接登录。发短信验证需要调用sendSmsCode()和submitSmsCode()方法。")
+	logger.mark("登录保护验证URL：" + url.replace("verify", "qrcode"))
+	logger.mark("密保手机号：" + phone)
 	return this.em("system.login.device", { url, phone })
 }
 
@@ -149,39 +152,39 @@ function verifyListener(this: Client, url: string, phone: string) {
 function loginErrorListener(this: Client, code: number, message: string) {
 	// toke expired
 	if (!code) {
-		this.logger.mark("登录token过期")
+		logger.mark("登录token过期")
 		fs.unlink(path.join(this.dir, "token"), (err) => {
 			if (err) {
-				this.logger.fatal(err.message)
+				logger.fatal(err.message)
 				return
 			}
-			this.logger.mark("3秒后重新连接")
+			logger.mark("3秒后重新连接")
 			setTimeout(this.login.bind(this), 3000)
 		})
 	}
 	// network error
 	else if (code < 0) {
 		this.terminate()
-		this.logger.error(message)
+		logger.error(message)
 		if (code === -3) //register failed
 			fs.unlink(path.join(this.dir, "token"), NOOP)
 		const t = this.config.reconn_interval
 		if (t >= 1) {
-			this.logger.mark(t + "秒后重新连接")
-			setTimeout(this.login.bind(this), t * 1000)
+			logger.mark(t + "秒后重新连接")
+			setTimeout(this.login.bind(this,this.uin), t * 1000)
 		}
 		this.em("system.offline.network", { message })
 	}
 	// login error
 	else if (code > 0) {
-		this.logger.error(message)
+		logger.error(message)
 		this.em("system.login.error", { code, message })
 	}
 }
 
 function qrcodeErrorListener(this: Client, code: number, message: string) {
-	this.logger.error(`二维码扫码遇到错误: ${code} (${message})`)
-	this.logger.mark("二维码已更新")
+	logger.error(`二维码扫码遇到错误: ${code} (${message})`)
+	logger.mark("二维码已更新")
 	this.login()
 }
 

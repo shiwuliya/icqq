@@ -14,9 +14,13 @@ import { Discuss, Group } from "./group"
 import {Member} from "./member"
 import { Forwardable, Quotable, Sendable, parseDmMessageId, parseGroupMessageId, Image, ImageElem} from "./message"
 import {Matcher, Trapper} from "triptrap";
+import {Guild} from "./guild";
+import {logger} from "./core";
 
 /** 事件接口 */
 export interface Client extends BaseClient {
+	on<T extends keyof EventMap>(event: T, listener: EventMap[T]): Trapper.Dispose<this>
+	on<S extends Matcher>(event: S & Exclude<S, keyof EventMap>, listener: (this: this, ...args: any[]) => void): Trapper.Dispose<this>
 	trap<T extends keyof EventMap>(event: T, listener: EventMap[T]): Trapper.Dispose<this>
 	trap<S extends Matcher>(event: S & Exclude<S, keyof EventMap>, listener: (this: this, ...args: any[]) => void): Trapper.Dispose<this>
 	trip<E extends keyof EventMap>(event:E,...args:Parameters<EventMap[E]>):boolean
@@ -45,7 +49,6 @@ export class Client extends BaseClient {
 	readonly pickDiscuss = Discuss.as.bind(this)
 
 	/** 日志记录器，初始情况下是`log4js.Logger` */
-	logger: Logger | log4js.Logger
 	/** 账号本地数据存储目录 */
 	readonly dir: string
 	/** 配置 */
@@ -71,6 +74,7 @@ export class Client extends BaseClient {
 	readonly gml = new Map<number, Map<number, MemberInfo>>()
 	/** 黑名单列表(务必以`ReadonlySet`方式访问) */
 	readonly blacklist = new Set<number>()
+	readonly guildmap=new Map<string,Guild>()
 	/** 好友分组 */
 	readonly classes = new Map<number, string>()
 
@@ -115,7 +119,7 @@ export class Client extends BaseClient {
 		(this.logger as log4js.Logger).level = level
 		this.config.log_level = level
 	}
-	constructor(uin: number, conf?: Config) {
+	constructor(conf?: Config) {
 
 		const config = {
 			log_level: "info" as LogLevel,
@@ -130,34 +134,32 @@ export class Client extends BaseClient {
 			...conf,
 		}
 
-		const dir = createDataDir(config.data_dir, uin)
-		const file = path.join(dir, `device-${uin}.json`)
+		const dir = config.data_dir
+		const file = path.join(dir, `device.json`)
+		let device:ShortDevice,isNew:boolean=false
 		try {
-			var device = require(file) as ShortDevice
-			var _ = false
+			device = require(file) as ShortDevice
 		} catch {
-			var device = generateShortDevice(uin, config.random_device)
-			var _ = true
+			device = generateShortDevice()
+			isNew=true
 			fs.writeFile(file, JSON.stringify(device, null, 2), NOOP)
 		}
 
-		super(uin, config.platform, device)
-
-		this.logger = log4js.getLogger(`[${this.apk.display}:${uin}]`)
-		;(this.logger as log4js.Logger).level = config.log_level
-		if (_)
-			this.logger.mark("创建了新的设备文件：" + file)
-		this.logger.mark("----------")
-		this.logger.mark(`Package Version: icqq@${pkg.version} (Released on ${pkg.upday})`)
-		this.logger.mark("View Changelogs：https://github.com/icqqjs/icqq/releases")
-		this.logger.mark("----------")
+		super(config.platform, device);
+		Client.setLogLevel(config.log_level)
+		if (isNew)
+			logger.mark("创建了新的设备文件：" + file)
+		logger.mark("----------")
+		logger.mark(`Package Version: icqq@${pkg.version} (Released on ${pkg.upday})`)
+		logger.mark("View Changelogs：https://github.com/icqqjs/icqq/releases")
+		logger.mark("----------")
 
 		this.dir = dir
 		this.config = config as Required<Config>
 		bindInternalListeners.call(this)
 		this.on("internal.verbose", (verbose, level) => {
 			const list: Exclude<LogLevel, "off">[] = ["fatal", "mark", "error", "warn", "info", "trace"]
-			this.logger[list[level]](verbose)
+			logger[list[level]](verbose)
 		})
 		lock(this, "dir")
 		lock(this, "config")
@@ -189,20 +191,23 @@ export class Client extends BaseClient {
 		if (!this.config.auto_server)
 			this.setRemoteServer("msfwifi.3g.qq.com", 8080)
 	}
-
 	/**
-	 * 会优先尝试使用token登录 (token在上次登录成功后存放在`this.dir`下)
+	 * 传了uin 未传password
+	 * 会优先尝试使用token登录 (token在上次登录成功后存放在`this.dir`的`${uin}_token`中)
 	 *
-	 * 无token或token失效时：
+	 * 传了uin无token或token失效时：
 	 * * 传了`password`则尝试密码登录
 	 * * 不传`password`则尝试扫码登录
+	 *
+	 * 未传任何参数 则尝试扫码登录
 	 *
 	 * 掉线重连时也是自动调用此函数，走相同逻辑
 	 * 你也可以在配置中修改`reconn_interval`，关闭掉线重连并自行处理
 	 *
+	 * @param uin number，登录账号
 	 * @param password 可以为密码原文，或密码的md5值
 	 */
-	async login(password?: string | Buffer) {
+	async login(uin?:number,password?: string | Buffer) {
 		if (password && password.length > 0) {
 			let md5pass
 			if (typeof password === "string")
@@ -214,11 +219,13 @@ export class Client extends BaseClient {
 			this.password_md5 = md5pass
 		}
 		try {
-			const token = await fs.promises.readFile(path.join(this.dir, "token"))
+			if(!uin) throw new Error()
+			const token=await fs.promises.readFile(path.join(this.dir,uin+'_token'))
+			this.uin=uin
 			return this.tokenLogin(token)
 		} catch {
-			if (this.password_md5)
-				return this.passwordLogin(this.password_md5)
+			if (this.password_md5 && uin)
+				return this.passwordLogin(uin as number,this.password_md5)
 			else
 				return this.sig.qrsig.length ? this.qrcodeLogin() : this.fetchQrcode()
 		}
@@ -603,6 +610,9 @@ export class Client extends BaseClient {
 	get online_status() {
 		return this.status
 	}
+	static setLogLevel(logLevel:LogLevel){
+		logger.level=logLevel
+	}
 }
 
 /** 日志记录器接口 */
@@ -663,8 +673,6 @@ function createDataDir(dir: string, uin: number) {
 }
 
 /** 创建一个客户端 (=new Client) */
-export function createClient(uin: number, config?: Config) {
-	if (isNaN(Number(uin)))
-		throw new Error(uin + " is not an OICQ account")
-	return new Client(Number(uin), config)
+export function createClient(config?: Config) {
+	return new Client(config)
 }

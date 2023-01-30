@@ -10,6 +10,8 @@ import * as pb from "./protobuf"
 import * as jce from "./jce"
 import { BUF0, BUF4, BUF16, NOOP, md5, timestamp, lock, hide, unzip, int32ip2str } from "./constants"
 import { ShortDevice, Device, generateFullDevice, Platform, Apk, getApkInfo } from "./device"
+import * as log4js from "log4js";
+import {Logger} from "../client";
 
 const FN_NEXT_SEQ = Symbol("FN_NEXT_SEQ")
 const FN_SEND = Symbol("FN_SEND")
@@ -21,6 +23,7 @@ const IS_ONLINE = Symbol("IS_ONLINE")
 const LOGIN_LOCK = Symbol("LOGIN_LOCK")
 const HEARTBEAT = Symbol("HEARTBEAT")
 
+export const logger=log4js.getLogger(`[icqq]`)
 export enum VerboseLevel {
 	Fatal, Mark, Error, Warn, Info, Debug
 }
@@ -41,6 +44,8 @@ export enum QrcodeResult {
 }
 
 export interface BaseClient {
+	uin:number
+	logger: Logger | log4js.Logger
 	/** 收到二维码 */
 	on(name: "internal.qrcode", listener: (this: this, qrcode: Buffer) => void): Trapper.Dispose<this>
 	/** 收到滑动验证码 */
@@ -135,11 +140,10 @@ export class BaseClient extends Trapper {
 		remote_ip: "",
 		remote_port: 0,
 	}
-
-	constructor(public readonly uin: number, p: Platform = Platform.Android, d?: ShortDevice) {
+	constructor(p: Platform = Platform.Android, d?: ShortDevice) {
 		super()
 		this.apk = getApkInfo(p)
-		this.device = generateFullDevice(d || uin)
+		this.device = generateFullDevice(d)
 		this[NET].on("error", err => this.trip("internal.verbose", err.message, VerboseLevel.Error))
 		this[NET].on("close", () => {
 			this.statistics.remote_ip = ""
@@ -156,7 +160,6 @@ export class BaseClient extends Trapper {
 		this[NET].on("lost", lostListener.bind(this))
 		this.on("internal.online", onlineListener)
 		this.on("internal.sso", ssoListener)
-		lock(this, "uin")
 		lock(this, "apk")
 		lock(this, "device")
 		lock(this, "sig")
@@ -233,9 +236,11 @@ export class BaseClient extends Trapper {
 	}
 	/**
 	 * 使用密码登录
+	 * @param uin 登录账号
 	 * @param md5pass 密码的md5值
 	 */
-	passwordLogin(md5pass: Buffer) {
+	passwordLogin(uin:number,md5pass: Buffer) {
+		this.uin=uin
 		this.sig.session = randomBytes(4)
 		this.sig.randkey = randomBytes(16)
 		this.sig.tgtgt = randomBytes(16)
@@ -363,11 +368,8 @@ export class BaseClient extends Trapper {
 		if (retcode < 0) {
 			this.trip("internal.error.network", -2, "server is busy")
 		} else if (retcode === 0 && t106 && t16a && t318 && tgtgt) {
+			this.uin=uin as number
 			this.sig.qrsig = BUF0
-			if (uin !== this.uin) {
-				this.trip("internal.error.qrcode", retcode, `扫码账号(${uin})与登录账号(${this.uin})不符`)
-				return
-			}
 			this.sig.tgtgt = tgtgt
 			const t = tlv.getPacker(this)
 			const body = new Writer()
@@ -940,8 +942,9 @@ function decodeLoginResponse(this: BaseClient, payload: Buffer): any {
 		this.sig.t174 = BUF0
 		const { token, nickname, gender, age } = decodeT119.call(this, t[0x119])
 		return register.call(this).then(() => {
-			if (this[IS_ONLINE])
+			if (this[IS_ONLINE]){
 				this.trip("internal.online", token, nickname, gender, age)
+			}
 		})
 	}
 

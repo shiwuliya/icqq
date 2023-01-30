@@ -1,4 +1,4 @@
-import { pb } from "../core"
+import {logger, pb} from "../core"
 import { FriendRequestEvent, GroupRequestEvent, GroupInviteEvent } from "../events"
 
 type Client = import("../client").Client
@@ -147,7 +147,7 @@ export async function getFrdSysMsg(this: Client) {
 				this.em("request.friend.add", e)
 			}
 		} catch (e: any) {
-			this.logger.trace(e.message)
+			logger.trace(e.message)
 		}
 	}
 }
@@ -238,7 +238,7 @@ export async function getGrpSysMsg(this: Client) {
 				this.em("request.group.invite", e)
 			}
 		} catch (e: any) {
-			this.logger.trace(e.message)
+			logger.trace(e.message)
 		}
 	}
 }

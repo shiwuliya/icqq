@@ -246,6 +246,6 @@ export interface EventMap extends MergeEventMap{
 	"internal.input": (event: { user_id: number, end: boolean }) => void
 
 	/** 频道相关: 频道消息 */
-	"guild.message": (event: GuildMessageEvent) => void
+	"message.guild": (event: GuildMessageEvent) => void
 	"send":(messageRet:MessageRet)=>void
 }

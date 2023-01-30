@@ -1,5 +1,5 @@
 import { randomBytes } from "crypto"
-import { pb, jce } from "../core"
+import {pb, jce, logger} from "../core"
 import { uin2code, NOOP, timestamp, log } from "../common"
 import { PrivateMessage } from "../message"
 import { PrivateMessageEvent } from "../events"
@@ -55,7 +55,7 @@ export async function pbGetMsg(this: Client) {
 			item[3] = 187
 			rubbish.push(item)
 			handleSyncMsg.call(this, msg).catch(e => {
-				this.logger.debug(e)
+				logger.debug(e)
 			})
 		}
 	}

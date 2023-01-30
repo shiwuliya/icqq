@@ -2,6 +2,7 @@ node_modules
 .vscode
 data
 lib/**/*.d.ts
+lib/test.ts
 lib/**/*.js
 !lib/**/protobuf.min.d.ts
 !lib/**/protobuf.min.js

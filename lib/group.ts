@@ -290,6 +290,7 @@ export class Group extends Discuss {
 
 	/**
 	 * 发送一条消息
+	 * @param content 引用回复的消息
 	 * @param source 引用回复的消息
 	 * @param anony 匿名
 	 */

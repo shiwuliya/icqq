@@ -1,14 +1,16 @@
 {
   "name": "icqq",
-  "version": "0.0.11",
-  "upday": "2022/10/15",
+  "version": "0.0.12",
+  "upday": "2023/1/30",
   "description": "QQ protocol!",
   "main": "lib/index.js",
   "types": "lib/index.d.ts",
   "scripts": {
     "build": "tsc",
     "docs": "typedoc lib/index.ts",
-    "pub": "npm publish --access public"
+    "dev": "ts-node ./lib/test.ts",
+    "pub": "npm publish --access public",
+    "clean": "rm -rf ./lib/**/*.js && rm -rf ./lib/**/*.d.ts"
   },
   "engines": {
     "node": ">= v14"

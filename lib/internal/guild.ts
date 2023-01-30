@@ -1,6 +1,7 @@
 import { randomBytes } from "crypto"
+import {Guild} from "../guild";
 import { pb } from "../core"
-import { lock } from "../common"
+import { lock, log } from "../common"
 import { parse, MessageElem, Sendable, Converter } from "../message"
 
 type Client = import("../client").Client
@@ -81,7 +82,7 @@ export function guildMsgListener(this: Client, payload: Buffer) {
 			}
 		}))
 	}
-	this.em("guild.message", msg)
+	this.em("message.guild", msg)
 }
 
 // export function guildListPushListener(this: Client, payload: Buffer) {
