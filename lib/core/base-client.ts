@@ -580,13 +580,20 @@ function ssoListener(this: BaseClient, cmd: string, payload: Buffer, seq: number
 			if (nested[1] === 2 && nested[2]) {
 				const buf = jce.decode(nested[2])[5][5]
 				const decoded = pb.decode(buf)[1281]
-				this.sig.bigdata.sig_session = decoded[1].toBuffer()
-				this.sig.bigdata.session_key = decoded[2].toBuffer()
-				for (let v of decoded[3]) {
-					if (v[1] === 10) {
-						this.sig.bigdata.port = v[2][0][3]
-						this.sig.bigdata.ip = int32ip2str(v[2][0][2])
+				try{
+					this.sig.bigdata.sig_session = decoded[1].toBuffer()
+					this.sig.bigdata.session_key = decoded[2].toBuffer()
+					for (let v of decoded[3]) {
+						if (v[1] === 10) {
+							this.sig.bigdata.port = v[2][0][3]
+							this.sig.bigdata.ip = int32ip2str(v[2][0][2])
+						}
 					}
+				}catch {
+					this.sig.bigdata.sig_session = Buffer.from('')
+					this.sig.bigdata.session_key = Buffer.from('')
+					this.sig.bigdata.port = 0
+					this.sig.bigdata.ip = ''
 				}
 			}
 		}

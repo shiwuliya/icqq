@@ -1,6 +1,6 @@
 {
   "name": "icqq",
-  "version": "0.0.12-1",
+  "version": "0.0.13-3",
   "upday": "2023/1/30",
   "description": "QQ protocol!",
   "main": "lib/index.js",
@@ -36,7 +36,7 @@
     "long": "^4.0.0",
     "pngjs": "^6.0.0",
     "probe-image-size": "^7.2.2",
-    "triptrap": "^0.0.8"
+    "triptrap": "^0.0.13-1"
   },
   "devDependencies": {
     "@types/lodash": "^4.14.186",
