@@ -1,7 +1,7 @@
 import { randomBytes } from "crypto"
 import { pb } from "../core"
 import { lock, log } from "../common"
-import { parse, MessageElem, Sendable, Converter } from "../message"
+import { parse, MessageElem, Sendable } from "../message"
 
 type Client = import("../client").Client
 
@@ -12,6 +12,8 @@ export class GuildMessageEvent {
 	/** 子频道id */
 	channel_id: string
 	channel_name: string
+	post_type:'message'='message'
+	detail_type:string='guild'
 	/** 消息序号(同一子频道中一般顺序递增) */
 	seq: number
 	rand: number
@@ -59,48 +61,10 @@ export function guildMsgListener(this: Client, payload: Buffer) {
 	}
 	if (msg.sender.tiny_id === this.tiny_id && this.config.ignore_self)
 		return
+	this.stat.recv_msg_cnt++
 	this.logger.info(`recv from: [Guild: ${msg.guild_name}, Member: ${msg.sender.nickname}]` + msg.raw_message)
 	msg.reply = (content: Sendable) => {
-		const converter = new Converter(content)
-		this.writeUni("MsgProxy.SendMsg", pb.encode({
-			1: {
-				1: {
-					1: {
-						1: BigInt(msg.guild_id),
-						2: Number(msg.channel_id),
-						3: this.uin
-					},
-					2: {
-						1: 3840,
-						3: randomBytes(4).readUInt32BE()
-					}
-				},
-				3: {
-					1: converter.rich
-				}
-			}
-		}))
+		return this.sendGuildMsg(msg.guild_id,msg.channel_id,content)
 	}
 	this.em("message.guild", msg)
 }
-
-// export function guildListPushListener(this: Client, payload: Buffer) {
-// 	const rsp = pb.decode(payload)
-// 	if (!rsp[3]) return
-// 	if (!Array.isArray(rsp[3])) rsp[3] = [rsp[3]]
-// 	const tmp = new Set<string>()
-// 	for (let proto of rsp[3]) {
-// 		const id = String(proto[1])
-// 		tmp.add(id)
-// 		if (this.guildmap.has(id)) {
-// 			this.guildmap.get(id)!.name = String(proto[4])
-// 		} else {
-// 			this.guildmap.set(id, new Guild(this, proto))
-// 		}
-// 	}
-// 	for (let [id, _] of this.guildmap) {
-// 		if (!tmp.has(id))
-// 			this.guildmap.delete(id)
-// 	}
-// 	this.emit("internal.loadguilds")
-// }

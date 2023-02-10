@@ -78,12 +78,10 @@ async function onlineListener(this: Client, token: Buffer, nickname: string, gen
 		this.reloadFriendList(),
 		this.reloadGroupList(),
 		this.reloadStrangerList(),
+		this.reloadGuilds(),
 		this.reloadBlackList(),
 	])
-	await this.sendUni("trpc.group_pro.synclogic.SyncLogic.SyncFirstView", pb.encode({ 1: 0, 2: 0, 3: 0 })).then(payload => {
-		this.tiny_id = String(pb.decode(payload)[6])
-	}).catch(NOOP)
-	this.logger.mark(`加载了${this.fl.size}个好友，${this.gl.size}个群，${this.sl.size}个陌生人`)
+	this.logger.mark(`加载了${this.fl.size}个好友，${this.gl.size}个群，${this.guilds.size}个频道，${this.sl.size}个陌生人`)
 	pbGetMsg.call(this).catch(NOOP)
 	this.em("system.online")
 }
@@ -153,7 +151,7 @@ function loginErrorListener(this: Client, code: number, message: string) {
 	// toke expired
 	if (!code) {
 		logger.mark("登录token过期")
-		fs.unlink(path.join(this.dir, "token"), (err) => {
+		fs.unlink(path.join(this.dir, this.uin+"_token"), (err) => {
 			if (err) {
 				logger.fatal(err.message)
 				return
@@ -167,7 +165,7 @@ function loginErrorListener(this: Client, code: number, message: string) {
 		this.terminate()
 		logger.error(message)
 		if (code === -3) //register failed
-			fs.unlink(path.join(this.dir, "token"), NOOP)
+			fs.unlink(path.join(this.dir, this.uin+"_token"), NOOP)
 		const t = this.config.reconn_interval
 		if (t >= 1) {
 			logger.mark(t + "秒后重新连接")

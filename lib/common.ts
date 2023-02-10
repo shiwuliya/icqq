@@ -3,7 +3,7 @@ import * as crypto from "crypto"
 import * as stream from "stream"
 import * as util from "util"
 import * as os from "os"
-import { pb } from "./core"
+import * as pb from "./core/protobuf"
 
 export function uuid() {
 	let hex = crypto.randomBytes(16).toString("hex")
@@ -132,7 +132,6 @@ export class DownloadTransform extends stream.Transform {
 		callback(error)
 	}
 }
-
 export const PB_CONTENT = pb.encode({ 1: 1, 2: 0, 3: 0 })
 export const IS_WIN = os.platform() === "win32"
 

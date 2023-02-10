@@ -4,15 +4,26 @@ import * as log4js from "log4js"
 import { BaseClient, Platform, pb, generateShortDevice, ShortDevice, Domain } from "./core"
 const pkg = require("../package.json")
 import { md5, timestamp, NOOP, lock, Gender, OnlineStatus, hide } from "./common"
-import { bindInternalListeners, parseFriendRequestFlag, parseGroupRequestFlag,
+import {
+	bindInternalListeners, parseFriendRequestFlag, parseGroupRequestFlag,
 	getSysMsg, setAvatar, setSign, setStatus, addClass, delClass, renameClass,
-	loadBL, loadFL, loadGL, loadSL, getStamp, delStamp, imageOcr } from "./internal"
+	loadBL, loadFL, loadGL, loadSL, getStamp, delStamp, imageOcr, loadGPL
+} from "./internal"
 import { StrangerInfo, FriendInfo, GroupInfo, MemberInfo } from "./entities"
 import {EventMap, GroupInviteEvent, GroupMessageEvent, PrivateMessageEvent} from "./events"
 import { User, Friend } from "./friend"
 import { Discuss, Group } from "./group"
 import {Member} from "./member"
-import { Forwardable, Quotable, Sendable, parseDmMessageId, parseGroupMessageId, Image, ImageElem} from "./message"
+import {
+	Forwardable,
+	Quotable,
+	Sendable,
+	parseDmMessageId,
+	parseGroupMessageId,
+	Image,
+	ImageElem,
+	Converter
+} from "./message"
 import {Matcher, Trapper} from "triptrap";
 import {Guild} from "./guild";
 import {logger} from "./core";
@@ -47,6 +58,7 @@ export class Client extends BaseClient {
 	readonly pickUser = User.as.bind(this)
 	/** 创建一个讨论组对象 */
 	readonly pickDiscuss = Discuss.as.bind(this)
+	readonly pickGuild = Guild.as.bind(this)
 
 	/** 日志记录器，初始情况下是`log4js.Logger` */
 	/** 账号本地数据存储目录 */
@@ -72,9 +84,10 @@ export class Client extends BaseClient {
 	readonly gl = new Map<number, GroupInfo>()
 	/** 群员列表缓存(务必以`ReadonlyMap`方式访问) */
 	readonly gml = new Map<number, Map<number, MemberInfo>>()
+	/** 我加入的频道列表 */
+	readonly guilds = new Map<string, Guild>()
 	/** 黑名单列表(务必以`ReadonlySet`方式访问) */
 	readonly blacklist = new Set<number>()
-	readonly guildmap=new Map<string,Guild>()
 	/** 好友分组 */
 	readonly classes = new Map<number, string>()
 
@@ -297,6 +310,10 @@ export class Client extends BaseClient {
 	reloadStrangerList() {
 		return loadSL.call(this)
 	}
+	/** 重新加载频道列表 */
+	reloadGuilds(): Promise<void> {
+		return loadGPL.call(this)
+	}
 	/** 重载群列表 */
 	reloadGroupList() {
 		return loadGL.call(this)
@@ -345,6 +362,31 @@ export class Client extends BaseClient {
 	getGroupList() {
 		return this.gl
 	}
+	getGuildList(){
+		return [...this.guilds.values()].map(guild=>{
+			return {
+				guild_id:guild.guild_id,
+				guild_name:guild.guild_name
+			}
+		})
+	}
+	getChannelList(guild_id:string){
+		const guild=this.guilds.get(guild_id)
+		if(!guild) return []
+		return [...guild.channels.values()].map(channel=>{
+			return {
+				guild_id,
+				channel_id:channel.channel_id,
+				channel_name:channel.channel_name,
+				channel_type:channel.channel_type
+			}
+		})
+	}
+	getGuildMemberList(guild_id:string){
+		const guild=this.guilds.get(guild_id)
+		if(!guild) return []
+		return guild.getMemberList()
+	}
 	/** @cqhttp use client.sl */
 	getStrangerList() {
 		return this.sl
@@ -372,6 +414,9 @@ export class Client extends BaseClient {
 	/** @cqhttp use friend.sendMsg() */
 	async sendPrivateMsg(user_id: number, message: Sendable, source?: Quotable) {
 		return this.pickFriend(user_id).sendMsg(message, source)
+	}
+	async sendGuildMsg(guild_id:string,channel_id:string,message:Sendable){
+		return this.pickGuild(guild_id).sendMsg(channel_id,message)
 	}
 	/** @cqhttp use group.sendMsg() */
 	async sendGroupMsg(group_id: number, message: Sendable, source?: Quotable) {

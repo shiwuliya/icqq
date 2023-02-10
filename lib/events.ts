@@ -18,6 +18,7 @@ export interface MessageRet {
 export interface MessageEvent {
 	/**
 	 * 快速回复
+	 * @param content 消息内容
 	 * @param quote 引用这条消息(默认false)
 	 */
 	reply(content: Sendable, quote?: boolean): Promise<MessageRet>

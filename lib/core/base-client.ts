@@ -12,6 +12,7 @@ import { BUF0, BUF4, BUF16, NOOP, md5, timestamp, lock, hide, unzip, int32ip2str
 import { ShortDevice, Device, generateFullDevice, Platform, Apk, getApkInfo } from "./device"
 import * as log4js from "log4js";
 import {Logger} from "../client";
+import {log} from "../common";
 
 const FN_NEXT_SEQ = Symbol("FN_NEXT_SEQ")
 const FN_SEND = Symbol("FN_SEND")
@@ -524,6 +525,23 @@ export class BaseClient extends Trapper {
 		if (!this[IS_ONLINE])
 			throw new ApiRejection(-1, `client not online`)
 		return this[FN_SEND](buildUniPkt.call(this, cmd, body), timeout)
+	}
+	async sendOidbSvcTrpcTcp(cmd: string, body: Uint8Array){
+		const sp = cmd //OidbSvcTrpcTcp.0xf5b_1
+			.replace("OidbSvcTrpcTcp.", "")
+			.split("_");
+		const type1 = parseInt(sp[0], 16), type2 = parseInt(sp[1]);
+		body = pb.encode({
+			1: type1,
+			2: type2,
+			4: body,
+			6: "android " + this.apk.ver,
+		})
+		const payload = await this.sendUni(cmd, body)
+		log(payload)
+		const rsp = pb.decode(payload)
+		if (rsp[3] === 0) return rsp[4]
+		throw new ApiRejection(rsp[3], rsp[5])
 	}
 }
 

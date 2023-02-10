@@ -1,8 +1,9 @@
 import { pb, jce, Platform } from "../core"
 import { drop } from "../errors"
-import { timestamp, Gender, OnlineStatus, uuid, log } from "../common"
+import {timestamp, Gender, OnlineStatus, uuid, log, NOOP} from "../common"
 import { Image } from "../message"
 import { CmdID, highwayUpload } from "./highway"
+import {Guild} from "../guild";
 
 type Client = import("../client").Client
 
@@ -199,7 +200,6 @@ export async function loadFL(this: Client) {
 			this.fl.delete(uid)
 	}
 }
-
 export async function loadSL(this: Client) {
 	const body = pb.encode({
 		1: 1,
@@ -226,6 +226,36 @@ export async function loadSL(this: Client) {
 	}
 }
 
+export function loadGPL(this:Client){
+	this.sendUni("trpc.group_pro.synclogic.SyncLogic.SyncFirstView", pb.encode({ 1: 0, 2: 0, 3: 0 })).then(payload => {
+		this.tiny_id = String(pb.decode(payload)[6])
+	}).catch(NOOP)
+	return new Promise<void>((resolve, reject) => {
+		const id = setTimeout(reject, 5000)
+		this.on('internal.sso',(cmd,payload)=>{
+			if(cmd==='trpc.group_pro.synclogic.SyncLogic.PushFirstView'){
+				const proto = pb.decode(payload)
+				if (!proto[3]) return
+				if (!Array.isArray(proto[3])) proto[3] = [proto[3]]
+				const tmp = new Set<string>()
+				for (let p of proto[3]) {
+					const id = String(p[1]), name = String(p[4])
+					tmp.add(id)
+					if (!this.guilds.has(id))
+						this.guilds.set(id, new Guild(this, id))
+					const guild = this.guilds.get(id)!
+					guild._renew(name, p[3])
+				}
+				for (let [id, _] of this.guilds) {
+					if (!tmp.has(id))
+						this.guilds.delete(id)
+				}
+				clearTimeout(id)
+				resolve()
+			}
+		})
+	})
+}
 export async function loadGL(this: Client) {
 	const GetTroopListReqV2Simplify = jce.encodeStruct([
 		this.uin, 0, null, [], 1, 8, 0, 1, 1
