@@ -520,6 +520,26 @@ export class BaseClient extends Trapper {
 		this.statistics.sent_pkt_cnt++
 		this[NET].write(buildUniPkt.call(this, cmd, body, seq))
 	}
+	/** dont use it if not clear the usage */
+	sendOidb(cmd: string, body: Uint8Array, timeout = 5) {
+		const sp = cmd //OidbSvc.0x568_22
+			.replace("OidbSvc.", "")
+			.replace("oidb_", "")
+			.split("_")
+		const type1 = parseInt(sp[0], 16), type2 = parseInt(sp[1])
+		body = pb.encode({
+			1: type1,
+			2: isNaN(type2) ? 1 : type2,
+			3: 0,
+			4: body,
+			6: "android " + this.apk.ver,
+		})
+		return this.sendUni(cmd, body, timeout)
+	}
+	async sendPacket(type: string, cmd: string, body: any): Promise<Buffer> {
+		if (type === 'Uni') return await this.sendUni(cmd, body)
+		else return await this.sendOidb(cmd, body)
+	}
 	/** 发送一个业务包并等待返回 */
 	async sendUni(cmd: string, body: Uint8Array, timeout = 5) {
 		if (!this[IS_ONLINE])

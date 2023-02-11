@@ -1,7 +1,7 @@
 import * as fs from "fs"
 import * as path from "path"
 import * as log4js from "log4js"
-import { BaseClient, Platform, pb, generateShortDevice, ShortDevice, Domain } from "./core"
+import {BaseClient, Platform, pb, generateShortDevice, ShortDevice, Domain, ApiRejection} from "./core"
 const pkg = require("../package.json")
 import { md5, timestamp, NOOP, lock, Gender, OnlineStatus, hide } from "./common"
 import {
@@ -27,6 +27,7 @@ import {
 import {Matcher, Trapper} from "triptrap";
 import {Guild} from "./guild";
 import {logger} from "./core";
+import {drop, ErrorCode} from "./errors";
 
 /** 事件接口 */
 export interface Client extends BaseClient {
@@ -370,6 +371,48 @@ export class Client extends BaseClient {
 			}
 		})
 	}
+
+	/**
+	 * 加精群消息
+	 * @param message_id {string}
+	 */
+	async setEssenceMessage(message_id:string){
+		if(message_id.length <= 24) throw new ApiRejection(ErrorCode.MessageBuilderError,'只能加精群消息')
+		const {group_id,seq,rand}=parseGroupMessageId(message_id)
+		const retPacket = await this.sendPacket('Oidb','OidbSvc.0xeac_1', {
+			1: -group_id,
+			2: seq,
+			3: rand,
+		})
+		const ret = pb.decode(retPacket)[4]
+		if (ret[1]) {
+			this.logger.error(`加精群消息失败： ${ret[2]}(${ret[1]})`)
+			drop(ret[1], ret[2])
+		} else {
+			return '设置精华成功'
+		}
+	}
+
+	/**
+	 * 移除群精华消息
+	 * @param message_id
+	 */
+	async removeEssenceMessage(message_id:string){
+		if(message_id.length <= 24) throw new ApiRejection(ErrorCode.MessageBuilderError,'只能加精群消息')
+		const {group_id,seq,rand}=parseGroupMessageId(message_id)
+		const retPacket = await this.sendPacket('Oidb','OidbSvc.0xeac_2', {
+			1: -group_id,
+			2: seq,
+			3: rand,
+		})
+		const ret = pb.decode(retPacket)[4]
+		if (ret[1]) {
+			this.logger.error(`移除群精华消息失败： ${ret[2]}(${ret[1]})`)
+			drop(ret[1], ret[2])
+		} else {
+			return '移除群精华消息成功'
+		}
+	}
 	getChannelList(guild_id:string){
 		const guild=this.guilds.get(guild_id)
 		if(!guild) return []
@@ -553,22 +596,6 @@ export class Client extends BaseClient {
 		return invite ? user.setGroupInvite(group_id, seq, approve, block) : user.setGroupReq(group_id, seq, approve, reason, block)
 	}
 
-	/** dont use it if not clear the usage */
-	sendOidb(cmd: string, body: Uint8Array, timeout = 5) {
-		const sp = cmd //OidbSvc.0x568_22
-			.replace("OidbSvc.", "")
-			.replace("oidb_", "")
-			.split("_")
-		const type1 = parseInt(sp[0], 16), type2 = parseInt(sp[1])
-		body = pb.encode({
-			1: type1,
-			2: isNaN(type2) ? 1 : type2,
-			3: 0,
-			4: body,
-			6: "android " + this.apk.ver,
-		})
-		return this.sendUni(cmd, body, timeout)
-	}
 	group(...group_ids:number[]){
 		return (listener:(event:GroupInviteEvent|GroupMessageEvent)=>void)=>{
 			return this.trap((eventName,event)=>{
