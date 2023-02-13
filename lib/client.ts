@@ -380,7 +380,7 @@ export class Client extends BaseClient {
 		if(message_id.length <= 24) throw new ApiRejection(ErrorCode.MessageBuilderError,'只能加精群消息')
 		const {group_id,seq,rand}=parseGroupMessageId(message_id)
 		const retPacket = await this.sendPacket('Oidb','OidbSvc.0xeac_1', {
-			1: -group_id,
+			1: Number(group_id),
 			2: seq,
 			3: rand,
 		})
@@ -398,10 +398,10 @@ export class Client extends BaseClient {
 	 * @param message_id
 	 */
 	async removeEssenceMessage(message_id:string){
-		if(message_id.length <= 24) throw new ApiRejection(ErrorCode.MessageBuilderError,'只能加精群消息')
+		if(message_id.length <= 24) throw new ApiRejection(ErrorCode.MessageBuilderError,'消息id无效')
 		const {group_id,seq,rand}=parseGroupMessageId(message_id)
 		const retPacket = await this.sendPacket('Oidb','OidbSvc.0xeac_2', {
-			1: -group_id,
+			1: Number(group_id),
 			2: seq,
 			3: rand,
 		})

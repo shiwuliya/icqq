@@ -87,7 +87,9 @@ export class Image {
 	/** 临时文件路径 */
 	private tmpfile?: string
 
-	/** @param dm 是否私聊图片 */
+	/** @param elem
+	 * @param cachedir
+	 @param dm 是否私聊图片 */
 	constructor(elem: ImageElem | FlashElem, private dm = false, private cachedir?: string) {
 		let { file, cache, timeout, headers, asface, origin } = elem
 		this.origin = origin

@@ -113,7 +113,7 @@ export abstract class Contactable{
 		this.c.logger.debug(`开始图片任务，共有${imgs.length}张图片`)
 		const tasks: Promise<void>[] = []
 		for (let i = 0; i < imgs.length; i++) {
-			if (imgs[i] instanceof Image === false)
+			if (!(imgs[i] instanceof Image))
 				imgs[i] = new Image(imgs[i] as ImageElem, this.dm, path.join(this.c.dir, "../image"))
 			tasks.push((imgs[i] as Image).task)
 		}
@@ -141,6 +141,7 @@ export abstract class Contactable{
 			n += 20
 		}
 		this.c.logger.debug(`图片任务结束`)
+		console.log(res1)
 		return res1
 	}
 

@@ -90,7 +90,7 @@ class HighwayTransform extends stream.Transform {
 }
 
 /** highway上传数据 (只能上传流) */
-export function highwayUpload(this: Client, readable: stream.Readable, obj: HighwayUploadExt, ip?: string | number, port?: number): Promise<pb.Proto | void> {
+export function highwayUpload(this: Client, readable: stream.Readable, obj: HighwayUploadExt, ip?: string | number, port?: number): Promise<pb.Proto> {
 	ip = int32ip2str(ip || this.sig.bigdata.ip)
 	port = port || this.sig.bigdata.port
 	if (!port) throw new ApiRejection(ErrorCode.NoUploadChannel, "没有上传通道，如果你刚刚登录，请等待几秒")
@@ -117,6 +117,7 @@ export function highwayUpload(this: Client, readable: stream.Readable, obj: High
 					obj.callback(percentage)
 				if (Number(percentage) >= 100) {
 					socket.end()
+					console.log(rsp[7])
 					resolve(rsp[7])
 				}
 			}
