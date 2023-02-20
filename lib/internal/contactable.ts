@@ -183,12 +183,11 @@ export abstract class Contactable{
 				content[0] = await this.uploadVideo(content[0] as VideoElem)
 			else if ((content[0] as MessageElem).type === "record")
 				content[0] = await this.uploadPtt(content[0] as PttElem)
-			const converter = new Converter(this,content, {
+			const converter = new Converter(content, {
 				dm: this.dm,
 				cachedir: path.join(this.c.dir, "image"),
 				mlist: this.c.gml.get(this.gid!)
 			})
-			await converter.convert()
 			if (source)
 				await converter.quote(source)
 			if (converter.imgs.length)
@@ -467,8 +466,7 @@ export abstract class Contactable{
 					brief = json.prompt
 				}
 			}
-			const maker = new Converter(this,fake.message, { dm: this.dm, cachedir: this.c.config.data_dir })
-			await maker.convert()
+			const maker = new Converter(fake.message, { dm: this.dm, cachedir: this.c.config.data_dir })
 			if (maker?.brief && brief) {
 				maker.brief = brief
 			}

@@ -1,15 +1,12 @@
 import { deflateSync } from "zlib"
 import { FACE_OLD_BUF, facemap } from "./face"
 import { Image } from "./image"
-import {
-	AtElem, BfaceElem, Quotable, MessageElem, TextElem,
+import { AtElem, BfaceElem, Quotable, MessageElem, TextElem,
 	FaceElem, FlashElem, ImageElem, JsonElem, LocationElem, MfaceElem, ReplyElem,
-	MiraiElem, PokeElem, PttElem, Sendable, ShareElem, VideoElem, XmlElem, FileElem
-} from "./elements"
+	MiraiElem, PokeElem, PttElem, Sendable, ShareElem, VideoElem, XmlElem, FileElem } from "./elements"
 import { pb } from "../core"
 import { escapeXml } from "../common"
-import { Anonymous, rand2uuid} from "./message"
-import {Contactable} from "../internal";
+import { Anonymous, rand2uuid, parseDmMessageId, parseGroupMessageId } from "./message"
 
 const EMOJI_NOT_ENDING = ["\uD835", "\uD83C", "\uD83D", "\uD83E", "\u200D"]
 const EMOJI_NOT_STARTING = ["\uFE0F", "\u200D", "\u20E3"]
@@ -59,25 +56,25 @@ export class Converter {
 	/** 分片后 */
 	private fragments: Uint8Array[] = []
 
-	public constructor(private sender:Contactable,private content: Sendable, private ext?: ConverterExt) {}
-	async convert(){
-		if (typeof this.content === "string") {
-			this._text(this.content)
-		} else if (Array.isArray(this.content)) {
-			for (let elem of this.content)
-				await this._convert(elem)
+	public constructor(content: Sendable, private ext?: ConverterExt) {
+		if (typeof content === "string") {
+			this._text(content)
+		} else if (Array.isArray(content)) {
+			for (let elem of content)
+				this._convert(elem)
 		} else {
-			await this._convert(this.content)
+			this._convert(content)
 		}
 		if (!this.elems.length && !this.rich[4])
 			throw new Error("empty message")
 		this.elems.push(PB_RESERVER)
 	}
-	private async  _convert(elem: MessageElem | string) {
+
+	private _convert(elem: MessageElem | string) {
 		if (typeof elem === "string")
 			this._text(elem)
 		else if (Reflect.has(this, elem.type))
-			await this[elem.type](elem as any)
+			this[elem.type](elem as any)
 	}
 
 	private _text(text: string, attr6?: Buffer) {
@@ -261,8 +258,8 @@ export class Converter {
 		const buf = Buffer.from(file.replace("protobuf://", ""), "base64")
 		this.elems.push({ 19: buf })
 		this.elems.push({ 1: {
-			1: "你的QQ暂不支持查看视频短片，请期待后续版本。"
-		} })
+				1: "你的QQ暂不支持查看视频短片，请期待后续版本。"
+			} })
 		this.brief += "[视频]"
 		this.is_chain = false
 	}
@@ -361,9 +358,13 @@ export class Converter {
 	private file(elem: FileElem) {
 		throw new Error("暂不支持发送或转发file元素，请调用文件相关API完成该操作")
 	}
-	private async reply(elem: ReplyElem) {
+
+	private reply(elem: ReplyElem) {
 		const { id } = elem
-		await this.quote(await this.sender.client.getMsg(id) as Quotable)
+		if (id.length > 24)
+			this.quote({ ...parseGroupMessageId(id), message: "[消息]" })
+		else
+			this.quote({ ...parseDmMessageId(id), message: "[消息]" })
 	}
 
 	/** 转换为分片消息 */
@@ -440,10 +441,8 @@ export class Converter {
 	}
 
 	/** 引用回复 */
-	async quote(source: Quotable) {
-		const converter = new Converter(this.sender,source.message || "", this.ext)
-		await converter.convert()
-		const {elems}=converter
+	quote(source: Quotable) {
+		const elems = new Converter(source.message || "", this.ext).elems
 		const tmp = this.brief
 		if(!this.ext?.dm){
 			this.at({ type: "at", qq: source.user_id })

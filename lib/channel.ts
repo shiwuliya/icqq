@@ -3,7 +3,6 @@ import {Guild} from "./guild";
 import {ApiRejection, pb} from "./core"
 import {lock} from "./core/constants";
 import {Converter, Sendable} from "./message";
-import {Contactable} from "./internal";
 
 export enum NotifyType {
     Unknown = 0,
@@ -20,14 +19,13 @@ export enum ChannelType {
     Forum = 7,
 }
 
-export class Channel extends Contactable{
+export class Channel{
 
     channel_name = ""
     channel_type = ChannelType.Unknown
     notify_type = NotifyType.Unknown
 
     constructor(public readonly guild: Guild, public readonly channel_id: string) {
-        super(guild.c)
         lock(this, "guild")
         lock(this, "channel_id")
     }
@@ -42,8 +40,7 @@ export class Channel extends Contactable{
      * 暂时仅支持发送： 文本、AT、表情
      */
     async sendMsg(content: Sendable): Promise<{ seq: number, rand: number, time: number}> {
-        const maker = new Converter(this,content)
-        await maker.convert()
+        const maker = new Converter(content)
         const {rich,brief}=maker
         const payload = await this.guild.c.sendUni("MsgProxy.SendMsg", pb.encode({
             1: {
