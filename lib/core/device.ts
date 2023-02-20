@@ -39,8 +39,6 @@ export function generateShortDevice() {
 		for (let i = length; i > 0; --i) result += map[Math.floor(Math.random() * map.length)]
 		return result
 	}
-	const hash = md5(randstr(10))
-	const hex = hash.toString("hex")
 	return {
 		"--begin--":  "该设备为随机生成，丢失后不能得到原先配置",
 		product:      `ILPP-${randstr(5).toUpperCase()}`,

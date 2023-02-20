@@ -15,6 +15,7 @@ import {
 	PrivateMessageEvent
 } from "./events"
 import { FriendInfo } from "./entities"
+import {buildShare, ShareConfig, ShareContent} from "./message/share";
 
 type Client = import("./client").Client
 
@@ -377,6 +378,11 @@ export class Friend extends User {
 		hide(this, "_info")
 	}
 
+	/** 发送网址分享 */
+	async shareUrl(content: ShareContent, config?: ShareConfig) {
+		const body = buildShare(this.uid, 0, content, config)
+		await this.c.sendOidb("OidbSvc.0xb77_9", pb.encode(body))
+	}
 	/** 发送音乐分享 */
 	async shareMusic(platform: MusicPlatform, id: string) {
 		const body = await buildMusic(this.uid, platform, id, 0)

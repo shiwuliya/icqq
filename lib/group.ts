@@ -13,6 +13,7 @@ import {
 	MessageRet,
 } from "./events"
 import { GroupInfo, MemberInfo } from "./entities"
+import {buildShare, ShareConfig, ShareContent} from "./message/share";
 
 type Client = import("./client").Client
 
@@ -282,6 +283,11 @@ export class Group extends Discuss {
 		}
 	}
 
+	/** 发送网址分享 */
+	async shareUrl(content: ShareContent, config?: ShareConfig) {
+		const body = buildShare(this.gid, 1, content, config)
+		await this.c.sendOidb("OidbSvc.0xb77_9", pb.encode(body))
+	}
 	/** 发送音乐分享 */
 	async shareMusic(platform: MusicPlatform, id: string) {
 		const body = await buildMusic(this.gid, platform, id, 1)

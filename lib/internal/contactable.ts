@@ -22,12 +22,12 @@ export abstract class Contactable{
 	protected gid?: number
 
 	// 对方账号，可能是群号也可能是QQ号
-	private get target() {
+	get target() {
 		return this.uid || this.gid || this.c.uin
 	}
 
 	// 是否是 Direct Message (私聊)
-	private get dm() {
+	get dm() {
 		return !!this.uid
 	}
 
@@ -183,13 +183,14 @@ export abstract class Contactable{
 				content[0] = await this.uploadVideo(content[0] as VideoElem)
 			else if ((content[0] as MessageElem).type === "record")
 				content[0] = await this.uploadPtt(content[0] as PttElem)
-			const converter = new Converter(content, {
+			const converter = new Converter(this,content, {
 				dm: this.dm,
 				cachedir: path.join(this.c.dir, "image"),
 				mlist: this.c.gml.get(this.gid!)
 			})
+			await converter.convert()
 			if (source)
-				converter.quote(source)
+				await converter.quote(source)
 			if (converter.imgs.length)
 				await this.uploadImages(converter.imgs)
 			return converter
@@ -466,7 +467,8 @@ export abstract class Contactable{
 					brief = json.prompt
 				}
 			}
-			const maker = new Converter(fake.message, { dm: this.dm, cachedir: this.c.config.data_dir })
+			const maker = new Converter(this,fake.message, { dm: this.dm, cachedir: this.c.config.data_dir })
+			await maker.convert()
 			if (maker?.brief && brief) {
 				maker.brief = brief
 			}
