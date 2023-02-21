@@ -26,7 +26,7 @@ const map: { [tag: number]: (this: BaseClient, ...args: any[]) => Writer } = {
             .writeU32(this.uin)
             .write32(Date.now() & 0xffffffff)
             .writeBytes(Buffer.alloc(4)) //ip
-            .writeU16(0)
+            .writeU16(0);
     },
     0x08: function () {
         return new Writer()
@@ -35,15 +35,14 @@ const map: { [tag: number]: (this: BaseClient, ...args: any[]) => Writer } = {
             .writeU16(0)
     },
     0x16: function () {
-        const apk = getApkInfo(Platform.Watch)
         return new Writer()
             .writeU32(7)
-            .writeU32(apk.appid)
-            .writeU32(apk.subid)
+            .writeU32(16)
+            .writeU32(537067759)
             .writeBytes(this.device.guid)
-            .writeTlv(apk.id)
-            .writeTlv(apk.ver)
-            .writeTlv(apk.sign)
+            .writeTlv("com.tencent.qqlite")
+            .writeTlv("4.0.2")
+            .writeTlv(Buffer.from([0xA6, 0xB7, 0x45, 0xBF, 0x24, 0xA2, 0xC2, 0x77, 0x52, 0x77, 0x16, 0xF6, 0xF3, 0x6E, 0xB6, 0x8D]));
     },
     0x18: function () {
         return new Writer()
@@ -53,7 +52,7 @@ const map: { [tag: number]: (this: BaseClient, ...args: any[]) => Writer } = {
             .writeU32(0) // app client ver
             .writeU32(this.uin)
             .writeU16(0)
-            .writeU16(0)
+            .writeU16(0);
     },
     0x1B: function () {
         return new Writer()
@@ -64,7 +63,7 @@ const map: { [tag: number]: (this: BaseClient, ...args: any[]) => Writer } = {
             .writeU32(72)
             .writeU32(2)
             .writeU32(2)
-            .writeU16(0)
+            .writeU16(0);
     },
     0x1D: function () {
         return new Writer()
@@ -97,7 +96,7 @@ const map: { [tag: number]: (this: BaseClient, ...args: any[]) => Writer } = {
             .writeU32(this.apk.appid)
             .writeU32(emp ? 2 : this.apk.subid)
             .writeU32(0) // app client ver
-            .writeU32(this.apk.sigmap)
+            .writeU32(this.apk.sigmap);
     },
     0x104: function () {
         return new Writer().writeBytes(this.sig.t104)
@@ -122,7 +121,7 @@ const map: { [tag: number]: (this: BaseClient, ...args: any[]) => Writer } = {
             .writeU32(1) // login type password
             .writeTlv(String(this.uin))
             .writeU16(0)
-            .read()
+            .read();
         const buf = Buffer.alloc(4)
         buf.writeUInt32BE(this.uin)
         const key = md5(Buffer.concat([
@@ -136,6 +135,9 @@ const map: { [tag: number]: (this: BaseClient, ...args: any[]) => Writer } = {
             .writeU8(0)     // captcha type
             .writeU16(0)    // pic size
             .writeU8(1)     // ret type
+    },
+    0x108: function () {
+        return new Writer().writeBytes(Buffer.from(`|${this.device.imei}|${this.apk.name}`));
     },
     0x109: function () {
         return new Writer().writeBytes(md5(this.device.imei))
@@ -210,6 +212,9 @@ const map: { [tag: number]: (this: BaseClient, ...args: any[]) => Writer } = {
     0x154: function () {
         return new Writer().writeU32(this.sig.seq + 1)
     },
+    0x16a: function () {
+        return new Writer().writeBytes(this.sig.srm_token);
+    },
     0x16e: function () {
         return new Writer().writeBytes(this.device.model)
     },
@@ -271,7 +276,7 @@ const map: { [tag: number]: (this: BaseClient, ...args: any[]) => Writer } = {
     0x511: function () {
         const domains = new Set<Domain>([
             "aq.qq.com",
-            "buluo.qq.com",
+            // "buluo.qq.com",
             "connect.qq.com",
             "docs.qq.com",
             "game.qq.com",

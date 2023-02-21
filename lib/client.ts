@@ -238,7 +238,7 @@ export class Client extends BaseClient {
 			const token=await fs.promises.readFile(path.join(this.dir,uin+'_token'))
 			this.uin=uin
 			return this.tokenLogin(token)
-		} catch {
+		} catch (e) {
 			if (this.password_md5 && uin)
 				return this.passwordLogin(uin as number,this.password_md5)
 			else
