@@ -185,7 +185,24 @@ function parsePoke(data: any) {
 	}
 	return { target_id, operator_id, action, suffix }
 }
-
+function parseSign(this:Client,data:any) {
+	let user_id = this.uin, nickname = "", sign_text = "";
+	for (let o of data[7]) {
+		const name = String(o[1]), val = String(o[2]);
+		switch (name) {
+			case "user_sign":
+				sign_text = sign_text || val;
+				break;
+			case "mqq_uin":
+				user_id = parseInt(val);
+				break;
+			case "mqq_nick":
+				nickname = val;
+				break;
+		}
+	}
+	return { user_id, nickname, sign_text };
+}
 // 群事件解析
 const push732: {[k: number]: (this: Client, gid: number, buf: Buffer) => OnlinePushEvent | void} = {
 	0x0C: function (gid, buf) {
@@ -232,6 +249,13 @@ const push732: {[k: number]: (this: Client, gid: number, buf: Buffer) => OnlineP
 				user_id: e.target_id
 			})
 		}
+		const sign = { gid } as any;
+		Object.assign(sign, parseSign.call(this, data));
+		if (sign.sign_text)
+			return {
+				sub_type: 'sign',
+					...sign
+			}
 	},
 	0x0E: function (gid, buf) {
 		if (buf[5] !== 1) return

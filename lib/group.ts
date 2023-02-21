@@ -8,6 +8,7 @@ import { Sendable, GroupMessage, Image, ImageElem, buildMusic, MusicPlatform, An
 import { Gfs } from "./gfs"
 import {
 	DiscussMessageEvent, GroupAdminEvent, GroupInviteEvent,
+	GroupSignEvent,
 	GroupMessageEvent, GroupMuteEvent, GroupPokeEvent, GroupRecallEvent,
 	GroupRequestEvent, GroupTransferEvent, MemberDecreaseEvent, MemberIncreaseEvent,
 	MessageRet,
@@ -89,12 +90,13 @@ export interface GroupMessageEventMap{
 	'message.anonymous'(event:GroupMessageEvent):void
 }
 export interface GroupNoticeEventMap{
-	'notice'(event:MemberIncreaseEvent | MemberDecreaseEvent | GroupRecallEvent | GroupAdminEvent | GroupMuteEvent | GroupTransferEvent | GroupPokeEvent):void
+	'notice'(event:MemberIncreaseEvent|GroupSignEvent | MemberDecreaseEvent | GroupRecallEvent | GroupAdminEvent | GroupMuteEvent | GroupTransferEvent | GroupPokeEvent):void
 	'notice.increase'(event:MemberIncreaseEvent):void
 	'notice.decrease'(event:MemberDecreaseEvent):void
 	'notice.recall'(event:GroupRecallEvent):void
 	'notice.admin'(event:GroupAdminEvent):void
 	'notice.ban'(event:GroupMuteEvent):void
+	'notice.sign'(event:GroupSignEvent):void
 	'notice.transfer'(event:GroupTransferEvent):void
 	'notice.poke'(event:GroupPokeEvent):void
 }
@@ -612,6 +614,21 @@ export class Group extends Discuss {
 		return pb.decode(payload)[4].toBuffer().length > 6
 	}
 
+	/**
+	 * 打卡
+	 */
+	async sign(){
+		const body=pb.encode({
+			2: {
+				1: String(this.c.uin),
+				2: String(this.gid),
+				3: this.c.apk.ver
+			}
+		})
+		const payload=await this.c.sendOidb('OidbSvc.0xeb7_1',body)
+		const rsp = pb.decode(payload);
+		return { result: rsp[3] & 0xffffffff };
+	}
 	/** 退群/解散 */
 	async quit() {
 		const buf = Buffer.allocUnsafe(8)

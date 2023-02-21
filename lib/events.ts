@@ -131,6 +131,13 @@ export interface GroupNoticeEvent {
 	/** 群对象 */
 	group: Group
 }
+export interface GroupSignEvent extends GroupNoticeEvent{
+	sub_type: "sign", //群打卡
+	group_id: number, //群号
+	user_id: number, //打卡者
+	nickname: string, //打卡者昵称
+	sign_text: string, //打卡提示
+}
 /** 群员增加 */
 export interface MemberIncreaseEvent extends GroupNoticeEvent {
 	sub_type: "increase"

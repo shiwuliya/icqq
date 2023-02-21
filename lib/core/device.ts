@@ -113,17 +113,18 @@ export type Apk = typeof mobile
 
 const mobile = {
 	id: "com.tencent.mobileqq",
-	name: "A8.8.80.7400",
-	version: "8.8.80.7400",
-	ver: "8.8.80",
+	name: "A8.9.30.10200",
+	version: "8.9.30.10200",
+	ver: "8.9.30",
 	sign: Buffer.from([166, 183, 69, 191, 36, 162, 194, 119, 82, 119, 22, 246, 243, 110, 182, 141]),
-	buildtime: 1640921786,
+	buildtime: 1671103213,
 	appid: 16,
-	subid: 537113159,
+	subid: 537150482,
 	bitmap: 184024956,
 	sigmap: 34869472,
 	sdkver: "6.0.0.2494",
 	display: "Android",
+	ssover:19,
 }
 const watch: Apk = {
 	id: "com.tencent.qqlite",
@@ -138,8 +139,10 @@ const watch: Apk = {
 	sigmap: 34869472,
 	sdkver: "6.0.0.236",
 	display: "Watch",
+	ssover: 7
 }
 const hd: Apk = {
+
 	id: "com.tencent.minihd.qq",
 	name: "A5.9.3.3468",
 	version: "5.9.3.3468",
@@ -152,6 +155,7 @@ const hd: Apk = {
 	sigmap: 1970400,
 	sdkver: "6.0.0.2487",
 	display: "aPad",
+	ssover: 12
 }
 
 const apklist: {[platform in Platform]: Apk} = {
@@ -161,10 +165,10 @@ const apklist: {[platform in Platform]: Apk} = {
 	[Platform.iMac]: { ...hd },
 	[Platform.iPad]: { ...hd },
 }
-
+apklist[Platform.aPad].subid= 537150493
 apklist[Platform.iMac].subid = 537128930
 apklist[Platform.iMac].display = "iMac"
-apklist[Platform.iPad].subid = 537118796
+apklist[Platform.iPad].subid = 537149258
 apklist[Platform.iPad].display = "iPad"
 
 export function getApkInfo(p: Platform): Apk {

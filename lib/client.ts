@@ -222,7 +222,7 @@ export class Client extends BaseClient {
 	 * @param uin number，登录账号
 	 * @param password 可以为密码原文，或密码的md5值
 	 */
-	async login(uin?:number,password?: string | Buffer) {
+	async login(uin=this.uin,password?: string | Buffer) {
 		if (password && password.length > 0) {
 			let md5pass
 			if (typeof password === "string")
@@ -464,6 +464,10 @@ export class Client extends BaseClient {
 	/** @cqhttp use group.sendMsg() */
 	async sendGroupMsg(group_id: number, message: Sendable, source?: Quotable) {
 		return this.pickGroup(group_id).sendMsg(message, source)
+	}
+	/** @cqhttp use group.sign() */
+	async sendGroupSign(group_id:number){
+		return this.pickGroup(group_id).sign()
 	}
 	/** @cqhttp use discuss.sendMsg() */
 	async sendDiscussMsg(discuss_id: number, message: Sendable, source?: Quotable) {
