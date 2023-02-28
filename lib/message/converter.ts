@@ -1,9 +1,11 @@
 import { deflateSync } from "zlib"
 import { FACE_OLD_BUF, facemap } from "./face"
 import { Image } from "./image"
-import { AtElem, BfaceElem, Quotable, MessageElem, TextElem,
+import {
+	AtElem, BfaceElem, Quotable, MessageElem, TextElem,
 	FaceElem, FlashElem, ImageElem, JsonElem, LocationElem, MfaceElem, ReplyElem,
-	MiraiElem, PokeElem, PttElem, Sendable, ShareElem, VideoElem, XmlElem, FileElem } from "./elements"
+	MiraiElem, PokeElem, PttElem, Sendable, ShareElem, VideoElem, XmlElem, FileElem, ForwardElem
+} from "./elements"
 import { pb } from "../core"
 import { escapeXml } from "../common"
 import { Anonymous, rand2uuid, parseDmMessageId, parseGroupMessageId } from "./message"
@@ -129,7 +131,6 @@ export class Converter {
 		const attr6 = Buffer.concat([AT_BUF, buf, BUF2])
 		this._text(display, attr6)
 	}
-
 	private face(elem: FaceElem) {
 		let { id, text } = elem
 		id = Number(id)
@@ -290,6 +291,9 @@ export class Converter {
 		})
 	}
 
+	private forward(elem:ForwardElem){
+		throw new Error(`这个不能发:${JSON.stringify(elem)}`)
+	}
 	private share(elem: ShareElem) {
 		let { url, title, content, image } = elem
 		if (!url || !title)
@@ -362,9 +366,9 @@ export class Converter {
 	private reply(elem: ReplyElem) {
 		const { id } = elem
 		if (id.length > 24)
-			this.quote({ ...parseGroupMessageId(id), message: "[消息]" })
+			this.quote({ ...parseGroupMessageId(id), message: elem.text||'[消息]' })
 		else
-			this.quote({ ...parseDmMessageId(id), message: "[消息]" })
+			this.quote({ ...parseDmMessageId(id), message: elem.text||'[消息]' })
 	}
 
 	/** 转换为分片消息 */

@@ -269,13 +269,14 @@ export class BaseClient extends Trapper {
         const t = tlv.getPacker(this)
         let body = new Writer()
             .writeU16(9)
-            .writeU16(23)
+            .writeU16(25)
             .writeBytes(t(0x18))
             .writeBytes(t(0x1))
             .writeBytes(t(0x106, md5pass))
             .writeBytes(t(0x116))
             .writeBytes(t(0x100))
             .writeBytes(t(0x107))
+            //.writeBytes(t(0x108))
             .writeBytes(t(0x142))
             .writeBytes(t(0x144))
             .writeBytes(t(0x145))
@@ -286,13 +287,17 @@ export class BaseClient extends Trapper {
             .writeBytes(t(0x511))
             .writeBytes(t(0x187))
             .writeBytes(t(0x188))
-            .writeBytes(t(0x194))
+            .writeBytes(t(0x194)) // should have been removed
             .writeBytes(t(0x191))
-            .writeBytes(t(0x202))
+            .writeBytes(t(0x202)) // should have been removed
             .writeBytes(t(0x177))
             .writeBytes(t(0x516))
             .writeBytes(t(0x521))
             .writeBytes(t(0x525))
+            .writeBytes(t(0x544)) // TODO: native t544
+            //.writeBytes(t(0x545)) // TODO: qimei
+            //.writeBytes(t(0x548)) // TODO: PoW test data
+            .writeBytes(t(0x542))
             .read()
         this[FN_SEND_LOGIN]("wtlogin.login", body)
     }
@@ -1110,7 +1115,7 @@ function decodeLoginResponse(this: BaseClient, payload: Buffer): any {
         return this.trip("internal.error.login", type, "[登陆失败]未知格式的验证码")
     }
 
-    if (type === 160) {
+    if (type === 160 || type === 162 || type === 239) {
         if (!t[0x204] && !t[0x174])
             return this.trip("internal.verbose", "已向密保手机发送短信验证码", VerboseLevel.Mark)
         let phone = ""

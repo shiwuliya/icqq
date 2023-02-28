@@ -432,18 +432,17 @@ export abstract class Contactable{
 		let MultiMsg = []
 		let brief
 		for (const fake of msglist) {
-			if (typeof fake.message!=="string" && !Array.isArray(fake.message) && fake.message?.type == 'xml' && fake.message?.data) {
-				let data = fake.message.data
-				let brief_reg = /brief\=\"(.*?)\"/gm.exec(data)
-
-				if (brief_reg && brief_reg.length > 0) {
-					brief = brief_reg[1]
-				}
-
-				let resid_reg = /m_resid\=\"(.*?)\"/gm.exec(data)
-				let fileName_reg = /m_fileName\=\"(.*?)\"/gm.exec(data)
-				if (resid_reg && resid_reg.length > 1 && fileName_reg && fileName_reg.length > 1) {
-					const buf = await this._downloadMultiMsg(String(resid_reg[1]), 2)
+			if(!Array.isArray(fake.message)) fake.message=[fake.message]
+			if (fake.message.length===1 && typeof fake.message[0]!=="string" && ['xml','forward','json'].includes(fake.message[0].type)) {
+				const elem=fake.message[0]
+				if(elem.type==='xml'){
+					let brief_reg = /brief\=\"(.*?)\"/gm.exec(elem.data)
+					if (brief_reg && brief_reg.length > 0) {
+						brief=brief_reg[1]
+					}else  brief='[XML]'
+				}else if(elem.type==='forward'){
+					brief='[聊天记录]'
+					const buf = await this._downloadMultiMsg(elem.id, this.dm?1:2)
 					let a = pb.decode(buf)[2];
 					if (!Array.isArray(a)) {
 						a = [a]
@@ -452,18 +451,19 @@ export abstract class Contactable{
 						let m_fileName = b[1].toString();
 						if (m_fileName === 'MultiMsg') {
 							MultiMsg.push({
-								1: fileName_reg[1],
+								1: elem.filename,
 								2: b[2]
 							});
 						} else {
 							MultiMsg.push(b)
 						}
 					}
-				}
-			} else if (typeof fake.message!=="string" && !Array.isArray(fake.message) && fake.message?.type == 'json' && fake.message?.data) {
-				let json = fake.message.data
-				if (json) {
-					brief = json.prompt
+				}else if(elem.type==='json'){
+					brief='[JSON]'
+					let json = elem.data
+					if (json) {
+						brief = json.prompt
+					}
 				}
 			}
 			const maker = new Converter(fake.message, { dm: this.dm, cachedir: this.c.config.data_dir })
@@ -533,7 +533,7 @@ export abstract class Contactable{
 	/** 下载并解析合并转发 */
 	async getForwardMsg(resid: string, fileName: string = "MultiMsg") {
 		const ret = []
-		const buf = await this._downloadMultiMsg(String(resid), 2)
+		const buf = await this._downloadMultiMsg(String(resid), this.dm?1:2)
 		let a = pb.decode(buf)[2]
 		if (!Array.isArray(a)) a = [a]
 		for (let b of a) {

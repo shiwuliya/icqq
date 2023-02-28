@@ -59,9 +59,31 @@ export class Parser {
 				type: type === 12 ? "xml" : "json",
 				data: String(buf[0] > 0 ? unzipSync(buf.slice(1)) : buf.slice(1)),
 				id: proto[2]
-			} as T.XmlElem
-			brief = elem.type + "消息"
-			this.content = elem.data
+			} as T.XmlElem|T.JsonElem
+			const resIdRegex = /m_resid="([\w+=/]+)"/.exec(elem.data)
+			const fileNameRegex = /m_fileName="([\w+-=/]+)"/.exec(elem.data)
+			let jsonObj, resId, fileName
+			try {
+				jsonObj = JSON.parse(elem.data.data)
+				if (jsonObj.app === 'com.tencent.multimsg') {
+					resId = jsonObj.meta.detail.resid
+					fileName = jsonObj.meta.detail.uniseq
+				}
+			} catch {}
+			if((elem.type==='xml' && resIdRegex && fileNameRegex) || (elem.type==='json' && resId && fileName)){
+				brief = "转发消息"
+				const id:string=resIdRegex && resIdRegex.length?resIdRegex[0]:resId
+				const filename:string=fileNameRegex && fileNameRegex.length?fileNameRegex[0]:fileName
+				elem={
+					type:'forward',
+					id,
+					filename
+				} as T.ForwardElem
+				this.content = `{forward:id=${id},filename=${filename}}`
+			}else{
+				brief = elem.type + "消息"
+				this.content = elem.data
+			}
 			break
 		case 3: //flash
 			elem = this.parseImgElem(proto, "flash") as T.FlashElem

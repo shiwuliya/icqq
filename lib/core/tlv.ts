@@ -3,7 +3,6 @@ import * as tea from "./tea"
 import * as pb from "./protobuf"
 import Writer from "./writer"
 import {md5, BUF0} from "./constants"
-import {getApkInfo, Platform} from "./device"
 
 type BaseClient = import("./base-client").BaseClient
 
@@ -316,7 +315,11 @@ const map: { [tag: number]: (this: BaseClient, ...args: any[]) => Writer } = {
         return new Writer()
             .writeU16(1) // tlv cnt
             .writeU16(0x536) // tag
-            .writeTlv(Buffer.from([0x1, 0x0])) // zero
+            .writeTlv(Buffer.from([0x1, 0x0])); // zero
+    },
+    0x523: function () {
+        return new Writer()
+            .writeTlv(Buffer.from([0x1, 0x0]))
     },
     0x52d: function () {
         const d = this.device
@@ -333,8 +336,32 @@ const map: { [tag: number]: (this: BaseClient, ...args: any[]) => Writer } = {
         })
         return new Writer().writeBytes(buf)
     },
+    0x542: function () {
+        return new Writer().writeBytes(Buffer.from([0x4A, 0x02, 0x60, 0x01]));
+    },
+    0x544: function () {
+        // TODO: native generate t544, login error 45
+        return new Writer()
+            .writeBytes(
+                Buffer.concat(
+                    [Buffer.from([0x0C, 0x03]),
+                        crypto.randomBytes(6),
+                        Buffer.alloc(2),
+                        crypto.randomBytes(10),
+                        Buffer.alloc(4),
+                        crypto.randomBytes(4),
+                        Buffer.alloc(4),
+                    ])); // random generate, may not work?
+    },
+    0x545: function (qimei) {
+        return new Writer().writeBytes(Buffer.from(qimei)); // TODO: get qimei, https://snowflake.qq.com/ola/android
+    },
     0x547: function () {
         return new Writer().writeBytes(this.sig.t547);
+    },
+    0x548: function () {
+        // TODO: PoW test data
+        return new Writer().writeU8(0x01);
     }
 }
 

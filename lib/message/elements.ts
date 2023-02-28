@@ -126,7 +126,12 @@ export interface XmlElem {
 	data: string
 	id?: number
 }
-
+/** 转发消息 */
+export interface ForwardElem{
+	type:'forward',
+	id:string
+	filename?:string
+}
 /** 戳一戳 */
 export interface PokeElem {
 	type: "poke"
@@ -154,6 +159,7 @@ export interface FileElem {
 /** @deprecated @cqhttp 旧版引用回复(已弃用)，仅做一定程度的兼容 */
 export interface ReplyElem {
 	type: "reply"
+	text?:string
 	id: string
 }
 
@@ -181,7 +187,7 @@ export type ChainElem = TextElem | FaceElem | BfaceElem | MfaceElem | ImageElem 
 
 /** 注意：只有`ChainElem`中的元素可以组合发送，其他元素只能单独发送 */
 export type MessageElem = TextElem | FaceElem | BfaceElem | MfaceElem | ImageElem | AtElem | MiraiElem | ReplyElem |
-	FlashElem | PttElem | VideoElem | JsonElem | XmlElem | PokeElem | LocationElem | ShareElem | FileElem
+	FlashElem | PttElem | VideoElem | JsonElem | XmlElem | PokeElem | LocationElem | ShareElem | FileElem | ForwardElem
 
 /** 可通过sendMsg发送的类型集合 (字符串、元素对象，或它们的数组) */
 export type Sendable = string | MessageElem | (string | MessageElem)[]
