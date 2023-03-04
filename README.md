@@ -13,8 +13,8 @@
 ICQQ 是 [OICQ](https://github.com/takayama-lily/oicq) 的分支。ICQQ 的存在少不了 OICQ 作者 [takayama-lily](https://github.com/takayama-lily) 与 OICQ 的其它贡献者们，在此特别鸣谢！
 
 ----
-<p stype="color:red">
-# oicq2的差异
+<p style="color:red;font-size: 30px">
+oicq2的差异
 </p>
 - `createClient`将不再传递uin，改为在`login`时传入
 - 支持频道(基础的消息收发能力)
