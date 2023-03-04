@@ -19,9 +19,10 @@ export interface AtElem {
 /** 表情 */
 export interface FaceElem {
 	type: "face" | "sface"
-	/** face为0~324，sface不明 */
+	/** face为0~348，sface不明 */
 	id: number
 	text?: string
+	qlottie?: string
 }
 
 /** 原创表情 */

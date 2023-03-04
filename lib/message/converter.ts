@@ -132,10 +132,48 @@ export class Converter {
 		this._text(display, attr6)
 	}
 	private face(elem: FaceElem) {
-		let { id, text } = elem
+		let { id, text,qlottie } = elem
 		id = Number(id)
 		if (id < 0 || id > 0xffff || isNaN(id))
 			throw new Error("wrong face id: " + id)
+		if(qlottie){
+			if(facemap[id]){
+				text=facemap[id]
+			}else if(!text){
+				text = "/" + id;
+			}
+			if (!text.startsWith("/"))
+				text = "/" + text;
+
+			this.elems.push([
+				{
+					53: {
+						1: 37,
+						2: {
+							1: "1",
+							2: qlottie,
+							3: id,
+							4: 1,
+							5: 1,
+							6: "",
+							7: text,
+							8: "",
+							9: 1
+						},
+						3: 1
+					}
+				},
+				{
+					1: {
+						1: text,
+						12: {
+							1: "[" + text.replace("/", "") + "]请使用最新版手机QQ体验新功能"
+						}
+					}
+				}
+			]);
+			return;
+		}
 		if (id <= 0xff) {
 			const old = Buffer.allocUnsafe(2)
 			old.writeUInt16BE(0x1441 + id)
