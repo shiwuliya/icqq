@@ -1,6 +1,6 @@
 {
   "name": "icqq",
-  "version": "0.0.23",
+  "version": "0.0.24",
   "upday": "2023/3/4",
   "description": "QQ protocol!",
   "main": "lib/index.js",
