@@ -9,12 +9,15 @@
 * 若你不熟悉 Node.js 或不会组织代码，可通过 [template](https://github.com/icqqjs/icqq-template) 创建一个简单的应用程序
 * [Type Docs](https://icqqjs.github.io/icqq/)（文档仅供参考，具体类型以包内d.ts声明文件为准）
 * [从 OICQ v1.x 升级](https://github.com/takayama-lily/oicq/projects/3#column-16638290)（v1 在 OICQ 的 master 分支）
-* QQ频道未来不会直接支持，请使用插件 [icqq-guild](https://github.com/icqqjs/icqq-guild)
 
 ICQQ 是 [OICQ](https://github.com/takayama-lily/oicq) 的分支。ICQQ 的存在少不了 OICQ 作者 [takayama-lily](https://github.com/takayama-lily) 与 OICQ 的其它贡献者们，在此特别鸣谢！
 
 ----
-
+**<p stype="color:red">oicq2的差异</p>**
+- `createClient`将不再传递uin，改为在`login`时传入
+- 支持频道(基础的消息收发能力)
+- 支持群精华消息的添加和移除
+- 消息类型添加ForwardElem
 **安装:**
 
 ```bash
@@ -40,7 +43,7 @@ client.on("system.login.qrcode", function (e) {
   })
 }).login()
 ```
-# **一定要看！！！如果你要使用密码登录，请先详细阅读密码登录流程，此处和oicq的不一样呀不一样**
+
 注意：扫码登录现在仅能在同一ip下进行，建议使用密码登录，只需验证一次设备便长期有效
 [密码登录教程](https://github.com/icqqjs/icqq/wiki/%E5%AF%86%E7%A0%81%E7%99%BB%E5%BD%95%E6%B5%81%E7%A8%8B) 
 
