@@ -24,8 +24,6 @@ const IS_ONLINE = Symbol("IS_ONLINE")
 const LOGIN_LOCK = Symbol("LOGIN_LOCK")
 const HEARTBEAT = Symbol("HEARTBEAT")
 
-export const logger = log4js.getLogger(`[icqq]`)
-
 export enum VerboseLevel {
     Fatal, Mark, Error, Warn, Info, Debug
 }
@@ -99,7 +97,7 @@ export class BaseClient extends Trapper {
     private readonly [NET] = new Network
     // 回包的回调函数
     private readonly [HANDLERS] = new Map<number, (buf: Buffer) => void>()
-
+    public logger:Logger | log4js.Logger=log4js.getLogger(`[icqq]`)
     readonly apk: Apk
     readonly device: Device
     readonly sig:Record<string, any> = {
