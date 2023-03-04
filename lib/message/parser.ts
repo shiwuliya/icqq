@@ -72,8 +72,8 @@ export class Parser {
 			} catch {}
 			if((elem.type==='xml' && resIdRegex && fileNameRegex) || (elem.type==='json' && resId && fileName)){
 				brief = "转发消息"
-				const id:string=resIdRegex && resIdRegex.length?resIdRegex[0]:resId
-				const filename:string=fileNameRegex && fileNameRegex.length?fileNameRegex[0]:fileName
+				const id:string=resIdRegex && resIdRegex.length?resIdRegex[1]:resId
+				const filename:string=fileNameRegex && fileNameRegex.length?fileNameRegex[1]:fileName
 				elem={
 					type:'forward',
 					id,
