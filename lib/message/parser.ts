@@ -80,7 +80,7 @@ export class Parser {
                         id,
                         filename
                     } as T.ForwardElem
-                    this.content = `{forward:id=${id},filename=${filename}}`
+                    this.content = `{forward:${id},filename=${filename}}`
                 } else {
                     brief = elem.type + "消息"
                     this.content = elem.data
@@ -133,6 +133,19 @@ export class Parser {
                 brief = "群文件"
                 this.content = `{file:${elem.fid}}`
                 break
+            case 37: //qlottie
+                elem={
+                    type:"face",
+                    id:proto[2][3],
+                    text:facemap[proto[2][3]]
+                }
+                if (!elem.text)
+                    elem.text = proto[2][7] ? String(proto[2][7]) : '超级表情';
+                if(proto[2][2])
+                    elem.qlottie=String(proto[2][2])
+                brief = elem.text as string;
+                this.content=`{face:${elem.id},text:${elem.text},qlottie:${elem.qlottie}}`
+                break;
             case 126: //poke
                 if (!proto[3])
                     return
@@ -145,17 +158,6 @@ export class Parser {
                 brief = pokemap[pokeid]
                 this.content = `{poke:${elem.id}}`
                 break
-
-            case 37: //qlottie
-                elem={
-                    type:"face",
-                    id:proto[2][3],
-                    text:facemap[proto[2][3]]
-                }
-                if(proto[2][2])
-                    elem.qlottie=String(proto[2][2])
-                brief = elem.text as string;
-                break;
             default:
                 return
         }
@@ -329,9 +331,13 @@ export class Parser {
                         if (proto[1] === 3) { //flash
                             this.parseExclusiveElem(3, proto[2][1] ? proto[2][1] : proto[2][2])
                         } else if (proto[1] === 33) { //face(id>255)
-                            this.parsePartialElem(33, proto[2])
+                            this.parsePartialElem(33, proto[2]);
                         } else if (proto[1] === 2) { //poke
-                            this.parseExclusiveElem(126, proto)
+                            this.parseExclusiveElem(126, proto);
+                        } else if (proto[1] === 37) { //qlottie
+                            this.parseExclusiveElem(37, proto);
+                        } else if (proto[1] === 20) { //json
+                            this.parseExclusiveElem(51, proto[2]);
                         }
                         break
                     default:

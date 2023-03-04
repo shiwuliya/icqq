@@ -607,8 +607,8 @@ export class Client extends BaseClient {
     }
 
     /** @cqhttp use group.kickMember() or member.kick() */
-    async setGroupKick(group_id: number, user_id: number, reject_add_request = false) {
-        return this.pickMember(group_id, user_id).kick(reject_add_request)
+    async setGroupKick(group_id: number, user_id: number, reject_add_request = false,message?:string) {
+        return this.pickMember(group_id, user_id).kick(message,reject_add_request)
     }
 
     /** @cqhttp use group.muteMember() or member.mute() */
