@@ -20,7 +20,7 @@ ICQQ 是 [OICQ](https://github.com/takayama-lily/oicq) 的分支。ICQQ 的存�
 - 支持频道(基础的消息收发能力)
 - 支持群精华消息的添加和移除
 - 消息类型添加ForwardElem
-- 
+- 支持监听指定群/好友的消息
 **安装:**
 
 ```bash
