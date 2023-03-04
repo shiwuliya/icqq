@@ -42,7 +42,7 @@ client.on("system.login.qrcode", function (e) {
 ```
 
 注意：扫码登录现在仅能在同一ip下进行，建议使用密码登录，只需验证一次设备便长期有效  
-[密码登录教程](https://github.com/icqqjs/icqq/wiki/01.%E4%BD%BF%E7%94%A8%E5%AF%86%E7%A0%81%E7%99%BB%E5%BD%95-(%E6%BB%91%E5%8A%A8%E9%AA%8C%E8%AF%81%E7%A0%81%E6%95%99%E7%A8%8B))
+[密码登录教程](https://github.com/icqqjs/icqq/wiki/%E5%AF%86%E7%A0%81%E7%99%BB%E5%BD%95%E6%B5%81%E7%A8%8B)
 
 **鸣谢：**
 * [oicq](https://github.com/takayama-lily/oicq) icqq原来的仓库
