@@ -11,7 +11,6 @@ import * as jce from "./jce"
 import {BUF0, BUF4, BUF16, NOOP, md5, timestamp, lock, hide, unzip, int32ip2str} from "./constants"
 import {ShortDevice, Device, generateFullDevice, Platform, Apk, getApkInfo} from "./device"
 import * as log4js from "log4js";
-import {Logger} from "../client";
 import {log} from "../common";
 
 const FN_NEXT_SEQ = Symbol("FN_NEXT_SEQ")
@@ -45,7 +44,7 @@ export enum QrcodeResult {
 
 export interface BaseClient {
     uin: number
-    logger: Logger | log4js.Logger
+    logger: log4js.Logger
 
     /** 收到二维码 */
     on(name: "internal.qrcode", listener: (this: this, qrcode: Buffer) => void): Trapper.Dispose<this>
@@ -97,7 +96,7 @@ export class BaseClient extends Trapper {
     private readonly [NET] = new Network
     // 回包的回调函数
     private readonly [HANDLERS] = new Map<number, (buf: Buffer) => void>()
-    public logger:Logger | log4js.Logger=log4js.getLogger(`[icqq]`)
+    public logger:log4js.Logger=log4js.getLogger(`[icqq]`)
     readonly apk: Apk
     readonly device: Device
     readonly sig:Record<string, any> = {

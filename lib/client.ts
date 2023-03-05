@@ -158,7 +158,6 @@ export class Client extends BaseClient {
             random_device: false,
             ...conf,
         }
-
         const dir = path.resolve(config.data_dir)
         createDataDir(dir)
         const file = path.join(dir, `device.json`)
@@ -172,6 +171,7 @@ export class Client extends BaseClient {
         }
 
         super(config.platform, device);
+        this.logger.level=config.log_level
         if (isNew)
             this.logger.mark("创建了新的设备文件：" + file)
         this.logger.mark("----------")
@@ -246,8 +246,8 @@ export class Client extends BaseClient {
         }
         try {
             if (!uin) throw new Error()
-            const token = await fs.promises.readFile(path.join(this.dir, uin + '_token'))
             this.uin = uin
+            const token = await fs.promises.readFile(path.join(this.dir, uin + '_token'))
             return this.tokenLogin(token)
         } catch (e) {
             if (this.password_md5 && uin)
@@ -767,23 +767,6 @@ export class Client extends BaseClient {
     get online_status() {
         return this.status
     }
-}
-
-/** 日志记录器接口 */
-export interface Logger {
-    trace(msg: any, ...args: any[]): any
-
-    debug(msg: any, ...args: any[]): any
-
-    info(msg: any, ...args: any[]): any
-
-    warn(msg: any, ...args: any[]): any
-
-    error(msg: any, ...args: any[]): any
-
-    fatal(msg: any, ...args: any[]): any
-
-    mark(msg: any, ...args: any[]): any
 }
 
 /** 日志等级 */

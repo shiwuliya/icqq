@@ -1,4 +1,4 @@
-export { Client, createClient, Config, Logger, LogLevel, Statistics } from "./client"
+export { Client, createClient, Config, LogLevel, Statistics } from "./client"
 export { User, Friend } from "./friend"
 export { Discuss, Group } from "./group"
 export { Member } from "./member"
