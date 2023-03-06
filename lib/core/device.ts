@@ -139,7 +139,7 @@ const watch: Apk = {
 	sigmap: 34869472,
 	sdkver: "6.0.0.236",
 	display: "Watch",
-	ssover: 7
+	ssover: 5
 }
 const hd: Apk = {
 

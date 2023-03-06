@@ -175,6 +175,7 @@ export function highwayHttpUpload(this: Client, readable: stream.Readable, obj: 
     obj.ticket = this.sig.bigdata.sig_session
 
     const tasks = new Set<Promise<any>>()
+    const controller = new AbortController();
     const cancels = new Set<CancelTokenSource>()
     let finished = 0
 
@@ -220,7 +221,8 @@ export function highwayHttpUpload(this: Client, readable: stream.Readable, obj: 
                     httpAgent: agent,
                     cancelToken: c.token,
                     headers: {
-                        "Content-Length": String(buf.length)
+                        "Content-Length": String(buf.length),
+                        "Content-Type": "application/octet-stream"
                     }
                 }).then(r => {
                     let percentage, rsp
@@ -234,6 +236,7 @@ export function highwayHttpUpload(this: Client, readable: stream.Readable, obj: 
                         return
                     }
                     if (rsp?.[3] !== 0) {
+                        controller.abort()
                         reject(new ApiRejection(rsp[3], "unknown highway error"))
                         return
                     }

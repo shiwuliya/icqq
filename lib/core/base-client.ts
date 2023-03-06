@@ -221,10 +221,15 @@ export class BaseClient extends Trapper {
         this.sig.session = randomBytes(4)
         this.sig.randkey = randomBytes(16)
         this[ECDH] = new Ecdh
-        this.sig.d2key = token.slice(0, 16)
-        this.sig.d2 = token.slice(16, token.length - 72)
-        this.sig.tgt = token.slice(token.length - 72)
-        this.sig.tgtgt = md5(this.sig.d2key)
+        const stream = Readable.from(token, { objectMode: false });
+        const d2key = stream.read(stream.read(2).readUInt16BE());
+        this.sig.device_token = stream.read(stream.read(2).readUInt16BE());
+        this.sig.ticket_key = stream.read(stream.read(2).readUInt16BE());
+        this.sig.sig_key = stream.read(stream.read(2).readUInt16BE());
+        this.sig.srm_token = stream.read(stream.read(2).readUInt16BE());
+        this.sig.tgt = stream.read(stream.read(2).readUInt16BE());
+        this.sig.d2=stream.read(stream.read(2).readUInt16BE());
+        this.sig.tgtgt = md5(d2key);
         const t = tlv.getPacker(this)
         const body = new Writer()
             .writeU16(11)
@@ -989,11 +994,16 @@ function decodeT119(this: BaseClient, t119: Buffer) {
             this.pskey[domain] = pskey
         }
     }
-    const token = Buffer.concat([
-        this.sig.d2key,
-        this.sig.d2,
-        this.sig.tgt,
-    ])
+    let token_writer = new Writer()
+        .writeTlv(this.sig.d2key)
+        .writeTlv(this.sig.d2)
+        .writeTlv(this.sig.ticket_key)
+        .writeTlv(this.sig.sig_key)
+        .writeTlv(this.sig.srm_token)
+        .writeTlv(this.sig.tgt)
+    if (this.sig.device_token) token_writer.writeTlv(this.sig.device_token)
+    else token_writer.writeTlv(BUF0)
+    const token = token_writer.read()
     const age = t[0x11a].slice(2, 3).readUInt8()
     const gender = t[0x11a].slice(3, 4).readUInt8()
     const nickname = String(t[0x11a].slice(5))

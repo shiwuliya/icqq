@@ -169,7 +169,6 @@ export class Client extends BaseClient {
             isNew = true
             fs.writeFile(file, JSON.stringify(device, null, 2), NOOP)
         }
-
         super(config.platform, device);
         this.logger.level=config.log_level
         if (isNew)
