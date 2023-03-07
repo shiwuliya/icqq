@@ -266,7 +266,8 @@ export const segment = {
 	/** 视频(仅支持本地文件) */
 	video(file: string): VideoElem {
 		return {
-			type: "video", file
+			type: "video",
+			file
 		}
 	},
 	json(data: any): JsonElem {

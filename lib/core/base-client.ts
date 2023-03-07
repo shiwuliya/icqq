@@ -154,9 +154,9 @@ export class BaseClient extends Trapper {
         remote_port: 0,
     }
 
-    constructor(p: Platform = Platform.Android, d?: ShortDevice) {
+    constructor(public platform: Platform = Platform.Android, d?: ShortDevice) {
         super()
-        this.apk = getApkInfo(p)
+        this.apk = getApkInfo(platform)
         this.device = generateFullDevice(d)
         this[NET].on("error", err => this.trip("internal.verbose", err.message, VerboseLevel.Error))
         this[NET].on("close", () => {
