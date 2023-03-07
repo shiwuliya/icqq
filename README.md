@@ -21,6 +21,7 @@ ICQQ 是 [OICQ](https://github.com/takayama-lily/oicq) 的分支。ICQQ 的存�
 - 支持群精华消息的添加和移除
 - 消息类型添加ForwardElem
 - 支持监听指定群/好友的消息
+
 **安装:**
 
 ```bash
@@ -31,7 +32,7 @@ ICQQ 是 [OICQ](https://github.com/takayama-lily/oicq) 的分支。ICQQ 的存�
 
 ```js
 const { createClient } = require("icqq")
-const client = createClient()
+const client = createClient({platform:3})
 
 client.on("system.online", () => console.log("Logged in!"))
 client.on("message", e => {
@@ -47,7 +48,10 @@ client.on("system.login.qrcode", function (e) {
 }).login()
 ```
 
-注意：扫码登录现在仅能在同一ip下进行，建议使用密码登录，只需验证一次设备便长期有效
+注意：
+- 扫码登录现在仅能使用Watch协议登录下进行，如需扫码登陆，请在creatClient时按照上方示例代码传入platform，其他协议暂时无法登陆
+- 现在使用iPad改为生成登录二维码，不在统一局域网下也能扫码登陆成功啦
+- 建议使用密码登录，只需验证一次设备便长期有效
 [密码登录教程](https://github.com/icqqjs/icqq/wiki/%E5%AF%86%E7%A0%81%E7%99%BB%E5%BD%95%E6%B5%81%E7%A8%8B) 
 
 **鸣谢：**
