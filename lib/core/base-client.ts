@@ -154,9 +154,9 @@ export class BaseClient extends Trapper {
         remote_port: 0,
     }
 
-    constructor(public platform: Platform = Platform.Android, d?: ShortDevice) {
+    constructor(p: Platform = Platform.Android, d?: ShortDevice) {
         super()
-        this.apk = getApkInfo(platform)
+        this.apk = getApkInfo(p)
         this.device = generateFullDevice(d)
         this[NET].on("error", err => this.trip("internal.verbose", err.message, VerboseLevel.Error))
         this[NET].on("close", () => {
@@ -216,14 +216,19 @@ export class BaseClient extends Trapper {
 
     /** 使用接收到的token登录 */
     tokenLogin(token: Buffer) {
-        if (![144, 152].includes(token.length))
+        if (![144, 152,160].includes(token.length))
             throw new Error("bad token")
         this.sig.session = randomBytes(4)
         this.sig.randkey = randomBytes(16)
         this[ECDH] = new Ecdh
         this.sig.d2key = token.slice(0, 16)
-        this.sig.d2 = token.slice(16, token.length - 72)
-        this.sig.tgt = token.slice(token.length - 72)
+        if(token.length===160){
+            this.sig.d2 = token.slice(16, token.length - 80)
+            this.sig.tgt = token.slice(token.length - 80)
+        }else{
+            this.sig.d2 = token.slice(16, token.length - 72)
+            this.sig.tgt = token.slice(token.length - 72)
+        }
         this.sig.tgtgt = md5(this.sig.d2key)
         const t = tlv.getPacker(this)
         const body = new Writer()
