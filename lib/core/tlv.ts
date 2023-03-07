@@ -86,7 +86,6 @@ const map: { [tag: number]: (this: BaseClient, ...args: any[]) => Writer } = {
         return new Writer().writeBytes(this.device.guid)
     },
     0x35: function () {
-        console.log(this.apk)
         return new Writer().writeU32(3)
     },
     0x100: function (emp = 0) {
