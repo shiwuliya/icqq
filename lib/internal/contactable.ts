@@ -141,7 +141,6 @@ export abstract class Contactable{
 			n += 20
 		}
 		this.c.logger.debug(`图片任务结束`)
-		console.log(res1)
 		return res1
 	}
 
