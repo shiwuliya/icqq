@@ -465,7 +465,7 @@ export abstract class Contactable{
 					}
 				}
 			}
-			const maker = new Converter(fake.message, { dm: this.dm, cachedir: this.c.config.data_dir })
+			const maker = await this._preprocess(fake.message)
 			if (maker?.brief && brief) {
 				maker.brief = brief
 			}
