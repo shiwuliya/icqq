@@ -120,7 +120,6 @@ export function highwayUpload(this: Client, readable: stream.Readable, obj: High
                     obj.callback(percentage)
                 if (Number(percentage) >= 100) {
                     socket.end()
-                    console.log(rsp[7])
                     resolve(rsp[7])
                 }
             }
