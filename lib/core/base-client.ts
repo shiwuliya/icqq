@@ -294,7 +294,7 @@ export class BaseClient extends Trapper {
             .writeBytes(t(0x202)) // should have been removed
             .writeBytes(t(0x177))
             .writeBytes(t(0x516))
-            .writeBytes(t(0x521))
+            .writeBytes(t(0x521,0))
             .writeBytes(t(0x525))
             .writeBytes(t(0x544)) // TODO: native t544
             //.writeBytes(t(0x545)) // TODO: qimei
@@ -427,7 +427,7 @@ export class BaseClient extends Trapper {
                 .writeBytes(t(0x202))
                 .writeBytes(t(0x177))
                 .writeBytes(t(0x516))
-                .writeBytes(t(0x521))
+                .writeBytes(t(0x521,8))
                 .writeU16(0x318)
                 .writeTlv(t318)
                 .read()

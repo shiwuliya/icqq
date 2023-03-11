@@ -3,6 +3,7 @@
 [![npm version](https://img.shields.io/npm/v/icqq/latest.svg)](https://www.npmjs.com/package/icqq)
 [![dm](https://shields.io/npm/dm/icqq)](https://www.npmjs.com/package/icqq)
 [![node engine](https://img.shields.io/node/v/icqq/latest.svg)](https://nodejs.org)
+[![group:860669870](https://img.shields.io/badge/group-860669870-blue)](https://jq.qq.com/?_wv=1027&k=xAdGDRVh)
 [![discord](https://img.shields.io/static/v1?label=chat&message=on%20discord&color=7289da&logo=discord)](https://discord.gg/D7T7wPtwvb)
 
 * QQ（安卓）协议基于 Node.js 的实现，支持最低node版本为 v14
@@ -55,6 +56,9 @@ client.on("system.login.qrcode", function (e) {
 [密码登录教程](https://github.com/icqqjs/icqq/wiki/%E5%AF%86%E7%A0%81%E7%99%BB%E5%BD%95%E6%B5%81%E7%A8%8B) 
 
 **鸣谢：**
+* [Miao-Yunzai](https://github.com/yoimiya-kokomi/Miao-Yunzai) 云崽 v3的一个分支，该分支使用icqq来代替oicq，如果你从云崽过来想从oicq迁移到icqq，可以参考这个项目
+
+**鸣谢：**
 * [oicq](https://github.com/takayama-lily/oicq) icqq原来的仓库
 * [oicq-guild](https://github.com/takayama-lily/oicq-guild) 将其频道的api移植到icqq上
 * [oicq-icalingua-plus-plus](https://github.com/icalingua-plus-plus/oicq-icalingua-plus-plus) 参考了该分支上登录协议相关的pr
@@ -65,4 +69,3 @@ client.on("system.login.qrcode", function (e) {
 * [QQWebApi](./web-api.md) QQ Web Api 收集整理 (途中)
 * [TXHook](https://github.com/fuqiuluo/TXHook) 抓包工具推荐
 
-[![group:860669870](https://img.shields.io/badge/group-860669870-blue)](https://jq.qq.com/?_wv=1027&k=xAdGDRVh)
