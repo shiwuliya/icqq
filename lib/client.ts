@@ -233,6 +233,9 @@ export class Client extends BaseClient {
      * @param password 可以为密码原文，或密码的md5值
      */
     async login(uin = this.uin, password?: string | Buffer) {
+        if(!this.device.qImei36||!this.device.qImei16){
+            await this.device.getQIMEI()
+        }
         if (password && password.length > 0) {
             let md5pass
             if (typeof password === "string")

@@ -29,7 +29,10 @@ export const md5 = (data: BinaryLike) => createHash("md5").update(data).digest()
 
 /** sha hash */
 export const sha = (data: BinaryLike) => createHash("sha1").update(data).digest()
-
+export const randomString=(n:number,template='abcdef1234567890')=>{
+	const len=template.length
+	return new Array(n).fill(false).map(()=>template.charAt(Math.floor(Math.random()*len))).join('')
+}
 /** unix timestamp (second) */
 export const timestamp = () => Math.floor(Date.now() / 1000)
 

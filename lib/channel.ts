@@ -40,8 +40,7 @@ export class Channel{
      * 暂时仅支持发送： 文本、AT、表情
      */
     async sendMsg(content: Sendable): Promise<{ seq: number, rand: number, time: number}> {
-        const maker = new Converter(content)
-        const {rich,brief}=maker
+        const {rich,brief}=new Converter(content)
         const payload = await this.guild.c.sendUni("MsgProxy.SendMsg", pb.encode({
             1: {
                 1: {

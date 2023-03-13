@@ -9,7 +9,7 @@ import * as tea from "./tea"
 import * as pb from "./protobuf"
 import * as jce from "./jce"
 import {BUF0, BUF4, BUF16, NOOP, md5, timestamp, lock, hide, unzip, int32ip2str} from "./constants"
-import {ShortDevice, Device, generateFullDevice, Platform, Apk, getApkInfo} from "./device"
+import {ShortDevice, Device, Platform, Apk, getApkInfo} from "./device"
 import * as log4js from "log4js";
 import {log} from "../common";
 
@@ -157,7 +157,7 @@ export class BaseClient extends Trapper {
     constructor(p: Platform = Platform.Android, d?: ShortDevice) {
         super()
         this.apk = getApkInfo(p)
-        this.device = generateFullDevice(d)
+        this.device = new Device(this.apk,d)
         this[NET].on("error", err => this.trip("internal.verbose", err.message, VerboseLevel.Error))
         this[NET].on("close", () => {
             this.statistics.remote_ip = ""
@@ -297,7 +297,7 @@ export class BaseClient extends Trapper {
             .writeBytes(t(0x521,0))
             .writeBytes(t(0x525))
             .writeBytes(t(0x544)) // TODO: native t544
-            //.writeBytes(t(0x545)) // TODO: qimei
+            .writeBytes(t(0x545,this.device.qImei16||this.device.imei))
             //.writeBytes(t(0x548)) // TODO: PoW test data
             .writeBytes(t(0x542))
             .read()
