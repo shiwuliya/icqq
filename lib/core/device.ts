@@ -258,19 +258,19 @@ export enum Platform {
 }
 
 export type Apk = typeof mobile
-
 const mobile = {
     id: "com.tencent.mobileqq",
     app_key: '0S200MNJT807V3GE',
     name: "A8.9.33.10335",
     version: "8.9.33.10335",
     ver: "8.9.33",
-    sign: Buffer.from([166, 183, 69, 191, 36, 162, 194, 119, 82, 119, 22, 246, 243, 110, 182, 141]),
-    buildtime: 1671103213,
+    sign: Buffer.from([0xA6,0xB7,0x45,0xBF,0x24,0xA2,0xC2,0x77,0x52,0x77,0x16,0xF6,0xF3,0x6E,0xB6,0x8D]),
+    buildtime: 1673599898,
     appid: 16,
     subid: 537151682,
-    bitmap: 184024956,
-    sigmap: 34869472,
+    bitmap: 150470524,
+    main_sig_map:16724722,
+    sub_sig_map: 0x10400,
     sdkver: "6.0.0.2534",
     display: "Android",
     ssover: 19,
@@ -286,7 +286,8 @@ const watch: Apk = {
     appid: 16,
     subid: 537064446,
     bitmap: 16252796,
-    sigmap: 34869472,
+    main_sig_map:16724722,
+    sub_sig_map: 0x10400,
     sdkver: "6.0.0.236",
     display: "Watch",
     ssover: 5
@@ -294,31 +295,32 @@ const watch: Apk = {
 const hd: Apk = {
     id: "com.tencent.minihd.qq",
     app_key: '0S200MNJT807V3GE',
-    name: "A5.9.3.3468",
-    version: "5.9.3.3468",
-    ver: "5.9.3",
-    sign: Buffer.from([170, 57, 120, 244, 31, 217, 111, 249, 145, 74, 102, 158, 24, 100, 116, 199]),
-    buildtime: 1637427966,
+    name: "A5.8.9",
+    version: "5.8.9",
+    ver: "5.8.9",
+    sign: Buffer.from([0xAA,0x39,0x78,0xF4,0x1F,0xD9,0x6F,0xF9,0x91,0x4A,0x66,0x9E,0x18,0x64,0x74,0xC7]),
+    buildtime: 1595836208,
     appid: 16,
-    subid: 537067382,
+    subid: 537128930,
     bitmap: 150470524,
-    sigmap: 1970400,
-    sdkver: "6.0.0.2487",
-    display: "aPad",
+    main_sig_map:1970400,
+    sub_sig_map: 66560,
+    sdkver: "6.0.0.2433",
+    display: "iPad",
     ssover: 12
 }
 
 const apklist: { [platform in Platform]: Apk } = {
     [Platform.Android]: mobile,
-    [Platform.aPad]: hd,
+    [Platform.aPad]: {...mobile},
     [Platform.Watch]: watch,
     [Platform.iMac]: {...hd},
     [Platform.iPad]: {...hd},
 }
-apklist[Platform.aPad].subid = 537150493
+apklist[Platform.aPad].subid = 537151218
 apklist[Platform.iMac].subid = 537128930
 apklist[Platform.iMac].display = "iMac"
-apklist[Platform.iPad].subid = 537149258
+apklist[Platform.iPad].subid = 537151363
 apklist[Platform.iPad].display = "iPad"
 
 export function getApkInfo(p: Platform): Apk {

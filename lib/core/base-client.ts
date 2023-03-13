@@ -370,7 +370,7 @@ export class BaseClient extends Trapper {
             .writeBytes(t(0x1D))
             .writeBytes(t(0x1F))
             .writeBytes(t(0x33))
-            .writeBytes(t(0x35))
+            .writeBytes(t(0x35,3))
             .read()
         const pkt = buildCode2dPacket.call(this, 0x31, 0x11100, body)
         this[FN_SEND](pkt).then(payload => {
@@ -978,6 +978,7 @@ function decodeT119(this: BaseClient, t119: Buffer) {
     this.sig.t103 = t[0x103] ? t[0x103] : this.sig.t103
     this.sig.skey = t[0x120] ? t[0x120] : this.sig.skey
     this.sig.d2 = t[0x143] ? t[0x143] : this.sig.d2
+    this.sig.skid=t[0x108]?t[0x108]:undefined
     this.sig.d2key = t[0x305] ? t[0x305] : this.sig.d2key
     this.sig.sig_key =  t[0x133] ? t[0x133] : this.sig.sig_key
     this.sig.ticket_key= t[0x134] ? t[0x134] : this.sig.ticket_key

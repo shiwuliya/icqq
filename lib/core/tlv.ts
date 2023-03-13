@@ -30,7 +30,7 @@ const map: { [tag: number]: (this: BaseClient, ...args: any[]) => Writer } = {
     0x08: function () {
         return new Writer()
             .writeU16(0)
-            .writeU32(2052)
+            .writeU32(2052) //localId
             .writeU16(0)
     },
     0x16: function () {
@@ -85,17 +85,17 @@ const map: { [tag: number]: (this: BaseClient, ...args: any[]) => Writer } = {
     0x33: function () {
         return new Writer().writeBytes(this.device.guid)
     },
-    0x35: function () {
-        return new Writer().writeU32(3)
+    0x35: function (deviceType:number) {
+        return new Writer().writeU32(deviceType)
     },
-    0x100: function (emp = 0) {
+    0x100: function () {
         return new Writer()
             .writeU16(1) // db buf ver
             .writeU32(this.apk.ssover) // sso ver
-            .writeU32(this.apk.appid)
-            .writeU32(emp ? 2 : this.apk.subid)
+            .write32(this.apk.appid)
+            .writeU32(this.apk.subid)
             .writeU32(0) // app client ver
-            .writeU32(this.apk.sigmap);
+            .writeU32(this.apk.main_sig_map);
     },
     0x104: function () {
         return new Writer().writeBytes(this.sig.t104)
@@ -136,7 +136,7 @@ const map: { [tag: number]: (this: BaseClient, ...args: any[]) => Writer } = {
             .writeU8(1)     // ret type
     },
     0x108: function () {
-        return new Writer().writeBytes(Buffer.from(`|${this.device.imei}|${this.apk.name}`));
+        return new Writer().writeBytes(this.sig.ksid||Buffer.from(`|${this.device.imei}|${this.apk.name}`));
     },
     0x109: function () {
         return new Writer().writeBytes(md5(this.device.imei))
@@ -151,7 +151,7 @@ const map: { [tag: number]: (this: BaseClient, ...args: any[]) => Writer } = {
         return new Writer()
             .writeU8(0)
             .writeU32(this.apk.bitmap)
-            .writeU32(0x10400) // sub sigmap
+            .writeU32(this.apk.sub_sig_map) // sub sigmap
             .writeU8(1) // size of app id list
             .writeU32(1600000226) // app id list[0]
     },
@@ -306,9 +306,9 @@ const map: { [tag: number]: (this: BaseClient, ...args: any[]) => Writer } = {
     0x516: function () {
         return new Writer().writeU32(0)
     },
-    0x521: function () {
+    0x521: function (type:number) {
         return new Writer()
-            .writeU32(0) // product type
+            .writeU32(type) // product type
             .writeU16(0) // const
     },
     0x525: function () {
