@@ -7,8 +7,7 @@ function initPublicKey(pemStr: string, encryptKey: string) {
     const publicKey = crypto.createPublicKey(pemStr)
     return crypto.publicEncrypt({
         key: publicKey, padding: crypto.constants.RSA_PKCS1_PADDING
-    }, Buffer.from(encryptKey))
-        .toString('base64')
+    }, Buffer.from(encryptKey)).toString('base64')
 }
 
 function sign(key: string, params: string, ts: number, nonce: string, secret: string) {
@@ -156,31 +155,27 @@ LQ+FLkpncClKVIrBwv6PHyUvuCb0rIarmgDnzkfQAqVufEtR64iazGDKatvJ9y6B
         }
         const k = randomString(16, "abcdef1234567890");
         const key = initPublicKey(this.publicKey, k);
-        const time = new Date().getTime();
+        const time = Date.now();
         const nonce = randomString(16, "abcdef1234567890");
         const payload = this.genRandomPayloadByDevice();
-        const str = JSON.stringify(payload);
-        const params = aesEncrypt(str, k).toString('base64');
-
-        const postData = {
-            "key": key,
-            "params": params,
-            "time": time,
-            "nonce": nonce,
-            "sign": sign(key, params, time, nonce, this.secret),
-            "extra": "",
-        }
-        const {data} = await axios.post<{ data: string, code: number }>("https://snowflake.qq.com/ola/android", postData, {
+        const params = aesEncrypt(JSON.stringify(payload), k).toString('base64');
+        const {data} = await axios.post<{ data: string, code: number }>(
+            "https://snowflake.qq.com/ola/android", {
+                key,
+                params,
+                time,nonce,
+                sign:sign(key, params, time, nonce, this.secret),
+                extra:''
+            }, {
             headers: {
                 'User-Agent': `Dalvik/2.1.0 (Linux; U; Android ${this.version.release}; PCRT00 Build/N2G48H)`,
                 'Content-Type': "application/json"
             }
         });
-        if (data.code !== 0) {
+        if (data?.code !== 0) {
             return;
         }
         try{
-
             const {q16,q36}=JSON.parse(aesDecrypt(data.data,k))
             this.qImei16=q16
             this.qImei36=q36

@@ -354,7 +354,7 @@ const map: { [tag: number]: (this: BaseClient, ...args: any[]) => Writer } = {
                     ])); // random generate, may not work?
     },
     0x545: function (qimei) {
-        return new Writer().writeBytes(Buffer.from(qimei)); // TODO: get qimei, https://snowflake.qq.com/ola/android
+        return new Writer().writeBytes(Buffer.from(qimei));
     },
     0x547: function () {
         return new Writer().writeBytes(this.sig.t547);
