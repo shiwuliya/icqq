@@ -214,61 +214,34 @@ LQ+FLkpncClKVIrBwv6PHyUvuCb0rIarmgDnzkfQAqVufEtR64iazGDKatvJ9y6B
             "host": "se.infra",
             "kernel": this.fingerprint
         };
-        let beaconId = "";
         const timeMonth = now.toISOString().slice(0, 7) + "-01";
         const rand1 = fixedRand(900000, 100000)
         const rand2 = fixedRand(900000000, 100000000);
-        for (let i = 1; i <= 40; i++) {
-            switch (i) {
-                case 1:
-                case 2:
-                case 13:
-                case 14:
-                case 17:
-                case 18:
-                case 21:
-                case 22:
-                case 25:
-                case 26:
-                case 29:
-                case 30:
-                case 33:
-                case 34:
-                case 37:
-                case 38:
-                    beaconId += `k${i}:${timeMonth}${rand1}.${rand2}`;
-                    break;
-                case 3:
-                    beaconId += "k3:0000000000000000";
-                    break;
-                case 4:
-                    beaconId += `k4:${randomString(16, "123456789abcdef")}`;
-                    break;
-                default:
-                    beaconId += `k${i}:${fixedRand(10000)}`;
-                    break;
-            }
-            beaconId += ";";
-        }
+        let beaconIdArr=new Array(40).fill(1).map((_,i)=>{
+            if([1,2,13,14,17,18,21,22,25,26,29,30,33,34,37,38].includes(i)) return `k${i}:${timeMonth}${rand1}.${rand2}`
+            if(i===3) return "k3:0000000000000000"
+            if(i===4) return `k4:${randomString(16, "123456789abcdef")}`
+            return `k${i}:${fixedRand(10000)}`
+        })
         return {
             "androidId": '',
             "platformId": 1,
             "appKey": this.apk.app_key,
             "appVersion": this.apk.version,
-            "beaconIdSrc": beaconId,
+            "beaconIdSrc": beaconIdArr.join(';'),
             "brand": this.brand,
             "channelId": "2017",
             "cid": "",
             "imei": this.imei,
             "imsi": '',
-            "mac": '',
+            "mac": this.mac_address,
             "model": this.model,
             "networkType": "unknown",
             "oaid": "",
             "osVersion": `Android ${this.version.release},level ${this.version.sdk}`,
             "qimei": "",
             "qimei36": "",
-            "sdkVersion": "1.2.13.6",
+            "sdkVersion": this.apk.sdkver,
             "targetSdkVersion": "26",
             "audit": "",
             "userId": "{}",
