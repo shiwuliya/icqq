@@ -24,31 +24,31 @@ import {
     Image,
     ImageElem,
 } from "./message"
-import {Matcher, Trapper} from "triptrap";
+import {Listener, Matcher, ToDispose, Trapper} from "triptrap";
 import {Guild} from "./guild";
 import {drop, ErrorCode} from "./errors";
 
 /** 事件接口 */
 export interface Client extends BaseClient {
-    on<T extends keyof EventMap>(event: T, listener: EventMap[T]): Trapper.Dispose<this>
+    on<T extends keyof EventMap>(event: T, listener: EventMap[T]): ToDispose<this>
 
-    on<S extends Matcher>(event: S & Exclude<S, keyof EventMap>, listener: (this: this, ...args: any[]) => void): Trapper.Dispose<this>
+    on<S extends Matcher>(event: S & Exclude<S, keyof EventMap>, listener: Listener): ToDispose<this>
 
-    trap<T extends keyof EventMap>(event: T, listener: EventMap[T]): Trapper.Dispose<this>
+    trap<T extends keyof EventMap>(event: T, listener: EventMap[T]): ToDispose<this>
 
-    trap<S extends Matcher>(event: S & Exclude<S, keyof EventMap>, listener: (this: this, ...args: any[]) => void): Trapper.Dispose<this>
+    trap<S extends Matcher>(event: S & Exclude<S, keyof EventMap>, listener: Listener): ToDispose<this>
 
     trip<E extends keyof EventMap>(event: E, ...args: Parameters<EventMap[E]>): boolean
 
     trip<S extends string | symbol>(event: S & Exclude<S, keyof EventMap>, ...args: any[]): boolean
 
-    trapOnce<T extends keyof EventMap>(event: T, listener: EventMap[T]): Trapper.Dispose<this>
+    trapOnce<T extends keyof EventMap>(event: T, listener: EventMap[T]): ToDispose<this>
 
-    trapOnce<S extends Matcher>(event: S & Exclude<S, keyof EventMap>, listener: (this: this, ...args: any[]) => void): Trapper.Dispose<this>
+    trapOnce<S extends Matcher>(event: S & Exclude<S, keyof EventMap>, listener: Listener): ToDispose<this>
 
-    off<T extends keyof EventMap>(event: T, listener: EventMap[T]): Trapper.Dispose<this>
+    off<T extends keyof EventMap>(event: T): void
 
-    off<S extends Matcher>(event: S & Exclude<S, keyof EventMap>, listener: (this: this, ...args: any[]) => void): Trapper.Dispose<this>
+    off<S extends Matcher>(event: S & Exclude<S, keyof EventMap>): void
 }
 
 /** 一个客户端 */
@@ -181,8 +181,8 @@ export class Client extends BaseClient {
         this.dir = dir
         this.config = config as Required<Config>
         bindInternalListeners.call(this)
-        this.on("internal.verbose", (verbose, level) => {
-            const list: Exclude<LogLevel, "off">[] = ["fatal", "mark", "error", "warn", "info", "trace"]
+        this.on("internal.verbose", (verbose, level,c) => {
+            const list: Exclude<LogLevel, "off">[] = ["fatal", "mark", "error", "warn", "info", "debug","trace"]
             this.logger[list[level]](verbose)
         })
         lock(this, "dir")
@@ -702,7 +702,7 @@ export class Client extends BaseClient {
             configurable: true,
         })
         while (true) {
-            this.trip(name, data)
+            this.emit(name, data)
             let i = name.lastIndexOf(".")
             if (i === -1)
                 break

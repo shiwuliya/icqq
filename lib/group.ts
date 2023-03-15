@@ -320,7 +320,7 @@ export class Group extends Discuss {
 		})
 		const e = `internal.${this.gid}.${rand}`
 		let message_id = ""
-		this.c.once(e, (id) => message_id = id)
+		this.c.trapOnce(e, (id) => message_id = id)
 		try {
 			const payload = await this.c.sendUni("MessageSvc.PbSendMsg", body)
 			const rsp = pb.decode(payload)
@@ -341,7 +341,7 @@ export class Group extends Discuss {
 						this.c.offTrap(e)
 						reject()
 					}, time)
-					this.c.once(e, (id) => {
+					this.c.trapOnce(e, (id) => {
 						clearTimeout(timeout)
 						resolve(id)
 					})
@@ -355,7 +355,7 @@ export class Group extends Discuss {
 		{
 			const { seq, rand, time } = parseGroupMessageId(message_id)
 			const messageRet:MessageRet={ seq, rand, time, message_id}
-			this.c.trip('send',messageRet)
+			this.c.emit('send',messageRet)
 
 			return messageRet
 		}
@@ -391,7 +391,7 @@ export class Group extends Discuss {
 					this.c.offTrap(e)
 					reject()
 				}, 5000)
-				this.c.once(e, (id) => {
+				this.c.trapOnce(e, (id) => {
 					clearTimeout(timeout)
 					resolve(id)
 				})

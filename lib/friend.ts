@@ -221,7 +221,7 @@ export class User extends Contactable {
 		const time = rsp[3]
 		const message_id = genDmMessageId(this.uid, seq, rand, rsp[3], 1)
 		const messageRet:MessageRet={ message_id, seq, rand, time }
-		this.c.trip('send',messageRet)
+		this.c.emit('send',messageRet)
 		return messageRet
 	}
 

@@ -3,6 +3,27 @@ import {md5, randomString} from "./constants"
 import crypto from "crypto";
 import axios from "axios";
 
+function formatDate(value: Date | number | string, template: string = 'yyyy-MM-dd HH:mm:ss') {
+    const date = new Date()
+    const o: Record<string, number> = {
+        "M+": date.getMonth() + 1, //月份
+        "d+": date.getDate(), //日
+        "H+": date.getHours(), //小时
+        "m+": date.getMinutes(), //分
+        "s+": date.getSeconds(), //秒
+        "q+": Math.floor((date.getMonth() + 3) / 3), //季度
+        "S": date.getMilliseconds() //毫秒
+    };
+    if (/(y+)/.test(template)) template = template.replace(/(y+)/, (sub)=>(date.getFullYear() + "").slice(0,sub.length));
+    for (let k in o){
+        const reg=new RegExp("(" + k + ")")
+        if (reg.test(template)) {
+            template = template.replace(reg, (v)=>`${o[k]}`.padStart(v.length,''));
+        }
+    }
+    return template;
+}
+
 function initPublicKey(pemStr: string, encryptKey: string) {
     const publicKey = crypto.createPublicKey(pemStr)
     return crypto.publicEncrypt({
@@ -10,9 +31,9 @@ function initPublicKey(pemStr: string, encryptKey: string) {
     }, Buffer.from(encryptKey)).toString('base64')
 }
 
-function sign(key: string, params: string, ts: number, nonce: string, secret: string) {
+function sign(str: string) {
     const md5 = crypto.createHash('md5');
-    return md5.update(key + params + ts + nonce + secret).digest('hex');
+    return md5.update(str).digest('hex');
 }
 
 function aesEncrypt(data: string, key: string): Buffer {
@@ -131,12 +152,12 @@ export function generateFullDevice(apk: Apk, d?: ShortDevice) {
 export type ShortDevice = ReturnType<typeof generateShortDevice>
 
 export interface Device extends ReturnType<typeof generateFullDevice> {
-    qImei16?:string
-    qImei36?:string
+    qImei16?: string
+    qImei36?: string
 }
 
 export class Device {
-    private secret = "ZdJqM15EeO2zWc08";
+    private secret = randomString(16, 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ1234567890');
     private publicKey = `-----BEGIN PUBLIC KEY-----
 MIGfMA0GCSqGSIb3DQEBAQUAA4GNADCBiQKBgQDEIxgwoutfwoJxcGQeedgP7FG9
 qaIuS0qzfR8gWkrkTZKM2iWHn2ajQpBRZjMSoSf6+KJGvar2ORhBfpDXyVtZCKpq
@@ -163,23 +184,24 @@ LQ+FLkpncClKVIrBwv6PHyUvuCb0rIarmgDnzkfQAqVufEtR64iazGDKatvJ9y6B
             "https://snowflake.qq.com/ola/android", {
                 key,
                 params,
-                time,nonce,
-                sign:sign(key, params, time, nonce, this.secret),
-                extra:''
+                time, nonce,
+                sign: sign(key + params + time + nonce + this.secret),
+                extra: ''
             }, {
-            headers: {
-                'User-Agent': `Dalvik/2.1.0 (Linux; U; Android ${this.version.release}; PCRT00 Build/N2G48H)`,
-                'Content-Type': "application/json"
-            }
-        });
+                headers: {
+                    'User-Agent': `Dalvik/2.1.0 (Linux; U; Android ${this.version.release}; PCRT00 Build/N2G48H)`,
+                    'Content-Type': "application/json"
+                }
+            });
         if (data?.code !== 0) {
             return;
         }
-        try{
-            const {q16,q36}=JSON.parse(aesDecrypt(data.data,k))
-            this.qImei16=q16
-            this.qImei36=q36
-        }catch {}
+        try {
+            const {q16, q36} = JSON.parse(aesDecrypt(data.data, k))
+            this.qImei16 = q16
+            this.qImei36 = q36
+        } catch {
+        }
     }
 
     genRandomPayloadByDevice() {
@@ -191,15 +213,11 @@ LQ+FLkpncClKVIrBwv6PHyUvuCb0rIarmgDnzkfQAqVufEtR64iazGDKatvJ9y6B
         };
         const reserved = {
             "harmony": "0",
-            "clone": "0",
+            "clone": Math.random() > 0.5,
             "containe": "",
-            "oz": "UhYmelwouA+V2nPWbOvLTgN2/m8jwGB+yUB5v9tysQg=",
-            "oo": "Xecjt+9S1+f8Pz2VLSxgpw==",
-            "kelong": "0",
-            "uptimes": new Date().toISOString()
-                .replace('T', ' ')
-                .replace(/\.\d+Z/, ''),
-            "multiUser": "0",
+            "kelong": Math.random() > 0.5,
+            "uptimes": formatDate(new Date()),
+            "multiUser": Math.random() > 0.5,
             "bod": this.board,
             "brd": this.brand,
             "dv": this.device,
@@ -209,15 +227,27 @@ LQ+FLkpncClKVIrBwv6PHyUvuCb0rIarmgDnzkfQAqVufEtR64iazGDKatvJ9y6B
             "host": "se.infra",
             "kernel": this.fingerprint
         };
-        const timeMonth = now.toISOString().slice(0, 7) + "-01";
-        const rand1 = fixedRand(900000, 100000)
-        const rand2 = fixedRand(900000000, 100000000);
-        let beaconIdArr=new Array(40).fill(1).map((_,i)=>{
-            if([1,2,13,14,17,18,21,22,25,26,29,30,33,34,37,38].includes(i)) return `k${i}:${timeMonth}${rand1}.${rand2}`
-            if(i===3) return "k3:0000000000000000"
-            if(i===4) return `k4:${randomString(16, "123456789abcdef")}`
-            return `k${i}:${fixedRand(10000)}`
-        })
+        const timeMonth = `${formatDate(new Date(),'yyyy-MM')}-01`;
+        const staticRand1 = fixedRand(10000, 1000)
+        const staticRand2 = fixedRand(100)
+        const staticTime = `${new Date().getFullYear() - 1}-${String(fixedRand(13, 1)).padStart(2, '0')}-${String(fixedRand(29, 1)).padStart(2, '0')}`
+        let beaconIdArr = new Array(40).fill(1).map((_, i) => {
+            let idx: number = i + 1
+            if (idx === 3) return `k3:${''.padStart(16, '0')}`
+            if (idx === 4) return `K4:${randomString(16)}`
+            if (idx === 9) return `k9:${randomString(8)}-${randomString(4)}-${randomString(4)}-${randomString(4)}-${randomString(12)}`
+            if (idx === 19) return `k${idx}:${fixedRand(100000, 1000000)}`
+            if ([1, 13, 14, 17, 18, 21, 25, 26, 29, 30, 33, 34, 37, 38].includes(idx)) {
+                if ([25, 26, 29, 30].includes(idx)) return `k${idx}:${timeMonth}00${staticRand1}.${String(idx === 25 ? staticRand2 : staticRand2 + 1).padStart(2, '0')}0000000`
+                return `k${idx}:${timeMonth}00${fixedRand(10000, 1000)}.${fixedRand(100).toString().padStart(2, '0')}0000000`
+            }
+            if ([16, 20, 28, 36].includes(idx)) return `k${idx}:${fixedRand(100, 10)}`
+            if ([10, 11, 12, 15, 24, 32, 35, 39, 40].includes(idx)) return `k${idx}:${fixedRand(10)}`
+            if ([5, 6, 7].includes(idx)) return `k${idx}:${fixedRand(10000000, 1000000)}`
+            if ([23, 27, 31]) return `k${idx}:${fixedRand(10000, 1000)}`
+            if ([22, 2].includes(idx)) return `k${staticTime}${fixedRand(1000000, 100000)}.${fixedRand(1000000000, 100000000)}`
+            return `k${i}:${fixedRand(10, 0)}`
+        }).filter(Boolean)
         return {
             "androidId": '',
             "platformId": 1,
@@ -228,7 +258,7 @@ LQ+FLkpncClKVIrBwv6PHyUvuCb0rIarmgDnzkfQAqVufEtR64iazGDKatvJ9y6B
             "channelId": "2017",
             "cid": "",
             "imei": this.imei,
-            "imsi": '',
+            "imsi": this.imsi.toString("hex"),
             "mac": this.mac_address,
             "model": this.model,
             "networkType": "unknown",
@@ -264,12 +294,12 @@ const mobile = {
     name: "A8.9.33.10335",
     version: "8.9.33.10335",
     ver: "8.9.33",
-    sign: Buffer.from([0xA6,0xB7,0x45,0xBF,0x24,0xA2,0xC2,0x77,0x52,0x77,0x16,0xF6,0xF3,0x6E,0xB6,0x8D]),
+    sign: Buffer.from([0xA6, 0xB7, 0x45, 0xBF, 0x24, 0xA2, 0xC2, 0x77, 0x52, 0x77, 0x16, 0xF6, 0xF3, 0x6E, 0xB6, 0x8D]),
     buildtime: 1673599898,
     appid: 16,
     subid: 537151682,
     bitmap: 150470524,
-    main_sig_map:16724722,
+    main_sig_map: 16724722,
     sub_sig_map: 0x10400,
     sdkver: "6.0.0.2534",
     display: "Android",
@@ -286,7 +316,7 @@ const watch: Apk = {
     appid: 16,
     subid: 537064446,
     bitmap: 16252796,
-    main_sig_map:16724722,
+    main_sig_map: 16724722,
     sub_sig_map: 0x10400,
     sdkver: "6.0.0.236",
     display: "Watch",
@@ -298,12 +328,12 @@ const hd: Apk = {
     name: "A5.8.9",
     version: "5.8.9",
     ver: "5.8.9",
-    sign: Buffer.from([0xAA,0x39,0x78,0xF4,0x1F,0xD9,0x6F,0xF9,0x91,0x4A,0x66,0x9E,0x18,0x64,0x74,0xC7]),
+    sign: Buffer.from([0xAA, 0x39, 0x78, 0xF4, 0x1F, 0xD9, 0x6F, 0xF9, 0x91, 0x4A, 0x66, 0x9E, 0x18, 0x64, 0x74, 0xC7]),
     buildtime: 1595836208,
     appid: 16,
     subid: 537128930,
     bitmap: 150470524,
-    main_sig_map:1970400,
+    main_sig_map: 1970400,
     sub_sig_map: 66560,
     sdkver: "6.0.0.2433",
     display: "iPad",

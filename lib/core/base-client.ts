@@ -1,4 +1,4 @@
-import {Trapper} from 'triptrap'
+import {Trapper, ToDispose, Matcher, Listener} from 'triptrap'
 import {randomBytes, createHash} from "crypto"
 import {Readable} from "stream"
 import Network from "./network"
@@ -47,42 +47,42 @@ export interface BaseClient {
     logger: log4js.Logger
 
     /** 收到二维码 */
-    on(name: "internal.qrcode", listener: (this: this, qrcode: Buffer) => void): Trapper.Dispose<this>
+    on(name: "internal.qrcode", listener: (this: this, qrcode: Buffer) => void): ToDispose<this>
 
     /** 收到滑动验证码 */
-    on(name: "internal.slider", listener: (this: this, url: string) => void): Trapper.Dispose<this>
+    on(name: "internal.slider", listener: (this: this, url: string) => void): ToDispose<this>
 
     /** 登录保护验证 */
-    on(name: "internal.verify", listener: (this: this, url: string, phone: string) => void): Trapper.Dispose<this>
+    on(name: "internal.verify", listener: (this: this, url: string, phone: string) => void): ToDispose<this>
 
     /** token过期(此时已掉线) */
-    on(name: "internal.error.token", listener: (this: this) => void): Trapper.Dispose<this>
+    on(name: "internal.error.token", listener: (this: this) => void): ToDispose<this>
 
     /** 网络错误 */
-    on(name: "internal.error.network", listener: (this: this, code: number, message: string) => void): Trapper.Dispose<this>
+    on(name: "internal.error.network", listener: (this: this, code: number, message: string) => void): ToDispose<this>
 
     /** 密码登录相关错误 */
-    on(name: "internal.error.login", listener: (this: this, code: number, message: string) => void): Trapper.Dispose<this>
+    on(name: "internal.error.login", listener: (this: this, code: number, message: string) => void): ToDispose<this>
 
     /** 扫码登录相关错误 */
-    on(name: "internal.error.qrcode", listener: (this: this, code: QrcodeResult, message: string) => void): Trapper.Dispose<this>
+    on(name: "internal.error.qrcode", listener: (this: this, code: QrcodeResult, message: string) => void): ToDispose<this>
 
     /** 登录成功 */
-    on(name: "internal.online", listener: (this: this, token: Buffer, nickname: string, gender: number, age: number) => void): Trapper.Dispose<this>
+    on(name: "internal.online", listener: (this: this, token: Buffer, nickname: string, gender: number, age: number) => void): ToDispose<this>
 
     /** token更新 */
-    on(name: "internal.token", listener: (this: this, token: Buffer) => void): Trapper.Dispose<this>
+    on(name: "internal.token", listener: (this: this, token: Buffer) => void): ToDispose<this>
 
     /** 服务器强制下线 */
-    on(name: "internal.kickoff", listener: (this: this, reason: string) => void): Trapper.Dispose<this>
+    on(name: "internal.kickoff", listener: (this: this, reason: string) => void): ToDispose<this>
 
     /** 业务包 */
-    on(name: "internal.sso", listener: (this: this, cmd: string, payload: Buffer, seq: number) => void): Trapper.Dispose<this>
+    on(name: "internal.sso", listener: (this: this, cmd: string, payload: Buffer, seq: number) => void): ToDispose<this>
 
     /** 日志信息 */
-    on(name: "internal.verbose", listener: (this: this, verbose: unknown, level: VerboseLevel) => void): Trapper.Dispose<this>
+    on(name: "internal.verbose", listener: (this: this, verbose: unknown, level: VerboseLevel) => void): ToDispose<this>
 
-    on(name: string | symbol, listener: (this: this, ...args: any[]) => void): Trapper.Dispose<this>
+    on(name: string | symbol, listener: (this: this, ...args: any[]) => void): ToDispose<this>
 }
 
 export class BaseClient extends Trapper {
@@ -158,16 +158,16 @@ export class BaseClient extends Trapper {
         super()
         this.apk = getApkInfo(p)
         this.device = new Device(this.apk,d)
-        this[NET].on("error", err => this.trip("internal.verbose", err.message, VerboseLevel.Error))
+        this[NET].on("error", err => this.emit("internal.verbose", err.message, VerboseLevel.Error))
         this[NET].on("close", () => {
             this.statistics.remote_ip = ""
             this.statistics.remote_port = 0
-            this[NET].remoteAddress && this.trip("internal.verbose", `${this[NET].remoteAddress}:${this[NET].remotePort} closed`, VerboseLevel.Mark)
+            this[NET].remoteAddress && this.emit("internal.verbose", `${this[NET].remoteAddress}:${this[NET].remotePort} closed`, VerboseLevel.Mark)
         })
         this[NET].on("connect2", () => {
             this.statistics.remote_ip = this[NET].remoteAddress as string
             this.statistics.remote_port = this[NET].remotePort as number
-            this.trip("internal.verbose", `${this[NET].remoteAddress}:${this[NET].remotePort} connected`, VerboseLevel.Mark)
+            this.emit("internal.verbose", `${this[NET].remoteAddress}:${this[NET].remotePort} connected`, VerboseLevel.Mark)
             syncTimeDiff.call(this)
         })
         this[NET].on("packet", packetListener.bind(this))
@@ -193,7 +193,18 @@ export class BaseClient extends Trapper {
             this[NET].auto_search = true
         }
     }
-
+    on(matcher:Matcher,listener:Listener){
+        return this.trap(matcher,listener)
+    }
+    once(matcher:Matcher,listener:Listener){
+        return this.trapOnce(matcher,listener)
+    }
+    off(matcher:Matcher){
+        return this.offTrap(matcher)
+    }
+    emit(matcher:Matcher,...args:any[]){
+        return this.trip(matcher,...args)
+    }
     /** 是否为在线状态 (可以收发业务包的状态) */
     isOnline() {
         return this[IS_ONLINE]
@@ -383,18 +394,18 @@ export class BaseClient extends Trapper {
             const t = readTlv(stream)
             if (!retcode && t[0x17]) {
                 this.sig.qrsig = qrsig
-                this.trip("internal.qrcode", t[0x17])
+                this.emit("internal.qrcode", t[0x17])
             } else {
-                this.trip("internal.error.qrcode", retcode, "获取二维码失败，请重试")
+                this.emit("internal.error.qrcode", retcode, "获取二维码失败，请重试")
             }
-        }).catch(() => this.trip("internal.error.network", -2, "server is busy"))
+        }).catch(() => this.emit("internal.error.network", -2, "server is busy"))
     }
 
     /** 扫码后调用此方法登录 */
     async qrcodeLogin() {
         const {retcode, uin, t106, t16a, t318, tgtgt} = await this.queryQrcodeResult()
         if (retcode < 0) {
-            this.trip("internal.error.network", -2, "server is busy")
+            this.emit("internal.error.network", -2, "server is busy")
         } else if (retcode === 0 && t106 && t16a && t318 && tgtgt) {
             this.uin = uin as number
             this.sig.qrsig = BUF0
@@ -452,7 +463,7 @@ export class BaseClient extends Trapper {
                     break
             }
             this.sig.qrsig = BUF0
-            this.trip("internal.error.qrcode", retcode, message)
+            this.emit("internal.error.qrcode", retcode, message)
         }
     }
 
@@ -541,8 +552,8 @@ export class BaseClient extends Trapper {
             decodeLoginResponse.call(this, await this[FN_SEND](pkt))
         } catch (e: any) {
             this[LOGIN_LOCK] = false
-            this.trip("internal.error.network", -2, "server is busy")
-            this.trip("internal.verbose", e.message, VerboseLevel.Error)
+            this.emit("internal.error.network", -2, "server is busy")
+            this.emit("internal.verbose", e.message, VerboseLevel.Error)
         }
     }
 
@@ -602,7 +613,7 @@ export class BaseClient extends Trapper {
 
 function buildUniPkt(this: BaseClient, cmd: string, body: Uint8Array, seq = 0) {
     seq = seq || this[FN_NEXT_SEQ]()
-    this.trip("internal.verbose", `send:${cmd} seq:${seq}`, VerboseLevel.Debug)
+    this.emit("internal.verbose", `send:${cmd} seq:${seq}`, VerboseLevel.Debug)
     let len = cmd.length + 20
     const sso = Buffer.allocUnsafe(len + body.length + 4)
     sso.writeUInt32BE(len, 0)
@@ -637,7 +648,7 @@ function ssoListener(this: BaseClient, cmd: string, payload: Buffer, seq: number
         case "MessageSvc.PushForceOffline": {
             const nested = jce.decodeWrapper(payload)
             const msg = nested[4] ? `[${nested[4]}]${nested[3]}` : `[${nested[1]}]${nested[2]}`
-            this.trip(EVENT_KICKOFF, msg)
+            this.emit(EVENT_KICKOFF, msg)
         }
             break
         case "QualityTest.PushList":
@@ -673,11 +684,11 @@ function ssoListener(this: BaseClient, cmd: string, payload: Buffer, seq: number
 }
 
 function onlineListener(this: BaseClient) {
-    if (!this.matcherCount(EVENT_KICKOFF)) {
+    if (!this.listeners(EVENT_KICKOFF).length) {
         this.trapOnce(EVENT_KICKOFF, (msg: string) => {
             this[IS_ONLINE] = false
             clearInterval(this[HEARTBEAT])
-            this.trip("internal.kickoff", msg)
+            this.emit("internal.kickoff", msg)
         })
     }
 }
@@ -696,7 +707,7 @@ async function parseSso(this: BaseClient, buf: Buffer) {
     const seq = buf.readInt32BE(4)
     const retcode = buf.readInt32BE(8)
     if (retcode !== 0) {
-        this.trip("internal.error.token")
+        this.emit("internal.error.token")
         throw new Error("unsuccessful retcode: " + retcode)
     }
     let offset = buf.readUInt32BE(12) + 12
@@ -738,17 +749,17 @@ async function packetListener(this: BaseClient, pkt: Buffer) {
                 decrypted = tea.decrypt(encrypted, BUF16)
                 break
             default:
-                this.trip("internal.error.token")
+                this.emit("internal.error.token")
                 throw new Error("unknown flag:" + flag)
         }
         const sso = await parseSso.call(this, decrypted)
-        this.trip("internal.verbose", `recv:${sso.cmd} seq:${sso.seq}`, VerboseLevel.Debug)
+        this.emit("internal.verbose", `recv:${sso.cmd} seq:${sso.seq}`, VerboseLevel.Debug)
         if (this[HANDLERS].has(sso.seq))
             this[HANDLERS].get(sso.seq)?.(sso.payload)
         else
-            this.trip("internal.sso", sso.cmd, sso.payload, sso.seq)
+            this.emit("internal.sso", sso.cmd, sso.payload, sso.seq)
     } catch (e) {
-        this.trip("internal.verbose", e, VerboseLevel.Error)
+        this.emit("internal.verbose", e, VerboseLevel.Error)
     }
 }
 
@@ -781,7 +792,7 @@ async function register(this: BaseClient, logout = false, reflush = false) {
         const rsp = jce.decodeWrapper(payload)
         const result = rsp[9] ? true : false
         if (!result && !reflush) {
-            this.trip("internal.error.token")
+            this.emit("internal.error.token")
         } else {
             this[IS_ONLINE] = true
             this[HEARTBEAT] = setInterval(async () => {
@@ -789,9 +800,9 @@ async function register(this: BaseClient, logout = false, reflush = false) {
                 if (typeof this.heartbeat === "function")
                     await this.heartbeat()
                 this.sendUni("OidbSvc.0x480_9_IMCore", this.sig.hb480).catch(() => {
-                    this.trip("internal.verbose", "heartbeat timeout", VerboseLevel.Warn)
+                    this.emit("internal.verbose", "heartbeat timeout", VerboseLevel.Warn)
                     this.sendUni("OidbSvc.0x480_9_IMCore", this.sig.hb480).catch(() => {
-                        this.trip("internal.verbose", "heartbeat timeout x 2", VerboseLevel.Error)
+                        this.emit("internal.verbose", "heartbeat timeout x 2", VerboseLevel.Error)
                         this[NET].destroy()
                     })
                 }).then(refreshToken.bind(this))
@@ -799,7 +810,7 @@ async function register(this: BaseClient, logout = false, reflush = false) {
         }
     } catch {
         if (!logout)
-            this.trip("internal.error.network", -3, "server is busy(register)")
+            this.emit("internal.error.network", -3, "server is busy(register)")
     }
 }
 
@@ -850,10 +861,10 @@ async function refreshToken(this: BaseClient) {
             const {token} = decodeT119.call(this, t[0x119])
             await register.call(this, false, true)
             if (this[IS_ONLINE])
-                this.trip("internal.token", token)
+                this.emit("internal.token", token)
         }
     } catch (e: any) {
-        this.trip("internal.verbose", "refresh token error: " + e?.message, VerboseLevel.Error)
+        this.emit("internal.verbose", "refresh token error: " + e?.message, VerboseLevel.Error)
     }
 }
 
@@ -876,7 +887,7 @@ type LoginCmdType = 0 | 1 | 2
 
 function buildLoginPacket(this: BaseClient, cmd: LoginCmd, body: Buffer, type: LoginCmdType = 2): Buffer {
     this[FN_NEXT_SEQ]()
-    this.trip("internal.verbose", `send:${cmd} seq:${this.sig.seq}`, VerboseLevel.Debug)
+    this.emit("internal.verbose", `send:${cmd} seq:${this.sig.seq}`, VerboseLevel.Debug)
     let uin = this.uin, cmdid = 0x810, subappid = this.apk.subid
     if (cmd === "wtlogin.trans_emp") {
         uin = 0
@@ -1083,7 +1094,7 @@ function decodeLoginResponse(this: BaseClient, payload: Buffer): any {
     if (t[0x546]) this.sig.t547 = calcPoW.call(this, t[0x546]);
     if (type === 204) {
         this.sig.t104 = t[0x104]
-        this.trip("internal.verbose", "unlocking...", VerboseLevel.Mark)
+        this.emit("internal.verbose", "unlocking...", VerboseLevel.Mark)
         const tt = tlv.getPacker(this)
         const body = new Writer()
             .writeU16(20)
@@ -1102,32 +1113,32 @@ function decodeLoginResponse(this: BaseClient, payload: Buffer): any {
         const {token, nickname, gender, age} = decodeT119.call(this, t[0x119])
         return register.call(this).then(() => {
             if (this[IS_ONLINE]) {
-                this.trip("internal.online", token, nickname, gender, age)
+                this.emit("internal.online", token, nickname, gender, age)
             }
         })
     }
 
     if (type === 15 || type === 16) {
-        return this.trip("internal.error.token")
+        return this.emit("internal.error.token")
     }
 
     if (type === 2) {
         this.sig.t104 = t[0x104]
         if (t[0x192])
-            return this.trip("internal.slider", String(t[0x192]))
-        return this.trip("internal.error.login", type, "[登陆失败]未知格式的验证码")
+            return this.emit("internal.slider", String(t[0x192]))
+        return this.emit("internal.error.login", type, "[登陆失败]未知格式的验证码")
     }
 
     if (type === 160 || type === 162 || type === 239) {
         if (!t[0x204] && !t[0x174])
-            return this.trip("internal.verbose", "已向密保手机发送短信验证码", VerboseLevel.Mark)
+            return this.emit("internal.verbose", "已向密保手机发送短信验证码", VerboseLevel.Mark)
         let phone = ""
         if (t[0x174] && t[0x178]) {
             this.sig.t104 = t[0x104]
             this.sig.t174 = t[0x174]
             phone = String(t[0x178]).substr(t[0x178].indexOf("\x0b") + 1, 11)
         }
-        return this.trip("internal.verify", t[0x204]?.toString() || "", phone)
+        return this.emit("internal.verify", t[0x204]?.toString() || "", phone)
     }
 
     if (t[0x149]) {
@@ -1135,7 +1146,7 @@ function decodeLoginResponse(this: BaseClient, payload: Buffer): any {
         stream.read(2)
         const title = stream.read(stream.read(2).readUInt16BE()).toString()
         const content = stream.read(stream.read(2).readUInt16BE()).toString()
-        return this.trip("internal.error.login", type, `[${title}]${content}`)
+        return this.emit("internal.error.login", type, `[${title}]${content}`)
     }
 
     if (t[0x146]) {
@@ -1145,9 +1156,9 @@ function decodeLoginResponse(this: BaseClient, payload: Buffer): any {
         const content = stream.read(stream.read(2).readUInt16BE()).toString();
         const message = `[${title}]${content}`;
         this.logger.warn("token失效: " + message + "(错误码：" + type + ")");
-        return this.trip("internal.error.login", type, `[${title}]${content}`)
+        return this.emit("internal.error.login", type, `[${title}]${content}`)
     }
 
-    this.trip("internal.error.login", type, `[登陆失败]未知错误`)
+    this.emit("internal.error.login", type, `[登陆失败]未知错误`)
 }
 

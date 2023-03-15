@@ -36,7 +36,7 @@
     "long": "^4.0.0",
     "pngjs": "^6.0.0",
     "probe-image-size": "^7.2.2",
-    "triptrap": "^0.0.13-1"
+    "triptrap": "^0.0.16"
   },
   "devDependencies": {
     "@types/lodash": "^4.14.186",

@@ -159,7 +159,7 @@ const push528: {[k: number]: (this: Client, buf: Buffer) => OnlinePushEvent | vo
 		const data = pb.decode(buf)
 		const user_id = data[1]
 		const end = data[3][4] === 2
-		this.trip("internal.input", { user_id, end })
+		this.emit("internal.input", { user_id, end })
 	},
 }
 
@@ -394,7 +394,7 @@ export function groupMsgListener(this: Client, payload: Buffer) {
 	this.stat.recv_msg_cnt++
 	if (!this._sync_cookie) return
 	let msg = new GroupMessage(pb.decode(payload)[1]) as GroupMessageEvent
-	this.trip(`internal.${msg.group_id}.${msg.rand}`, msg.message_id)
+	this.emit(`internal.${msg.group_id}.${msg.rand}`, msg.message_id)
 
 	if (msg.user_id === this.uin && this.config.ignore_self)
 		return
