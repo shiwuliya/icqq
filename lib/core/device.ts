@@ -55,21 +55,8 @@ function aesDecrypt(encryptedData: string, key: string) {
 }
 
 
-function generateImei(uin: number) {
-    let imei = uin % 2 ? "86" : "35"
-    const buf = Buffer.alloc(4)
-    buf.writeUInt32BE(uin)
-    let a: number | string = buf.readUInt16BE()
-    let b: number | string = Buffer.concat([Buffer.alloc(1), buf.slice(1)]).readUInt32BE()
-    if (a > 9999)
-        a = Math.trunc(a / 10)
-    else if (a < 1000)
-        a = String(uin).substr(0, 4)
-    while (b > 9999999)
-        b = b >>> 1
-    if (b < 1000000)
-        b = String(uin).substr(0, 4) + String(uin).substr(0, 3)
-    imei += a + "0" + b
+function generateImei() {
+    let imei = `86${randstr(12, true)}`
 
     function calcSP(imei: string) {
         let sum = 0
@@ -107,7 +94,7 @@ export function generateShortDevice() {
         proc_version: `Linux version 5.10.101-android12-${randstr(8)}`,
         mac_address: `2D:${randstr(2).toUpperCase()}:${randstr(2).toUpperCase()}:${randstr(2,).toUpperCase()}:${randstr(2).toUpperCase()}:${randstr(2).toUpperCase()}`,
         ip_address: `192.168.${randstr(2, true)}.${randstr(2, true)}`,
-        imei: `86${randstr(13, true)}`,
+        imei: `${generateImei()}`,
         incremental: `${randstr(10).toUpperCase()}`,
         "--end--": "修改后可能需要重新验证设备。"
     }
