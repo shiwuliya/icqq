@@ -157,7 +157,7 @@ export interface Device extends ReturnType<typeof generateFullDevice> {
 }
 
 export class Device {
-    private secret = randomString(16, 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ1234567890');
+    private secret = 'ZdJqM15EeO2zWc08';
     private publicKey = `-----BEGIN PUBLIC KEY-----
 MIGfMA0GCSqGSIb3DQEBAQUAA4GNADCBiQKBgQDEIxgwoutfwoJxcGQeedgP7FG9
 qaIuS0qzfR8gWkrkTZKM2iWHn2ajQpBRZjMSoSf6+KJGvar2ORhBfpDXyVtZCKpq
@@ -234,8 +234,8 @@ LQ+FLkpncClKVIrBwv6PHyUvuCb0rIarmgDnzkfQAqVufEtR64iazGDKatvJ9y6B
         let beaconIdArr = new Array(40).fill(1).map((_, i) => {
             let idx: number = i + 1
             if (idx === 3) return `k3:${''.padStart(16, '0')}`
-            if (idx === 4) return `K4:${randomString(16)}`
-            if (idx === 9) return `k9:${randomString(8)}-${randomString(4)}-${randomString(4)}-${randomString(4)}-${randomString(12)}`
+            if (idx === 4) return `K4:${this.android_id}`
+            if (idx === 9) return `k9:${this.boot_id}`
             if (idx === 19) return `k${idx}:${fixedRand(100000, 1000000)}`
             if ([1, 13, 14, 17, 18, 21, 25, 26, 29, 30, 33, 34, 37, 38].includes(idx)) {
                 if ([25, 26, 29, 30].includes(idx)) return `k${idx}:${timeMonth}00${staticRand1}.${String(idx === 25 ? staticRand2 : staticRand2 + 1).padStart(2, '0')}0000000`
@@ -249,7 +249,7 @@ LQ+FLkpncClKVIrBwv6PHyUvuCb0rIarmgDnzkfQAqVufEtR64iazGDKatvJ9y6B
             return `k${i}:${fixedRand(10, 0)}`
         }).filter(Boolean)
         return {
-            "androidId": '',
+            "androidId": this.android_id,
             "platformId": 1,
             "appKey": this.apk.app_key,
             "appVersion": this.apk.version,
