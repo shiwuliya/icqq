@@ -200,11 +200,11 @@ LQ+FLkpncClKVIrBwv6PHyUvuCb0rIarmgDnzkfQAqVufEtR64iazGDKatvJ9y6B
         };
         const reserved = {
             "harmony": "0",
-            "clone": Math.random() > 0.5,
+            "clone": Math.random() > 0.5 ? "1" : "0",
             "containe": "",
-            "kelong": Math.random() > 0.5,
+            "kelong": Math.random() > 0.5 ? "1" : "0",
             "uptimes": formatDate(new Date()),
-            "multiUser": Math.random() > 0.5,
+            "multiUser": Math.random() > 0.5 ? "1" : "0",
             "bod": this.board,
             "brd": this.brand,
             "dv": this.device,
@@ -253,7 +253,7 @@ LQ+FLkpncClKVIrBwv6PHyUvuCb0rIarmgDnzkfQAqVufEtR64iazGDKatvJ9y6B
             "osVersion": `Android ${this.version.release},level ${this.version.sdk}`,
             "qimei": "",
             "qimei36": "",
-            "sdkVersion": this.apk.sdkver,
+            "sdkVersion": "1.2.13.6",
             "targetSdkVersion": "26",
             "audit": "",
             "userId": "{}",
