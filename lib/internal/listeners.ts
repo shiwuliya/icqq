@@ -99,9 +99,8 @@ function tokenUpdatedListener(this: Client, token: Buffer) {
 function kickoffListener(this: Client, message: string) {
     this.logger.warn(message)
     this.terminate()
-    fs.unlink(path.join(this.dir, this.uin + '_token'), () => {
-        this.em("system.offline.kickoff", {message})
-    })
+    fs.unlink(path.join(this.dir, this.uin + '_token'), NOOP)
+    this.em("system.offline.kickoff", {message})
 }
 
 function logQrcode(img: Buffer) {
@@ -158,14 +157,10 @@ function loginErrorListener(this: Client, code: number, message: string) {
     // toke expired
     if (!code) {
         this.logger.mark("登录token过期")
-        fs.unlink(path.join(this.dir, this.uin + "_token"), (err) => {
-            if (err) {
-                this.logger.fatal(err.message)
-                return
-            }
-            this.logger.mark("3秒后重新连接")
-            setTimeout(this.login.bind(this), 3000)
-        })
+        this.em('system.token.expire')
+        fs.unlink(path.join(this.dir, this.uin + "_token"), NOOP)
+        this.logger.mark("3秒后重新连接")
+        setTimeout(this.login.bind(this), 3000)
     }
     // network error
     else if (code < 0) {

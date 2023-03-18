@@ -24,7 +24,7 @@ import {
     Image,
     ImageElem,
 } from "./message"
-import {Listener, Matcher, ToDispose, Trapper} from "triptrap";
+import {Listener, Matcher, ToDispose} from "triptrap";
 import {Guild} from "./guild";
 import {drop, ErrorCode} from "./errors";
 
@@ -155,7 +155,6 @@ export class Client extends BaseClient {
             cache_group_member: true,
             reconn_interval: 5,
             data_dir: path.join(require?.main?.path || process.cwd(), "data"),
-            random_device: false,
             ...conf,
         }
         const dir = path.resolve(config.data_dir)
@@ -233,9 +232,6 @@ export class Client extends BaseClient {
      * @param password 可以为密码原文，或密码的md5值
      */
     async login(uin = this.uin, password?: string | Buffer) {
-        if(!this.device.qImei36||!this.device.qImei16){
-            await this.device.getQIMEI()
-        }
         if (password && password.length > 0) {
             let md5pass
             if (typeof password === "string")
@@ -253,7 +249,7 @@ export class Client extends BaseClient {
             return this.tokenLogin(token)
         } catch (e) {
             if (this.password_md5 && uin)
-                return this.passwordLogin(uin as number, this.password_md5)
+                return await this.passwordLogin(uin as number, this.password_md5)
             else
                 return this.sig.qrsig.length ? this.qrcodeLogin() : this.fetchQrcode()
         }
@@ -795,8 +791,6 @@ export interface Config {
     cache_group_member?: boolean
     /** 自动选择最优服务器(默认true)，关闭后会一直使用`msfwifi.3g.qq.com:8080`进行连接 */
     auto_server?: boolean
-    /** 是否生成随机设备文件(默认false)，开启后可能缓解风控问题 */
-    random_device?: boolean
     /** ffmpeg */
     ffmpeg_path?: string
     ffprobe_path?: string

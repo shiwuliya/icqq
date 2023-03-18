@@ -273,7 +273,7 @@ export class BaseClient extends Trapper {
      * @param uin 登录账号
      * @param md5pass 密码的md5值
      */
-    passwordLogin(uin: number, md5pass: Buffer) {
+    async passwordLogin(uin: number, md5pass: Buffer) {
         this.uin = uin
         this.sig.session = randomBytes(4)
         this.sig.randkey = randomBytes(16)

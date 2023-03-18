@@ -85,7 +85,7 @@ const map: { [tag: number]: (this: BaseClient, ...args: any[]) => Writer } = {
     0x33: function () {
         return new Writer().writeBytes(this.device.guid)
     },
-    0x35: function (deviceType:number) {
+    0x35: function (deviceType: number) {
         return new Writer().writeU32(deviceType)
     },
     0x100: function () {
@@ -136,7 +136,7 @@ const map: { [tag: number]: (this: BaseClient, ...args: any[]) => Writer } = {
             .writeU8(1)     // ret type
     },
     0x108: function () {
-        return new Writer().writeBytes(this.sig.ksid||Buffer.from(`|${this.device.imei}|${this.apk.name}`));
+        return new Writer().writeBytes(this.sig.ksid || Buffer.from(`|${this.device.imei}|${this.apk.name}`));
     },
     0x109: function () {
         return new Writer().writeBytes(md5(this.device.imei))
@@ -306,7 +306,7 @@ const map: { [tag: number]: (this: BaseClient, ...args: any[]) => Writer } = {
     0x516: function () {
         return new Writer().writeU32(0)
     },
-    0x521: function (type:number) {
+    0x521: function (type: number) {
         return new Writer()
             .writeU32(type) // product type
             .writeU16(0) // const
@@ -339,22 +339,24 @@ const map: { [tag: number]: (this: BaseClient, ...args: any[]) => Writer } = {
     0x542: function () {
         return new Writer().writeBytes(Buffer.from([0x4A, 0x02, 0x60, 0x01]));
     },
-    0x544: function () {
-        // TODO: native generate t544, login error 45
-        return new Writer()
-            .writeBytes(
-                Buffer.concat(
-                    [Buffer.from([0x0C, 0x03]),
-                        crypto.randomBytes(6),
-                        Buffer.alloc(2),
-                        crypto.randomBytes(10),
-                        Buffer.alloc(4),
-                        crypto.randomBytes(4),
-                        Buffer.alloc(4),
-                    ])); // random generate, may not work?
+    0x544: function (n) {
+        if (!this.sig.t544 || !this.sig.t544[n]) {
+            return new Writer()
+                .writeBytes(
+                    Buffer.concat(
+                        [Buffer.from([0x0C, 0x03]),
+                            crypto.randomBytes(6),
+                            Buffer.alloc(2),
+                            crypto.randomBytes(10),
+                            Buffer.alloc(4),
+                            crypto.randomBytes(4),
+                            Buffer.alloc(4),
+                        ]));
+        }
+        return new Writer().writeBytes(this.sig.t544[n])
     },
-    0x545: function (qimei) {
-        return new Writer().writeBytes(Buffer.from(qimei));
+    0x545: function (qImei) {
+        return new Writer().writeBytes(Buffer.from(qImei));
     },
     0x547: function () {
         return new Writer().writeBytes(this.sig.t547);

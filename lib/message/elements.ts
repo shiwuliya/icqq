@@ -131,6 +131,7 @@ export interface XmlElem {
 export interface ForwardElem{
 	type:'forward',
 	id:string
+	message?:MessageElem[]
 	filename?:string
 }
 /** 戳一戳 */
@@ -163,7 +164,6 @@ export interface ReplyElem {
 	text?:string
 	id: string
 }
-
 /** 可引用回复的消息 */
 export interface Quotable {
 	user_id: number
@@ -175,6 +175,9 @@ export interface Quotable {
 	message: Sendable
 }
 
+export interface QuoteElem extends Quotable{
+	type: 'quote'
+}
 /** 可转发的消息 */
 export interface Forwardable {
 	user_id: number,
@@ -182,13 +185,18 @@ export interface Forwardable {
 	nickname?: string,
 	time?: number,
 }
+/** 可转发节点 */
+export interface ForwardNode extends Forwardable{
+	type:'node'
+}
 
 /** 可组合发送的元素 */
-export type ChainElem = TextElem | FaceElem | BfaceElem | MfaceElem | ImageElem | AtElem | MiraiElem | ReplyElem
+export type ChainElem = TextElem | FaceElem | BfaceElem | MfaceElem | ImageElem | AtElem | MiraiElem
 
 /** 注意：只有`ChainElem`中的元素可以组合发送，其他元素只能单独发送 */
 export type MessageElem = TextElem | FaceElem | BfaceElem | MfaceElem | ImageElem | AtElem | MiraiElem | ReplyElem |
-	FlashElem | PttElem | VideoElem | JsonElem | XmlElem | PokeElem | LocationElem | ShareElem | FileElem | ForwardElem
+	FlashElem | PttElem | VideoElem | JsonElem | XmlElem | PokeElem | LocationElem |
+	ShareElem | FileElem | ForwardElem | ForwardNode | QuoteElem
 
 /** 可通过sendMsg发送的类型集合 (字符串、元素对象，或它们的数组) */
 export type Sendable = string | MessageElem | (string | MessageElem)[]

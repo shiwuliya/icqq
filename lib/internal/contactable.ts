@@ -8,7 +8,21 @@ import { exec } from "child_process"
 import { tea, pb, ApiRejection } from "../core"
 import { ErrorCode, drop } from "../errors"
 import { escapeXml, md5, NOOP, timestamp, uuid, md5Stream, IS_WIN, TMP_DIR, gzip, unzip, int32ip2str, lock, pipeline, DownloadTransform, log } from "../common"
-import { Sendable, PrivateMessage, MessageElem, ForwardElem, ForwardMessage, Forwardable, Quotable, Image, ImageElem, VideoElem, PttElem, Converter, XmlElem, rand2uuid } from "../message"
+import {
+	Sendable,
+	PrivateMessage,
+	MessageElem,
+	ForwardMessage,
+	Forwardable,
+	Quotable,
+	Image,
+	ImageElem,
+	VideoElem,
+	PttElem,
+	Converter,
+	XmlElem,
+	rand2uuid,
+} from "../message"
 import { CmdID, highwayUpload } from "./highway"
 import { fromCqcode } from "../message/cqCode";
 type Client = import("../client").Client
@@ -177,13 +191,22 @@ export abstract class Contactable {
 		try {
 			if (!Array.isArray(content))
 				content = [content]
-			content = content.map(item => typeof item === "string" ? fromCqcode(item) : item).flat()
-			if ((content[0] as MessageElem).type === "video")
-				content[0] = await this.uploadVideo(content[0] as VideoElem)
-			else if ((content[0] as MessageElem).type === "record")
-				content[0] = await this.uploadPtt(content[0] as PttElem)
-			else if ((content[0] as MessageElem).type === "forward")
-				content[0] = await this.createForward(content[0] as ForwardElem)
+			const task = content.map(item => typeof item === "string" ? fromCqcode(item) : item).flat().map(async (elem)=>{
+				if(elem.type==='video') return await this.uploadVideo(elem)
+				if(elem.type==='record') return await this.uploadPtt(elem)
+				if(elem.type==='forward') {
+					return {
+						...elem,
+						message:await this.getForwardMsg(elem.id,elem.filename)
+					}
+				}
+				if(elem.type==='reply') {
+					if(source) return
+					source=await this.c.getMsg(elem.id)
+				}
+				return Promise.resolve(elem)
+			})
+			content=(await Promise.all(task)).filter(Boolean) as MessageElem[]
 			const converter = new Converter(content, {
 				dm: this.dm,
 				cachedir: path.join(this.c.dir, "image"),
@@ -198,17 +221,24 @@ export abstract class Contactable {
 			drop(ErrorCode.MessageBuilderError, e.message)
 		}
 	}
+	private async _downloadFileToTmpDir(url:string,headers?:any){
+		const saveFileName=uuid()
+		const savePath=path.join(TMP_DIR,saveFileName)
+		let readable = (await axios.get(url, {
+				headers,
+				responseType: "stream",
+			}
+		)).data as Readable
+		readable = readable.pipe(new DownloadTransform)
+		await pipeline(readable, fs.createWriteStream(savePath))
+		return savePath
 
-	async createForward(elem: ForwardElem) {
-		let { id, filename } = elem
-		if (!id || !filename) return elem
-		return await this.makeForwardMsg(await this.getForwardMsg(id, filename))
 	}
-
 	/** 上传一个视频以备发送(理论上传一次所有群和好友都能发) */
 	async uploadVideo(elem: VideoElem): Promise<VideoElem> {
 		let { file } = elem
 		if (file.startsWith("protobuf://")) return elem
+		if(file.startsWith('https://')||file.startsWith('http://')) file=await this._downloadFileToTmpDir(file)
 		file = file.replace(/^file:\/{2}/, "")
 		IS_WIN && file.startsWith("/") && (file = file.slice(1))
 		const thumb = path.join(TMP_DIR, uuid())

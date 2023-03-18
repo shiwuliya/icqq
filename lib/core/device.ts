@@ -1,62 +1,11 @@
 import {randomBytes} from "crypto"
-import {md5, randomString} from "./constants"
-import crypto from "crypto";
+import {formatTime, md5, NOOP, randomString} from "./constants"
 import axios from "axios";
-
-function formatDate(value: Date | number | string, template: string = 'yyyy-MM-dd HH:mm:ss') {
-    const date = new Date()
-    const o: Record<string, number> = {
-        "M+": date.getMonth() + 1, //月份
-        "d+": date.getDate(), //日
-        "H+": date.getHours(), //小时
-        "m+": date.getMinutes(), //分
-        "s+": date.getSeconds(), //秒
-        "q+": Math.floor((date.getMonth() + 3) / 3), //季度
-        "S": date.getMilliseconds() //毫秒
-    };
-    if (/(y+)/.test(template)) template = template.replace(/(y+)/, (sub)=>(date.getFullYear() + "").slice(0,sub.length));
-    for (let k in o){
-        const reg=new RegExp("(" + k + ")")
-        if (reg.test(template)) {
-            template = template.replace(reg, (v)=>`${o[k]}`.padStart(v.length,''));
-        }
-    }
-    return template;
-}
-
-function initPublicKey(pemStr: string, encryptKey: string) {
-    const publicKey = crypto.createPublicKey(pemStr)
-    return crypto.publicEncrypt({
-        key: publicKey, padding: crypto.constants.RSA_PKCS1_PADDING
-    }, Buffer.from(encryptKey)).toString('base64')
-}
-
-function sign(str: string) {
-    const md5 = crypto.createHash('md5');
-    return md5.update(str).digest('hex');
-}
-
-function aesEncrypt(data: string, key: string): Buffer {
-
-    const iv = key.substring(0, 16)
-    const cipher = crypto.createCipheriv('aes-128-cbc', key, iv);
-    let encrypted = cipher.update(data);
-    return Buffer.concat([encrypted, cipher.final()]);
-    ;
-}
-
-function aesDecrypt(encryptedData: string, key: string) {
-    const iv = key.substring(0, 16)
-    let encryptedText = Buffer.from(encryptedData, 'base64');
-    let decipher = crypto.createDecipheriv('aes-128-cbc', key, iv);
-    let decrypted = decipher.update(encryptedText);
-    decrypted = Buffer.concat([decrypted, decipher.final()]);
-    return decrypted.toString();
-}
+import {aesDecrypt, aesEncrypt, encryptPKCS1} from "./algo";
 
 
 function generateImei() {
-    let imei = `86${randstr(12, true)}`
+    let imei = `86${randomString(12,'0123456789')}`
 
     function calcSP(imei: string) {
         let sum = 0
@@ -161,18 +110,18 @@ LQ+FLkpncClKVIrBwv6PHyUvuCb0rIarmgDnzkfQAqVufEtR64iazGDKatvJ9y6B
         if (this.apk.app_key === "") {
             return;
         }
-        const k = randomString(16, "abcdef1234567890");
-        const key = initPublicKey(this.publicKey, k);
+        const k = randomString(16);
+        const key = encryptPKCS1(this.publicKey, k);
         const time = Date.now();
-        const nonce = randomString(16, "abcdef1234567890");
+        const nonce = randomString(16);
         const payload = this.genRandomPayloadByDevice();
         const params = aesEncrypt(JSON.stringify(payload), k).toString('base64');
-        const {data} = await axios.post<{ data: string, code: number }>(
+        try {const {data} = await axios.post<{ data: string, code: number }>(
             "https://snowflake.qq.com/ola/android", {
                 key,
                 params,
                 time, nonce,
-                sign: sign(key + params + time + nonce + this.secret),
+                sign: md5(key + params + time + nonce + this.secret).toString("hex"),
                 extra: ''
             }, {
                 headers: {
@@ -180,14 +129,13 @@ LQ+FLkpncClKVIrBwv6PHyUvuCb0rIarmgDnzkfQAqVufEtR64iazGDKatvJ9y6B
                     'Content-Type': "application/json"
                 }
             });
-        if (data?.code !== 0) {
-            return;
-        }
-        try {
+            if (data?.code !== 0) {
+                return;
+            }
             const {q16, q36} = JSON.parse(aesDecrypt(data.data, k))
             this.qImei16 = q16
             this.qImei36 = q36
-        } catch {
+        } catch{
         }
     }
 
@@ -203,7 +151,7 @@ LQ+FLkpncClKVIrBwv6PHyUvuCb0rIarmgDnzkfQAqVufEtR64iazGDKatvJ9y6B
             "clone": Math.random() > 0.5 ? "1" : "0",
             "containe": "",
             "kelong": Math.random() > 0.5 ? "1" : "0",
-            "uptimes": formatDate(new Date()),
+            "uptimes": formatTime(new Date()),
             "multiUser": Math.random() > 0.5 ? "1" : "0",
             "bod": this.board,
             "brd": this.brand,
@@ -214,7 +162,7 @@ LQ+FLkpncClKVIrBwv6PHyUvuCb0rIarmgDnzkfQAqVufEtR64iazGDKatvJ9y6B
             "host": "se.infra",
             "kernel": this.fingerprint
         };
-        const timeMonth = `${formatDate(new Date(),'yyyy-MM')}-01`;
+        const timeMonth = `${formatTime(new Date(),'yyyy-MM')}-01`;
         const staticRand1 = fixedRand(10000, 1000)
         const staticRand2 = fixedRand(100)
         const staticTime = `${new Date().getFullYear() - 1}-${String(fixedRand(13, 1)).padStart(2, '0')}-${String(fixedRand(29, 1)).padStart(2, '0')}`
@@ -305,40 +253,46 @@ const watch: Apk = {
     bitmap: 16252796,
     main_sig_map: 16724722,
     sub_sig_map: 0x10400,
-    sdkver: "6.0.0.236",
+    sdkver: "6.0.0.2534",
     display: "Watch",
     ssover: 5
 }
 const hd: Apk = {
     id: "com.tencent.minihd.qq",
     app_key: '0S200MNJT807V3GE',
-    name: "A5.8.9",
-    version: "5.8.9",
-    ver: "5.8.9",
+    name: "A5.9.3.3468",
+    version: "5.9.3.3468",
+    ver: "5.9.3",
     sign: Buffer.from([0xAA, 0x39, 0x78, 0xF4, 0x1F, 0xD9, 0x6F, 0xF9, 0x91, 0x4A, 0x66, 0x9E, 0x18, 0x64, 0x74, 0xC7]),
-    buildtime: 1595836208,
+    buildtime: 1637427966,
     appid: 16,
     subid: 537128930,
     bitmap: 150470524,
     main_sig_map: 1970400,
     sub_sig_map: 66560,
-    sdkver: "6.0.0.2433",
-    display: "iPad",
+    sdkver: "6.0.0.2487",
+    display: "iMac",
     ssover: 12
 }
 
 const apklist: { [platform in Platform]: Apk } = {
     [Platform.Android]: mobile,
-    [Platform.aPad]: {...mobile},
+    [Platform.aPad]: {
+        ...mobile,
+        subid: 537151218,
+        display: 'aPad'
+    },
     [Platform.Watch]: watch,
     [Platform.iMac]: {...hd},
-    [Platform.iPad]: {...hd},
+    [Platform.iPad]: {
+        ...mobile,
+        subid: 537151363,
+        sign: hd.sign,
+        name:'A8.9.33.614',
+        version: 'A8.9.33.614',
+        display: 'iPad'
+    },
 }
-apklist[Platform.aPad].subid = 537151218
-apklist[Platform.iMac].subid = 537128930
-apklist[Platform.iMac].display = "iMac"
-apklist[Platform.iPad].subid = 537151363
-apklist[Platform.iPad].display = "iPad"
 
 export function getApkInfo(p: Platform): Apk {
     return apklist[p] || apklist[Platform.Android]
