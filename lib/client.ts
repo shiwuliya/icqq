@@ -414,18 +414,7 @@ export class Client extends BaseClient {
     async setEssenceMessage(message_id: string) {
         if (message_id.length <= 24) throw new ApiRejection(ErrorCode.MessageBuilderError, '只能加精群消息')
         const {group_id, seq, rand} = parseGroupMessageId(message_id)
-        const retPacket = await this.sendPacket('Oidb', 'OidbSvc.0xeac_1', {
-            1: Number(group_id),
-            2: seq,
-            3: rand,
-        })
-        const ret = pb.decode(retPacket)[4]
-        if (ret[1]) {
-            this.logger.error(`加精群消息失败： ${ret[2]}(${ret[1]})`)
-            drop(ret[1], ret[2])
-        } else {
-            return '设置精华成功'
-        }
+        return this.pickGroup(group_id).addEssence(seq,rand)
     }
 
     /**
@@ -435,18 +424,7 @@ export class Client extends BaseClient {
     async removeEssenceMessage(message_id: string) {
         if (message_id.length <= 24) throw new ApiRejection(ErrorCode.MessageBuilderError, '消息id无效')
         const {group_id, seq, rand} = parseGroupMessageId(message_id)
-        const retPacket = await this.sendPacket('Oidb', 'OidbSvc.0xeac_2', {
-            1: Number(group_id),
-            2: seq,
-            3: rand,
-        })
-        const ret = pb.decode(retPacket)[4]
-        if (ret[1]) {
-            this.logger.error(`移除群精华消息失败： ${ret[2]}(${ret[1]})`)
-            drop(ret[1], ret[2])
-        } else {
-            return '移除群精华消息成功'
-        }
+        return this.pickGroup(group_id).removeEssence(seq,rand)
     }
 
     getChannelList(guild_id: string) {

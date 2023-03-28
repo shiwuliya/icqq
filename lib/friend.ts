@@ -402,18 +402,6 @@ export class Friend extends User {
 		super(c, uid)
 		hide(this, "_info")
 	}
-
-	/** 发送网址分享 */
-	async shareUrl(content: ShareContent, config?: ShareConfig) {
-		const body = buildShare(this.uid, 0, content, config)
-		await this.c.sendOidb("OidbSvc.0xb77_9", pb.encode(body))
-	}
-	/** 发送音乐分享 */
-	async shareMusic(platform: MusicPlatform, id: string) {
-		const body = await buildMusic(this.uid, platform, id, 0)
-		await this.c.sendOidb("OidbSvc.0xb77_9", pb.encode(body))
-	}
-
 	/** 设置备注 */
 	async setRemark(remark: string) {
 		const req = jce.encodeStruct([ this.uid, String(remark || "") ])

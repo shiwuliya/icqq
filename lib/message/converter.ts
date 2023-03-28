@@ -4,11 +4,11 @@ import {Image} from "./image"
 import {
     AtElem, BfaceElem, Quotable, MessageElem, TextElem,
     FaceElem, FlashElem, ImageElem, JsonElem, LocationElem, MfaceElem, ReplyElem,
-    MiraiElem, PokeElem, PttElem, Sendable, ShareElem, VideoElem, XmlElem, FileElem, ForwardElem, ForwardNode
+    MiraiElem, PokeElem, PttElem, Sendable, ShareElem, VideoElem, XmlElem, FileElem, ForwardNode, MusicElem
 } from "./elements"
 import {pb} from "../core"
-import {escapeXml, uuid} from "../common"
 import {Anonymous, rand2uuid, parseDmMessageId, parseGroupMessageId} from "./message"
+import {makeMusicJson, MusicFullInfo, MusicPlatform} from "./music";
 
 const EMOJI_NOT_ENDING = ["\uD835", "\uD83C", "\uD83D", "\uD83E", "\u200D"]
 const EMOJI_NOT_STARTING = ["\uFE0F", "\u200D", "\u20E3"]
@@ -341,45 +341,21 @@ export class Converter {
             type: "json", data
         })
     }
-    private node(elem:ForwardNode){
-        throw new Error('这个不能单独发')
+
+    private node(elem: ForwardNode) {
+        throw new Error('这个不能直接发')
     }
-    private forward(elem: ForwardElem) {
-        const {filename=uuid(),message=[], id} = elem
+
+    private music(elem: MusicElem) {
+        if((['title', 'singer', 'jumpUrl', 'musicUrl', 'preview'] as (keyof MusicFullInfo)[]).some(key=>!elem[key]))
         return this.json({
             type: 'json',
-            data: {
-                "app": "com.tencent.multimsg",
-                "desc": "icqq",
-                "view": "contact",
-                "ver": "0.0.0.5",
-                "prompt": "[聊天记录]",
-                "meta": {
-                    "detail": {
-                        "news":message ,
-                        "uniseq": filename,
-                        "resid": id,
-                        "summary": `查看${message.length>99?'99+':message.length}条转发消息`,
-                        "source": "群聊的聊天记录"
-                    }
-                },
-                "config": {"round": 1, "forward": 1, "autosize": 1, "type": "normal", "width": 300}
-            }
+            data: makeMusicJson(elem as MusicFullInfo & {platform:MusicPlatform})
         })
     }
 
     private share(elem: ShareElem) {
-        let {url, title, content, image} = elem
-        if (!url || !title)
-            throw new Error("link share need 'url' and 'title'")
-        if (title.length > 26)
-            title = title.substr(0, 25) + "…"
-        title = escapeXml(title)
-        const data = `<?xml version="1.0" encoding="utf-8"?>
-		<msg templateID="12345" action="web" brief="[分享] ${title}" serviceID="1" sourceName="QQ浏览器" url="${escapeXml(url)}"><item layout="2">${image ? `<picture cover="${escapeXml(image)}"/>` : ""}<title>${title}</title><summary>${content ? escapeXml(content) : title}</summary></item><source action="app" name="QQ浏览器" icon="http://url.cn/PWkhNu" i_actionData="tencent100446242://" a_actionData="com.tencent.mtt" appid="100446242" url="http://url.cn/UQoBHn"/></msg>`
-        this.xml({
-            type: "xml", data, id: 1
-        })
+        throw new Error('这个不能直接发')
     }
 
     private json(elem: JsonElem) {

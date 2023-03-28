@@ -2,7 +2,8 @@ import {randomBytes} from "crypto";
 import {Guild} from "./guild";
 import {ApiRejection, pb} from "./core"
 import {lock} from "./core/constants";
-import {Converter, Sendable} from "./message";
+import {buildMusic, Converter, MusicPlatform, Sendable} from "./message";
+import {buildShare, ShareConfig, ShareContent} from "./message/share";
 
 export enum NotifyType {
     Unknown = 0,
@@ -34,7 +35,16 @@ export class Channel{
         this.notify_type = notify_type
         this.channel_type = channel_type
     }
-
+    /** 发送网址分享 */
+    async shareUrl(content: ShareContent, config?: ShareConfig) {
+        const body = buildShare(this.channel_id, this.guild.guild_id, content, config)
+        await this.guild.c.sendOidb("OidbSvc.0xb77_9", pb.encode(body))
+    }
+    /** 发送音乐分享 */
+    async shareMusic(platform: MusicPlatform, id: string) {
+        const body = await buildMusic(this.channel_id, this.guild.guild_id, platform, id)
+        await this.guild.c.sendOidb("OidbSvc.0xb77_9", pb.encode(body))
+    }
     /**
      * 发送频道消息
      * 暂时仅支持发送： 文本、AT、表情

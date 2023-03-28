@@ -1,5 +1,5 @@
 import {randomBytes} from "crypto"
-import {formatTime, md5, NOOP, randomString} from "./constants"
+import {formatTime, md5, randomString} from "./constants"
 import axios from "axios";
 import {aesDecrypt, aesEncrypt, encryptPKCS1} from "./algo";
 

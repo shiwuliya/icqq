@@ -4,7 +4,7 @@ import { pb, jce } from "./core"
 import { ErrorCode, drop } from "./errors"
 import { timestamp, code2uin, PB_CONTENT, NOOP, lock, hide } from "./common"
 import { Contactable } from "./internal"
-import { Sendable, GroupMessage, Image, ImageElem, buildMusic, MusicPlatform, Anonymous, parseGroupMessageId, Quotable, Converter } from "./message"
+import { Sendable, GroupMessage, Image, ImageElem,  Anonymous, parseGroupMessageId, Quotable, Converter } from "./message"
 import { Gfs } from "./gfs"
 import {
 	DiscussMessageEvent, GroupAdminEvent, GroupInviteEvent,
@@ -14,7 +14,6 @@ import {
 	MessageRet,
 } from "./events"
 import { GroupInfo, MemberInfo } from "./entities"
-import {buildShare, ShareConfig, ShareContent} from "./message/share";
 
 type Client = import("./client").Client
 
@@ -285,15 +284,44 @@ export class Group extends Discuss {
 		}
 	}
 
-	/** 发送网址分享 */
-	async shareUrl(content: ShareContent, config?: ShareConfig) {
-		const body = buildShare(this.gid, 1, content, config)
-		await this.c.sendOidb("OidbSvc.0xb77_9", pb.encode(body))
+	/**
+	 * 添加精华消息
+	 * @param seq
+	 * @param rand
+	 */
+	async addEssence(seq:number,rand:number){
+		const retPacket = await this.c.sendPacket('Oidb', 'OidbSvc.0xeac_1', {
+			1: this.gid,
+			2: seq,
+			3: rand,
+		})
+		const ret = pb.decode(retPacket)[4]
+		if (ret[1]) {
+			this.c.logger.error(`加精群消息失败： ${ret[2]}(${ret[1]})`)
+			drop(ret[1], ret[2])
+		} else {
+			return '设置精华成功'
+		}
 	}
-	/** 发送音乐分享 */
-	async shareMusic(platform: MusicPlatform, id: string) {
-		const body = await buildMusic(this.gid, platform, id, 1)
-		await this.c.sendOidb("OidbSvc.0xb77_9", pb.encode(body))
+
+	/**
+	 * 移除精华消息
+	 * @param seq
+	 * @param rand
+	 */
+	async removeEssence(seq:number,rand:number){
+		const retPacket = await this.c.sendPacket('Oidb', 'OidbSvc.0xeac_2', {
+			1: this.gid,
+			2: seq,
+			3: rand,
+		})
+		const ret = pb.decode(retPacket)[4]
+		if (ret[1]) {
+			this.c.logger.error(`移除群精华消息失败： ${ret[2]}(${ret[1]})`)
+			drop(ret[1], ret[2])
+		} else {
+			return '移除群精华消息成功'
+		}
 	}
 
 	/**
