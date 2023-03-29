@@ -1,6 +1,6 @@
-import {Trapper, ToDispose, Matcher, Listener} from 'triptrap'
-import {randomBytes, createHash} from "crypto"
-import {Readable} from "stream"
+import { Trapper, ToDispose, Matcher, Listener } from 'triptrap'
+import { randomBytes, createHash } from "crypto"
+import { Readable } from "stream"
 import Network from "./network"
 import Ecdh from "./ecdh"
 import Writer from "./writer"
@@ -8,10 +8,10 @@ import * as tlv from "./tlv"
 import * as tea from "./tea"
 import * as pb from "./protobuf"
 import * as jce from "./jce"
-import {BUF0, BUF4, BUF16, NOOP, md5, timestamp, lock, hide, unzip, int32ip2str} from "./constants"
-import {ShortDevice, Device, Platform, Apk, getApkInfo} from "./device"
+import { BUF0, BUF4, BUF16, NOOP, md5, timestamp, lock, hide, unzip, int32ip2str } from "./constants"
+import { ShortDevice, Device, Platform, Apk, getApkInfo } from "./device"
 import * as log4js from "log4js";
-import {log} from "../common";
+import { log } from "../common";
 
 const FN_NEXT_SEQ = Symbol("FN_NEXT_SEQ")
 const FN_SEND = Symbol("FN_SEND")
@@ -96,10 +96,10 @@ export class BaseClient extends Trapper {
     private readonly [NET] = new Network
     // 回包的回调函数
     private readonly [HANDLERS] = new Map<number, (buf: Buffer) => void>()
-    public logger:log4js.Logger=log4js.getLogger(`[icqq]`)
+    public logger: log4js.Logger = log4js.getLogger(`[icqq]`)
     readonly apk: Apk
     readonly device: Device
-    readonly sig:Record<string, any> = {
+    readonly sig: Record<string, any> = {
         seq: randomBytes(4).readUInt32BE() & 0xfff,
         session: randomBytes(4),
         randkey: randomBytes(16),
@@ -157,7 +157,7 @@ export class BaseClient extends Trapper {
     constructor(p: Platform = Platform.Android, d?: ShortDevice) {
         super()
         this.apk = getApkInfo(p)
-        this.device = new Device(this.apk,d)
+        this.device = new Device(this.apk, d)
         this[NET].on("error", err => this.emit("internal.verbose", err.message, VerboseLevel.Error))
         this[NET].on("close", () => {
             this.statistics.remote_ip = ""
@@ -193,17 +193,17 @@ export class BaseClient extends Trapper {
             this[NET].auto_search = true
         }
     }
-    on(matcher:Matcher,listener:Listener){
-        return this.trap(matcher,listener)
+    on(matcher: Matcher, listener: Listener) {
+        return this.trap(matcher, listener)
     }
-    once(matcher:Matcher,listener:Listener){
-        return this.trapOnce(matcher,listener)
+    once(matcher: Matcher, listener: Listener) {
+        return this.trapOnce(matcher, listener)
     }
-    off(matcher:Matcher){
+    off(matcher: Matcher) {
         return this.offTrap(matcher)
     }
-    emit(matcher:Matcher,...args:any[]){
-        return this.trip(matcher,...args)
+    emit(matcher: Matcher, ...args: any[]) {
+        return this.trip(matcher, ...args)
     }
     /** 是否为在线状态 (可以收发业务包的状态) */
     isOnline() {
@@ -227,16 +227,16 @@ export class BaseClient extends Trapper {
 
     /** 使用接收到的token登录 */
     tokenLogin(token: Buffer) {
-        if (![144, 152,160].includes(token.length))
+        if (![144, 152, 160].includes(token.length))
             throw new Error("bad token")
         this.sig.session = randomBytes(4)
         this.sig.randkey = randomBytes(16)
         this[ECDH] = new Ecdh
         this.sig.d2key = token.slice(0, 16)
-        if(token.length===160){
+        if (token.length === 160) {
             this.sig.d2 = token.slice(16, token.length - 80)
             this.sig.tgt = token.slice(token.length - 80)
-        }else{
+        } else {
             this.sig.d2 = token.slice(16, token.length - 72)
             this.sig.tgt = token.slice(token.length - 72)
         }
@@ -282,7 +282,7 @@ export class BaseClient extends Trapper {
         const t = tlv.getPacker(this)
         let body = new Writer()
             .writeU16(9)
-            .writeU16(25)
+            .writeU16(26)
             .writeBytes(t(0x18))
             .writeBytes(t(0x1))
             .writeBytes(t(0x106, md5pass))
@@ -305,10 +305,10 @@ export class BaseClient extends Trapper {
             .writeBytes(t(0x202)) // should have been removed
             .writeBytes(t(0x177))
             .writeBytes(t(0x516))
-            .writeBytes(t(0x521,0))
+            .writeBytes(t(0x521, 0))
             .writeBytes(t(0x525))
-            .writeBytes(t(0x544)) // TODO: native t544
-            .writeBytes(t(0x545,this.device.qImei16||this.device.imei))
+            .writeBytes(t(0x544, 9)) // TODO: native t544
+            .writeBytes(t(0x545, this.device.qImei16 || this.device.imei))
             //.writeBytes(t(0x548)) // TODO: PoW test data
             .writeBytes(t(0x542))
             .read()
@@ -321,11 +321,12 @@ export class BaseClient extends Trapper {
         const t = tlv.getPacker(this)
         const writer = new Writer()
             .writeU16(2)
-            .writeU16(this.sig.t547.length ? 5 : 4)
+            .writeU16(this.sig.t547.length ? 6 : 5)
             .writeBytes(t(0x193, ticket))
             .writeBytes(t(0x8))
             .writeBytes(t(0x104))
             .writeBytes(t(0x116))
+            .writeBytes(t(0x544, 2))
         if (this.sig.t547.length) writer.writeBytes(t(0x547));
         this[FN_SEND_LOGIN]("wtlogin.login", writer.read())
     }
@@ -354,7 +355,7 @@ export class BaseClient extends Trapper {
         const t = tlv.getPacker(this)
         const body = new Writer()
             .writeU16(7)
-            .writeU16(7)
+            .writeU16(8)
             .writeBytes(t(0x8))
             .writeBytes(t(0x104))
             .writeBytes(t(0x116))
@@ -362,6 +363,7 @@ export class BaseClient extends Trapper {
             .writeBytes(t(0x17c, code))
             .writeBytes(t(0x401))
             .writeBytes(t(0x198))
+            .writeBytes(t(0x544, 7))
             .read()
         this[FN_SEND_LOGIN]("wtlogin.login", body)
     }
@@ -381,12 +383,12 @@ export class BaseClient extends Trapper {
             .writeBytes(t(0x1D))
             .writeBytes(t(0x1F))
             .writeBytes(t(0x33))
-            .writeBytes(t(0x35,3))
+            .writeBytes(t(0x35, 3))
             .read()
         const pkt = buildCode2dPacket.call(this, 0x31, 0x11100, body)
         this[FN_SEND](pkt).then(payload => {
             payload = tea.decrypt(payload.slice(16, -1), this[ECDH].share_key)
-            const stream = Readable.from(payload, {objectMode: false})
+            const stream = Readable.from(payload, { objectMode: false })
             stream.read(54)
             const retcode = stream.read(1)[0]
             const qrsig = stream.read(stream.read(2).readUInt16BE())
@@ -403,7 +405,7 @@ export class BaseClient extends Trapper {
 
     /** 扫码后调用此方法登录 */
     async qrcodeLogin() {
-        const {retcode, uin, t106, t16a, t318, tgtgt} = await this.queryQrcodeResult()
+        const { retcode, uin, t106, t16a, t318, tgtgt } = await this.queryQrcodeResult()
         if (retcode < 0) {
             this.emit("internal.error.network", -2, "server is busy")
         } else if (retcode === 0 && t106 && t16a && t318 && tgtgt) {
@@ -438,7 +440,7 @@ export class BaseClient extends Trapper {
                 .writeBytes(t(0x202))
                 .writeBytes(t(0x177))
                 .writeBytes(t(0x516))
-                .writeBytes(t(0x521,8))
+                .writeBytes(t(0x521, 8))
                 .writeU16(0x318)
                 .writeTlv(t318)
                 .read()
@@ -471,7 +473,7 @@ export class BaseClient extends Trapper {
     async queryQrcodeResult() {
         let retcode = -1, uin, t106, t16a, t318, tgtgt
         if (!this.sig.qrsig.length)
-            return {retcode, uin, t106, t16a, t318, tgtgt}
+            return { retcode, uin, t106, t16a, t318, tgtgt }
         const body = new Writer()
             .writeU16(5)
             .writeU8(1)
@@ -487,7 +489,7 @@ export class BaseClient extends Trapper {
         try {
             let payload = await this[FN_SEND](pkt)
             payload = tea.decrypt(payload.slice(16, -1), this[ECDH].share_key)
-            const stream = Readable.from(payload, {objectMode: false})
+            const stream = Readable.from(payload, { objectMode: false })
             stream.read(48)
             let len = stream.read(2).readUInt16BE()
             if (len > 0) {
@@ -513,7 +515,7 @@ export class BaseClient extends Trapper {
             }
         } catch {
         }
-        return {retcode, uin, t106, t16a, t318, tgtgt}
+        return { retcode, uin, t106, t16a, t318, tgtgt }
     }
 
     private [FN_NEXT_SEQ]() {
@@ -768,8 +770,8 @@ async function register(this: BaseClient, logout = false, reflush = false) {
     clearInterval(this[HEARTBEAT])
     const pb_buf = pb.encode({
         1: [
-            {1: 46, 2: timestamp()},
-            {1: 283, 2: 0}
+            { 1: 46, 2: timestamp() },
+            { 1: 283, 2: 0 }
         ]
     })
     const d = this.device
@@ -784,7 +786,7 @@ async function register(this: BaseClient, logout = false, reflush = false) {
         d.brand, "", pb_buf, 0, null,
         0, null, 1000, 98
     ])
-    const body = jce.encodeWrapper({SvcReqRegister}, "PushService", "SvcReqRegister")
+    const body = jce.encodeWrapper({ SvcReqRegister }, "PushService", "SvcReqRegister")
     const pkt = buildLoginPacket.call(this, "StatSvc.register", body, 1)
     try {
         const payload = await this[FN_SEND](pkt, 10)
@@ -852,13 +854,13 @@ async function refreshToken(this: BaseClient) {
     try {
         let payload = await this[FN_SEND](pkt)
         payload = tea.decrypt(payload.slice(16, payload.length - 1), this[ECDH].share_key)
-        const stream = Readable.from(payload, {objectMode: false})
+        const stream = Readable.from(payload, { objectMode: false })
         stream.read(2)
         const type = stream.read(1).readUInt8()
         stream.read(2)
         const t = readTlv(stream)
         if (type === 0) {
-            const {token} = decodeT119.call(this, t[0x119])
+            const { token } = decodeT119.call(this, t[0x119])
             await register.call(this, false, true)
             if (this[IS_ONLINE])
                 this.emit("internal.token", token)
@@ -978,26 +980,26 @@ function buildCode2dPacket(this: BaseClient, cmdid: number, head: number, body: 
 }
 
 function decodeT119(this: BaseClient, t119: Buffer) {
-    const r = Readable.from(tea.decrypt(t119, this.sig.tgtgt), {objectMode: false})
+    const r = Readable.from(tea.decrypt(t119, this.sig.tgtgt), { objectMode: false })
     r.read(2)
     const t = readTlv(r)
-    this.sig.srm_token=t[0x16a] ? t[0x16a] : this.sig.srm_token
+    this.sig.srm_token = t[0x16a] ? t[0x16a] : this.sig.srm_token
     this.sig.tgt = t[0x10a] ? t[0x10a] : this.sig.tgt
     this.sig.tgt_key = t[0x10d] ? t[0x10d] : this.sig.tgt_key
     this.sig.st_key = t[0x10e] ? t[0x10e] : this.sig.st_key
-    this.sig.st_web_sig= t[0x103] ? t[0x103] : this.sig.st_web_sig
+    this.sig.st_web_sig = t[0x103] ? t[0x103] : this.sig.st_web_sig
     this.sig.t103 = t[0x103] ? t[0x103] : this.sig.t103
     this.sig.skey = t[0x120] ? t[0x120] : this.sig.skey
     this.sig.d2 = t[0x143] ? t[0x143] : this.sig.d2
-    this.sig.skid=t[0x108]?t[0x108]:undefined
+    this.sig.skid = t[0x108] ? t[0x108] : undefined
     this.sig.d2key = t[0x305] ? t[0x305] : this.sig.d2key
-    this.sig.sig_key =  t[0x133] ? t[0x133] : this.sig.sig_key
-    this.sig.ticket_key= t[0x134] ? t[0x134] : this.sig.ticket_key
-    this.sig.device_token= t[0x322] ? t[0x322] : this.sig.device_token
-    this.sig.tgtgt=t[0x10c] || md5(this.sig.d2key)
+    this.sig.sig_key = t[0x133] ? t[0x133] : this.sig.sig_key
+    this.sig.ticket_key = t[0x134] ? t[0x134] : this.sig.ticket_key
+    this.sig.device_token = t[0x322] ? t[0x322] : this.sig.device_token
+    this.sig.tgtgt = t[0x10c] || md5(this.sig.d2key)
     this.sig.emp_time = timestamp()
     if (t[0x512]) {
-        const r = Readable.from(t[0x512], {objectMode: false})
+        const r = Readable.from(t[0x512], { objectMode: false })
         let len = r.read(2).readUInt16BE()
         while (len-- > 0) {
             const domain = String(r.read(r.read(2).readUInt16BE()))
@@ -1014,12 +1016,12 @@ function decodeT119(this: BaseClient, t119: Buffer) {
     const age = t[0x11a].slice(2, 3).readUInt8()
     const gender = t[0x11a].slice(3, 4).readUInt8()
     const nickname = String(t[0x11a].slice(5))
-    return {token, nickname, gender, age}
+    return { token, nickname, gender, age }
 }
 
 function calcPoW(this: BaseClient, data: any) {
     if (!data || data.length === 0) return Buffer.alloc(0);
-    const stream = Readable.from(data, {objectMode: false});
+    const stream = Readable.from(data, { objectMode: false });
     const version = stream.read(1).readUInt8();
     const typ = stream.read(1).readUInt8();
     const hashType = stream.read(1).readUInt8();
@@ -1086,7 +1088,7 @@ function calcPoW(this: BaseClient, data: any) {
 
 function decodeLoginResponse(this: BaseClient, payload: Buffer): any {
     payload = tea.decrypt(payload.slice(16, payload.length - 1), this[ECDH].share_key)
-    const r = Readable.from(payload, {objectMode: false})
+    const r = Readable.from(payload, { objectMode: false })
     r.read(2)
     const type = r.read(1).readUInt8() as number
     r.read(2)
@@ -1110,7 +1112,7 @@ function decodeLoginResponse(this: BaseClient, payload: Buffer): any {
     if (type === 0) {
         this.sig.t104 = BUF0
         this.sig.t174 = BUF0
-        const {token, nickname, gender, age} = decodeT119.call(this, t[0x119])
+        const { token, nickname, gender, age } = decodeT119.call(this, t[0x119])
         return register.call(this).then(() => {
             if (this[IS_ONLINE]) {
                 this.emit("internal.online", token, nickname, gender, age)
@@ -1142,7 +1144,7 @@ function decodeLoginResponse(this: BaseClient, payload: Buffer): any {
     }
 
     if (t[0x149]) {
-        const stream = Readable.from(t[0x149], {objectMode: false})
+        const stream = Readable.from(t[0x149], { objectMode: false })
         stream.read(2)
         const title = stream.read(stream.read(2).readUInt16BE()).toString()
         const content = stream.read(stream.read(2).readUInt16BE()).toString()
@@ -1150,7 +1152,7 @@ function decodeLoginResponse(this: BaseClient, payload: Buffer): any {
     }
 
     if (t[0x146]) {
-        const stream = Readable.from(t[0x146], {objectMode: false});
+        const stream = Readable.from(t[0x146], { objectMode: false });
         const version = stream.read(4);
         const title = stream.read(stream.read(2).readUInt16BE()).toString();
         const content = stream.read(stream.read(2).readUInt16BE()).toString();

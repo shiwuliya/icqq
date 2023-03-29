@@ -1,20 +1,20 @@
 import * as fs from "fs"
 import * as path from "path"
 import * as log4js from "log4js"
-import {BaseClient, Platform, pb, generateShortDevice, ShortDevice, Domain, ApiRejection} from "./core"
+import { BaseClient, Platform, pb, generateShortDevice, ShortDevice, Domain, ApiRejection } from "./core"
 
 const pkg = require("../package.json")
-import {md5, timestamp, NOOP, lock, Gender, OnlineStatus, hide} from "./common"
+import { md5, timestamp, NOOP, lock, Gender, OnlineStatus, hide } from "./common"
 import {
     bindInternalListeners, parseFriendRequestFlag, parseGroupRequestFlag,
     getSysMsg, setAvatar, setSign, setStatus, addClass, delClass, renameClass,
     loadBL, loadFL, loadGL, loadSL, getStamp, delStamp, imageOcr, loadGPL
 } from "./internal"
-import {StrangerInfo, FriendInfo, GroupInfo, MemberInfo} from "./entities"
-import {EventMap, GroupInviteEvent, GroupMessageEvent, PrivateMessageEvent} from "./events"
-import {User, Friend} from "./friend"
-import {Discuss, Group} from "./group"
-import {Member} from "./member"
+import { StrangerInfo, FriendInfo, GroupInfo, MemberInfo } from "./entities"
+import { EventMap, GroupInviteEvent, GroupMessageEvent, PrivateMessageEvent } from "./events"
+import { User, Friend } from "./friend"
+import { Discuss, Group } from "./group"
+import { Member } from "./member"
 import {
     Forwardable,
     Quotable,
@@ -24,9 +24,9 @@ import {
     Image,
     ImageElem,
 } from "./message"
-import {Listener, Matcher, ToDispose} from "triptrap";
-import {Guild} from "./guild";
-import {drop, ErrorCode} from "./errors";
+import { Listener, Matcher, ToDispose } from "triptrap";
+import { Guild } from "./guild";
+import { drop, ErrorCode } from "./errors";
 
 /** 事件接口 */
 export interface Client extends BaseClient {
@@ -169,7 +169,7 @@ export class Client extends BaseClient {
             fs.writeFile(file, JSON.stringify(device, null, 2), NOOP)
         }
         super(config.platform, device);
-        this.logger.level=config.log_level
+        this.logger.level = config.log_level
         if (isNew)
             this.logger.mark("创建了新的设备文件：" + file)
         this.logger.mark("----------")
@@ -180,8 +180,8 @@ export class Client extends BaseClient {
         this.dir = dir
         this.config = config as Required<Config>
         bindInternalListeners.call(this)
-        this.on("internal.verbose", (verbose, level,c) => {
-            const list: Exclude<LogLevel, "off">[] = ["fatal", "mark", "error", "warn", "info", "debug","trace"]
+        this.on("internal.verbose", (verbose, level, c) => {
+            const list: Exclude<LogLevel, "off">[] = ["fatal", "mark", "error", "warn", "info", "debug", "trace"]
             this.logger[list[level]](verbose)
         })
         lock(this, "dir")
@@ -232,6 +232,10 @@ export class Client extends BaseClient {
      * @param password 可以为密码原文，或密码的md5值
      */
     async login(uin = this.uin, password?: string | Buffer) {
+        if (!this.device.qImei36 || !this.device.qImei16) {
+            await this.device.getQIMEI()
+        }
+
         if (password && password.length > 0) {
             let md5pass
             if (typeof password === "string")
@@ -292,7 +296,7 @@ export class Client extends BaseClient {
 
     /** 设置头像 */
     async setAvatar(file: ImageElem["file"]) {
-        return setAvatar.call(this, new Image({type: "image", file}))
+        return setAvatar.call(this, new Image({ type: "image", file }))
     }
 
     /** 获取漫游表情 */
@@ -353,7 +357,7 @@ export class Client extends BaseClient {
     /** 清空缓存文件 fs.rm need v14.14 */
     cleanCache() {
         const dir = path.join(this.dir, "image")
-        fs.rm?.(dir, {recursive: true}, () => {
+        fs.rm?.(dir, { recursive: true }, () => {
             fs.mkdir(dir, NOOP)
         })
     }
@@ -375,7 +379,7 @@ export class Client extends BaseClient {
 
     /** Ocr图片转文字 */
     imageOcr(file: ImageElem["file"]) {
-        return imageOcr.call(this, new Image({type: "image", file}))
+        return imageOcr.call(this, new Image({ type: "image", file }))
     }
 
     /** @cqhttp (cqhttp遗留方法) use client.cookies[domain] */
@@ -413,8 +417,8 @@ export class Client extends BaseClient {
      */
     async setEssenceMessage(message_id: string) {
         if (message_id.length <= 24) throw new ApiRejection(ErrorCode.MessageBuilderError, '只能加精群消息')
-        const {group_id, seq, rand} = parseGroupMessageId(message_id)
-        return this.pickGroup(group_id).addEssence(seq,rand)
+        const { group_id, seq, rand } = parseGroupMessageId(message_id)
+        return this.pickGroup(group_id).addEssence(seq, rand)
     }
 
     /**
@@ -423,8 +427,8 @@ export class Client extends BaseClient {
      */
     async removeEssenceMessage(message_id: string) {
         if (message_id.length <= 24) throw new ApiRejection(ErrorCode.MessageBuilderError, '消息id无效')
-        const {group_id, seq, rand} = parseGroupMessageId(message_id)
-        return this.pickGroup(group_id).removeEssence(seq,rand)
+        const { group_id, seq, rand } = parseGroupMessageId(message_id)
+        return this.pickGroup(group_id).removeEssence(seq, rand)
     }
 
     getChannelList(guild_id: string) {
@@ -507,10 +511,10 @@ export class Client extends BaseClient {
     /** @cqhttp use user.recallMsg() or group.recallMsg() */
     async deleteMsg(message_id: string) {
         if (message_id.length > 24) {
-            const {group_id, seq, rand, pktnum} = parseGroupMessageId(message_id)
+            const { group_id, seq, rand, pktnum } = parseGroupMessageId(message_id)
             return this.pickGroup(group_id).recallMsg(seq, rand, pktnum)
         } else {
-            const {user_id, seq, rand, time} = parseDmMessageId(message_id)
+            const { user_id, seq, rand, time } = parseDmMessageId(message_id)
             return this.pickUser(user_id).recallMsg(seq, rand, time)
         }
     }
@@ -518,10 +522,10 @@ export class Client extends BaseClient {
     /** @cqhttp use user.markRead() or group.markRead() */
     async reportReaded(message_id: string) {
         if (message_id.length > 24) {
-            const {group_id, seq} = parseGroupMessageId(message_id)
+            const { group_id, seq } = parseGroupMessageId(message_id)
             return this.pickGroup(group_id).markRead(seq)
         } else {
-            const {user_id, time} = parseDmMessageId(message_id)
+            const { user_id, time } = parseDmMessageId(message_id)
             return this.pickUser(user_id).markRead(time)
         }
     }
@@ -534,10 +538,10 @@ export class Client extends BaseClient {
     /** @cqhttp use user.getChatHistory() or group.getChatHistory() */
     async getChatHistory(message_id: string, count = 20) {
         if (message_id.length > 24) {
-            const {group_id, seq} = parseGroupMessageId(message_id)
+            const { group_id, seq } = parseGroupMessageId(message_id)
             return this.pickGroup(group_id).getChatHistory(seq, count)
         } else {
-            const {user_id, time} = parseDmMessageId(message_id)
+            const { user_id, time } = parseDmMessageId(message_id)
             return this.pickUser(user_id).getChatHistory(time, count)
         }
     }
@@ -583,8 +587,8 @@ export class Client extends BaseClient {
     }
 
     /** @cqhttp use group.kickMember() or member.kick() */
-    async setGroupKick(group_id: number, user_id: number, reject_add_request = false,message?:string) {
-        return this.pickMember(group_id, user_id).kick(message,reject_add_request)
+    async setGroupKick(group_id: number, user_id: number, reject_add_request = false, message?: string) {
+        return this.pickMember(group_id, user_id).kick(message, reject_add_request)
     }
 
     /** @cqhttp use group.muteMember() or member.mute() */
@@ -639,14 +643,14 @@ export class Client extends BaseClient {
 
     /** @cqhttp use user.setFriendReq() or user.addFriendBack() */
     async setFriendAddRequest(flag: string, approve = true, remark = "", block = false) {
-        const {user_id, seq, single} = parseFriendRequestFlag(flag)
+        const { user_id, seq, single } = parseFriendRequestFlag(flag)
         const user = this.pickUser(user_id)
         return single ? user.addFriendBack(seq, remark) : user.setFriendReq(seq, approve, remark, block)
     }
 
     /** @cqhttp use user.setGroupInvite() or user.setGroupReq() */
     async setGroupAddRequest(flag: string, approve = true, reason = "", block = false) {
-        const {group_id, user_id, seq, invite} = parseGroupRequestFlag(flag)
+        const { group_id, user_id, seq, invite } = parseGroupRequestFlag(flag)
         const user = this.pickUser(user_id)
         return invite ? user.setGroupInvite(group_id, seq, approve, block) : user.setGroupReq(group_id, seq, approve, reason, block)
     }
@@ -779,7 +783,7 @@ export type Statistics = Client["stat"]
 
 function createDataDir(dir: string) {
     if (!fs.existsSync(dir))
-        fs.mkdirSync(dir, {mode: 0o755, recursive: true})
+        fs.mkdirSync(dir, { mode: 0o755, recursive: true })
     const img_path = path.join(dir, "image")
     if (!fs.existsSync(img_path))
         fs.mkdirSync(img_path)
