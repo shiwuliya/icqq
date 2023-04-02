@@ -209,6 +209,72 @@ export class BaseClient extends Trapper {
     isOnline() {
         return this[IS_ONLINE]
     }
+    calcPoW(data: any) {
+        if (!data || data.length === 0) return Buffer.alloc(0);
+        const stream = Readable.from(data, { objectMode: false });
+        const version = stream.read(1).readUInt8();
+        const typ = stream.read(1).readUInt8();
+        const hashType = stream.read(1).readUInt8();
+        let ok = stream.read(1).readUInt8() === 0;
+        const maxIndex = stream.read(2).readUInt16BE();
+        const reserveBytes = stream.read(2);
+        const src = stream.read(stream.read(2).readUInt16BE());
+        const tgt = stream.read(stream.read(2).readUInt16BE());
+        const cpy = stream.read(stream.read(2).readUInt16BE());
+
+        if (hashType !== 1) {
+            this.logger.warn(`Unsupported tlv546 hash type ${hashType}`);
+            return Buffer.alloc(0);
+        }
+        let inputNum = BigInt("0x" + src.toString("hex"));
+        switch (typ) {
+            case 1:
+                // TODO
+                // See https://github.com/mamoe/mirai/blob/cc7f35519ea7cc03518a57dc2ee90d024f63be0e/mirai-core/src/commonMain/kotlin/network/protocol/packet/login/wtlogin/WtLoginExt.kt#L207
+                this.logger.warn(`Unsupported tlv546 algorithm type ${typ}`);
+                break;
+            case 2:
+                // Calc SHA256
+                let dst;
+                let elp = 0, cnt = 0;
+                if (tgt.length === 32) {
+                    const start = Date.now();
+                    let hash = createHash("sha256").update(Buffer.from(inputNum.toString(16), "hex")).digest();
+                    while (Buffer.compare(hash, tgt) !== 0) {
+                        inputNum ++;
+                        hash = createHash("sha256").update(Buffer.from(inputNum.toString(16), "hex")).digest();
+                        cnt++;
+                        if (cnt > 1000000) {
+                            this.logger.error("Calculating PoW cost too much time, maybe something wrong");
+                            throw new Error("Calculating PoW cost too much time, maybe something wrong");
+                        }
+                    }
+                    ok = true;
+                    dst = Buffer.from(inputNum.toString(16), "hex");
+                    elp = Date.now() - start;
+                    this.logger.info(`Calculating PoW of plus ${cnt} times cost ${elp} ms`);
+                }
+                if (!ok) return Buffer.alloc(0);
+                const body = new Writer()
+                    .writeU8(version)
+                    .writeU8(typ)
+                    .writeU8(hashType)
+                    .writeU8(ok ? 1 : 0)
+                    .writeU16(maxIndex)
+                    .writeBytes(reserveBytes)
+                    .writeTlv(src)
+                    .writeTlv(tgt)
+                    .writeTlv(cpy);
+                if (dst) body.writeTlv(dst)
+                body.writeU32(elp)
+                    .writeU32(cnt);
+                return body.read();
+            default:
+                this.logger.warn(`Unsupported tlv546 algorithm type ${typ}`);
+                break;
+        }
+        return Buffer.alloc(0);
+    }
 
     /** 下线 (keepalive: 是否保持tcp连接) */
     async logout(keepalive = false) {
@@ -274,15 +340,20 @@ export class BaseClient extends Trapper {
      * @param md5pass 密码的md5值
      */
     async passwordLogin(uin: number, md5pass: Buffer) {
+        if (this.apk.display!=='iPad' && !this.device.qImei36 || !this.device.qImei16) {
+            await this.device.getQIMEI()
+        }
         this.uin = uin
         this.sig.session = randomBytes(4)
         this.sig.randkey = randomBytes(16)
         this.sig.tgtgt = randomBytes(16)
         this[ECDH] = new Ecdh
         const t = tlv.getPacker(this)
-        let body = new Writer()
+        let tlv_count = this.device.qImei16 ? 25 : 26;
+        if (this.apk.ssover <= 12) tlv_count--;
+        let writer = new Writer()
             .writeU16(9)
-            .writeU16(26)
+            .writeU16(tlv_count)
             .writeBytes(t(0x18))
             .writeBytes(t(0x1))
             .writeBytes(t(0x106, md5pass))
@@ -300,34 +371,37 @@ export class BaseClient extends Trapper {
             .writeBytes(t(0x511))
             .writeBytes(t(0x187))
             .writeBytes(t(0x188))
-            .writeBytes(t(0x194)) // should have been removed
-            .writeBytes(t(0x191))
-            .writeBytes(t(0x202)) // should have been removed
-            .writeBytes(t(0x177))
+
+        if (!this.device.qImei16) writer.writeBytes(t(0x194))
+        writer.writeBytes(t(0x191))
+        if (!this.device.qImei16) writer.writeBytes(t(0x202))
+            writer.writeBytes(t(0x177))
             .writeBytes(t(0x516))
             .writeBytes(t(0x521, 0))
             .writeBytes(t(0x525))
-            .writeBytes(t(0x544, 9)) // TODO: native t544
-            .writeBytes(t(0x545, this.device.qImei16 || this.device.imei))
-            //.writeBytes(t(0x548)) // TODO: PoW test data
+        if (this.apk.ssover > 12) writer.writeBytes(t(0x544, "810_9"))
+        if (this.device.qImei16) writer.writeBytes(t(0x545, this.device.qImei16))
+        writer
+            .writeBytes(t(0x548))
             .writeBytes(t(0x542))
-            .read()
-        this[FN_SEND_LOGIN]("wtlogin.login", body)
+        this[FN_SEND_LOGIN]("wtlogin.login", writer.read())
     }
 
     /** 收到滑动验证码后，用于提交滑动验证码 */
     submitSlider(ticket: string) {
         ticket = String(ticket).trim()
         const t = tlv.getPacker(this)
+        let tlv_count = this.sig.t547.length ? 6 : 5;
+        if (this.apk.ssover <= 12) tlv_count--;
         const writer = new Writer()
             .writeU16(2)
-            .writeU16(this.sig.t547.length ? 6 : 5)
+            .writeU16(tlv_count)
             .writeBytes(t(0x193, ticket))
             .writeBytes(t(0x8))
             .writeBytes(t(0x104))
             .writeBytes(t(0x116))
-            .writeBytes(t(0x544, 2))
         if (this.sig.t547.length) writer.writeBytes(t(0x547));
+        if (this.apk.ssover > 12) writer.writeBytes(t(0x544, "810_2"))
         this[FN_SEND_LOGIN]("wtlogin.login", writer.read())
     }
 
@@ -353,9 +427,11 @@ export class BaseClient extends Trapper {
         if (Buffer.byteLength(code) !== 6)
             code = "123456"
         const t = tlv.getPacker(this)
-        const body = new Writer()
+        let tlv_count = 8;
+        if (this.apk.ssover <= 12) tlv_count--;
+        const writer = new Writer()
             .writeU16(7)
-            .writeU16(8)
+            .writeU16(tlv_count)
             .writeBytes(t(0x8))
             .writeBytes(t(0x104))
             .writeBytes(t(0x116))
@@ -363,9 +439,8 @@ export class BaseClient extends Trapper {
             .writeBytes(t(0x17c, code))
             .writeBytes(t(0x401))
             .writeBytes(t(0x198))
-            .writeBytes(t(0x544, 7))
-            .read()
-        this[FN_SEND_LOGIN]("wtlogin.login", body)
+        if (this.apk.ssover > 12) writer.writeBytes(t(0x544, "810_7"))
+        this[FN_SEND_LOGIN]("wtlogin.login", writer.read())
     }
 
     /** 获取登录二维码(模拟IPad协议扫码登录) */
@@ -923,6 +998,7 @@ function buildLoginPacket(this: BaseClient, cmd: LoginCmd, body: Buffer, type: L
             .writeU8(0x03)
             .read()
     }
+    const ksid=Buffer.from(`|${this.device.imei}|` + this.apk.name)
     let sso = new Writer()
         .writeWithLength(new Writer()
             .writeU32(this.sig.seq)
@@ -934,8 +1010,9 @@ function buildLoginPacket(this: BaseClient, cmd: LoginCmd, body: Buffer, type: L
             .writeWithLength(this.sig.session)
             .writeWithLength(this.device.imei)
             .writeU32(4)
-            .writeU16(2)
-            .writeU32(4)
+            .writeU16(ksid.length + 2)
+            .writeBytes(ksid)
+            .writeWithLength(this.device.qImei16 || BUF0)
             .read()
         )
         .writeWithLength(body)
@@ -1019,73 +1096,6 @@ function decodeT119(this: BaseClient, t119: Buffer) {
     return { token, nickname, gender, age }
 }
 
-function calcPoW(this: BaseClient, data: any) {
-    if (!data || data.length === 0) return Buffer.alloc(0);
-    const stream = Readable.from(data, { objectMode: false });
-    const version = stream.read(1).readUInt8();
-    const typ = stream.read(1).readUInt8();
-    const hashType = stream.read(1).readUInt8();
-    let ok = stream.read(1).readUInt8() === 0;
-    const maxIndex = stream.read(2).readUInt16BE();
-    const reserveBytes = stream.read(2);
-    const src = stream.read(stream.read(2).readUInt16BE());
-    const tgt = stream.read(stream.read(2).readUInt16BE());
-    const cpy = stream.read(stream.read(2).readUInt16BE());
-
-    if (hashType !== 1) {
-        this.logger.warn(`Unsupported tlv546 hash type ${hashType}`);
-        return Buffer.alloc(0);
-    }
-    let inputNum = BigInt("0x" + src.toString("hex"));
-    switch (typ) {
-        case 1:
-            // TODO
-            // See https://github.com/mamoe/mirai/blob/cc7f35519ea7cc03518a57dc2ee90d024f63be0e/mirai-core/src/commonMain/kotlin/network/protocol/packet/login/wtlogin/WtLoginExt.kt#L207
-            this.logger.warn(`Unsupported tlv546 algorithm type ${typ}`);
-            break;
-        case 2:
-            // Calc SHA256
-            let dst;
-            let elp = 0, cnt = 0;
-            if (tgt.length === 32) {
-                const start = Date.now();
-                let hash = createHash("sha256").update(Buffer.from(inputNum.toString(16), "hex")).digest();
-                while (Buffer.compare(hash, tgt) !== 0) {
-                    inputNum++;
-                    hash = createHash("sha256").update(Buffer.from(inputNum.toString(16), "hex")).digest();
-                    cnt++;
-                    if (cnt > 1000000) {
-                        this.logger.error("Calculating PoW cost too much time, maybe something wrong");
-                        throw new Error("Calculating PoW cost too much time, maybe something wrong");
-                    }
-                }
-                ok = true;
-                dst = Buffer.from(inputNum.toString(16), "hex");
-                elp = Date.now() - start;
-                this.logger.info(`Calculating PoW of plus ${cnt} times cost ${elp} ms`);
-            }
-            if (!ok) return Buffer.alloc(0);
-            const body = new Writer()
-                .writeU8(version)
-                .writeU8(typ)
-                .writeU8(hashType)
-                .writeU8(ok ? 1 : 0)
-                .writeU16(maxIndex)
-                .writeBytes(reserveBytes)
-                .writeTlv(src)
-                .writeTlv(tgt)
-                .writeTlv(cpy);
-            if (dst) body.writeTlv(dst)
-            body.writeU32(elp)
-                .writeU32(cnt);
-            return body.read();
-        default:
-            this.logger.warn(`Unsupported tlv546 algorithm type ${typ}`);
-            break;
-    }
-    return Buffer.alloc(0);
-}
-
 function decodeLoginResponse(this: BaseClient, payload: Buffer): any {
     payload = tea.decrypt(payload.slice(16, payload.length - 1), this[ECDH].share_key)
     const r = Readable.from(payload, { objectMode: false })
@@ -1093,7 +1103,7 @@ function decodeLoginResponse(this: BaseClient, payload: Buffer): any {
     const type = r.read(1).readUInt8() as number
     r.read(2)
     const t = readTlv(r)
-    if (t[0x546]) this.sig.t547 = calcPoW.call(this, t[0x546]);
+    if (t[0x546]) this.sig.t547 = this.calcPoW(t[0x546]);
     if (type === 204) {
         this.sig.t104 = t[0x104]
         this.emit("internal.verbose", "unlocking...", VerboseLevel.Mark)

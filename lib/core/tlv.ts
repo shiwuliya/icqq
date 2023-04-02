@@ -339,7 +339,7 @@ const map: { [tag: number]: (this: BaseClient, ...args: any[]) => Writer } = {
     0x542: function () {
         return new Writer().writeBytes(Buffer.from([0x4A, 0x02, 0x60, 0x01]));
     },
-    0x544: function (n) {
+    0x544: function (n='810_9') {
         if (!this.sig.t544 || !this.sig.t544[n]) {
             return new Writer()
                 .writeBytes(
@@ -362,8 +362,28 @@ const map: { [tag: number]: (this: BaseClient, ...args: any[]) => Writer } = {
         return new Writer().writeBytes(this.sig.t547);
     },
     0x548: function () {
-        // TODO: PoW test data
-        return new Writer().writeU8(0x01);
+        const src = crypto.randomBytes(128);
+        const srcNum = BigInt('0x' + src.toString("hex"));
+        const cnt = 10000;
+        const dstNum = srcNum + BigInt(cnt);
+        const dst = Buffer.from(dstNum.toString(16), "hex");
+        const tgt = crypto.createHash("sha256").update(dst).digest();
+        const writer = new Writer()
+            .writeU8(1) //version
+            .writeU8(2) //typ
+            .writeU8(1) //hashType
+            .writeU8(2) //ok
+            .writeU16(10) //maxIndex
+            .writeBytes(Buffer.from([0, 0])) //reserveBytes
+            .writeTlv(src)
+            .writeTlv(tgt)
+        const cpy = writer.read();
+        const t546 = writer
+            .writeBytes(cpy)
+            .writeTlv(cpy)
+            .read();
+        const t548 = this.calcPoW(t546);
+        return new Writer().writeBytes(t548);
     }
 }
 

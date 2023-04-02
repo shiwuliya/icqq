@@ -5,7 +5,7 @@ import {aesDecrypt, aesEncrypt, encryptPKCS1} from "./algo";
 
 
 function generateImei() {
-    let imei = `86${randomString(12,'0123456789')}`
+    let imei = `86${randomString(12, '0123456789')}`
 
     function calcSP(imei: string) {
         let sum = 0
@@ -90,6 +90,7 @@ export type ShortDevice = ReturnType<typeof generateShortDevice>
 export interface Device extends ReturnType<typeof generateFullDevice> {
     qImei16?: string
     qImei36?: string
+    mtime?: number
 }
 
 export class Device {
@@ -116,31 +117,31 @@ LQ+FLkpncClKVIrBwv6PHyUvuCb0rIarmgDnzkfQAqVufEtR64iazGDKatvJ9y6B
         const nonce = randomString(16);
         const payload = this.genRandomPayloadByDevice();
         const params = aesEncrypt(JSON.stringify(payload), k).toString('base64');
-        try {const {data} = await axios.post<{ data: string, code: number }>(
-            "https://snowflake.qq.com/ola/android", {
-                key,
-                params,
-                time, nonce,
-                sign: md5(key + params + time + nonce + this.secret).toString("hex"),
-                extra: ''
-            }, {
-                headers: {
-                    'User-Agent': `Dalvik/2.1.0 (Linux; U; Android ${this.version.release}; PCRT00 Build/N2G48H)`,
-                    'Content-Type': "application/json"
-                }
-            });
+        try {
+            const {data} = await axios.post<{ data: string, code: number }>(
+                "https://snowflake.qq.com/ola/android", {
+                    key,
+                    params,
+                    time, nonce,
+                    sign: md5(key + params + time + nonce + this.secret).toString("hex"),
+                    extra: ''
+                }, {
+                    headers: {
+                        'User-Agent': `Dalvik/2.1.0 (Linux; U; Android ${this.version.release}; PCRT00 Build/N2G48H)`,
+                        'Content-Type': "application/json"
+                    }
+                });
             if (data?.code !== 0) {
                 return;
             }
             const {q16, q36} = JSON.parse(aesDecrypt(data.data, k))
             this.qImei16 = q16
             this.qImei36 = q36
-        } catch{
+        } catch {
         }
     }
 
     genRandomPayloadByDevice() {
-        const now = new Date();
         const fixedRand = (max = 1, min = 0) => {
             if (max < min) [max, min] = [min, max]
             const diff = max - min
@@ -150,6 +151,8 @@ LQ+FLkpncClKVIrBwv6PHyUvuCb0rIarmgDnzkfQAqVufEtR64iazGDKatvJ9y6B
             "harmony": "0",
             "clone": Math.random() > 0.5 ? "1" : "0",
             "containe": "",
+            "oz": "",
+            "oo": "",
             "kelong": Math.random() > 0.5 ? "1" : "0",
             "uptimes": formatTime(new Date()),
             "multiUser": Math.random() > 0.5 ? "1" : "0",
@@ -162,27 +165,52 @@ LQ+FLkpncClKVIrBwv6PHyUvuCb0rIarmgDnzkfQAqVufEtR64iazGDKatvJ9y6B
             "host": "se.infra",
             "kernel": this.fingerprint
         };
-        const timeMonth = `${formatTime(new Date(),'yyyy-MM')}-01`;
-        const staticRand1 = fixedRand(10000, 1000)
-        const staticRand2 = fixedRand(100)
-        const staticTime = `${new Date().getFullYear() - 1}-${String(fixedRand(13, 1)).padStart(2, '0')}-${String(fixedRand(29, 1)).padStart(2, '0')}`
-        let beaconIdArr = new Array(40).fill(1).map((_, i) => {
-            let idx: number = i + 1
-            if (idx === 3) return `k3:${''.padStart(16, '0')}`
-            if (idx === 4) return `K4:${this.android_id}`
-            if (idx === 9) return `k9:${this.boot_id}`
-            if (idx === 19) return `k${idx}:${fixedRand(100000, 1000000)}`
-            if ([1, 13, 14, 17, 18, 21, 25, 26, 29, 30, 33, 34, 37, 38].includes(idx)) {
-                if ([25, 26, 29, 30].includes(idx)) return `k${idx}:${timeMonth}00${staticRand1}.${String(idx === 25 ? staticRand2 : staticRand2 + 1).padStart(2, '0')}0000000`
-                return `k${idx}:${timeMonth}00${fixedRand(10000, 1000)}.${fixedRand(100).toString().padStart(2, '0')}0000000`
-            }
-            if ([16, 20, 28, 36].includes(idx)) return `k${idx}:${fixedRand(100, 10)}`
-            if ([10, 11, 12, 15, 24, 32, 35, 39, 40].includes(idx)) return `k${idx}:${fixedRand(10)}`
-            if ([5, 6, 7].includes(idx)) return `k${idx}:${fixedRand(10000000, 1000000)}`
-            if ([23, 27, 31]) return `k${idx}:${fixedRand(10000, 1000)}`
-            if ([22, 2].includes(idx)) return `k${staticTime}${fixedRand(1000000, 100000)}.${fixedRand(1000000000, 100000000)}`
-            return `k${i}:${fixedRand(10, 0)}`
-        }).filter(Boolean)
+        const timestamp = Date.now();
+        this.mtime = this.mtime || Date.now()
+        const mtime1 = new Date(this.mtime || Date.now());
+        const dateFormat = (fmt?: string, time: number | Date = Date.now()) => formatTime(time, fmt)
+        const mtimeStr1 = dateFormat("YYYY-mm-ddHHMMSS", mtime1) + "." + this.imei.slice(2, 11);
+        const mtime2 = new Date(this.mtime - parseInt(this.imei.slice(2, 4)));
+        const mtimeStr2 = dateFormat("YYYY-mm-ddHHMMSS", mtime2) + "." + this.imei.slice(5, 14);
+        let beaconIdArr: (string | number)[] = [
+            `${formatTime(new Date(timestamp + fixedRand(60, 0)))}.${String(fixedRand(99, 0)).padStart(2, '0')}0000000`,
+            mtimeStr1,
+            '0000000000000000',
+            md5(this.android_id + this.imei).toString("hex").slice(0, 16),
+            ...new Array(4).fill(false).map((_) => fixedRand(10000000, 1000000)),
+            this.boot_id,
+            '1',
+            fixedRand(5, 0),
+            fixedRand(5, 0),
+            `${formatTime(new Date(timestamp + fixedRand(60, 0)))}.${String(fixedRand(99, 0)).padStart(2, '0')}0000000`,
+            `${formatTime(new Date(timestamp + fixedRand(60, 0)))}.${String(fixedRand(99, 0)).padStart(2, '0')}0000000`,
+            fixedRand(5, 0),
+            fixedRand(100, 10),
+            `${formatTime(new Date(timestamp + fixedRand(60, 0)))}.${String(fixedRand(99, 0)).padStart(2, '0')}0000000`,
+            `${formatTime(new Date(timestamp + fixedRand(60, 0)))}.${String(fixedRand(99, 0)).padStart(2, '0')}0000000`,
+            fixedRand(50000, 10000),
+            fixedRand(100, 10),
+            `${formatTime(new Date(timestamp + fixedRand(60, 0)))}.${String(fixedRand(99, 0)).padStart(2, '0')}0000000`,
+            mtimeStr2,
+            fixedRand(10000, 1000),
+            fixedRand(5, 0),
+            `${dateFormat("YYYY-mm-ddHHMMSS")}.${String(((10 + parseInt(this.imei.slice(5, 7))) % 100)).padStart(2, "0")}0000000`,
+            `${dateFormat("YYYY-mm-ddHHMMSS")}.${String(((11 + parseInt(this.imei.slice(5, 7))) % 100)).padStart(2, "0")}0000000`,
+            fixedRand(10000, 1000),
+            fixedRand(100, 10),
+            `${dateFormat("YYYY-mm-ddHHMMSS")}.${String(((11 + parseInt(this.imei.slice(5, 7))) % 100)).padStart(2, "0")}0000000`,
+            `${dateFormat("YYYY-mm-ddHHMMSS")}.${String(((11 + parseInt(this.imei.slice(5, 7))) % 100)).padStart(2, "0")}0000000`,
+            fixedRand(10000, 1000),
+            fixedRand(5, 0),
+            `${formatTime(new Date(timestamp + fixedRand(60, 0)))}.${String(fixedRand(99, 0)).padStart(2, '0')}0000000`,
+            `${formatTime(new Date(timestamp + fixedRand(60, 0)))}.${String(fixedRand(99, 0)).padStart(2, '0')}0000000`,
+            fixedRand(5, 0),
+            fixedRand(100, 10),
+            `${formatTime(new Date(timestamp + fixedRand(60, 0)))}.${String(fixedRand(99, 0)).padStart(2, '0')}0000000`,
+            `${formatTime(new Date(timestamp + fixedRand(60, 0)))}.${String(fixedRand(99, 0)).padStart(2, '0')}0000000`,
+            fixedRand(5, 0),
+            fixedRand(5, 0),
+        ].map((str, idx) => `k${idx + 1}:${str}`)
         return {
             "androidId": this.android_id,
             "platformId": 1,
@@ -243,17 +271,17 @@ const mobile = {
 const watch: Apk = {
     id: "com.tencent.qqlite",
     app_key: '0S200MNJT807V3GE',
-    name: "A2.0.5",
-    version: "2.0.5",
-    ver: "2.0.5",
+    name: "A2.0.8",
+    version: "2.0.8",
+    ver: "2.0.8",
     sign: Buffer.from([166, 183, 69, 191, 36, 162, 194, 119, 82, 119, 22, 246, 243, 110, 182, 141]),
     buildtime: 1559564731,
     appid: 16,
-    subid: 537064446,
+    subid: 537065138,
     bitmap: 16252796,
     main_sig_map: 16724722,
     sub_sig_map: 0x10400,
-    sdkver: "6.0.0.2534",
+    sdkver: "6.0.0.2365",
     display: "Watch",
     ssover: 5
 }
@@ -288,7 +316,7 @@ const apklist: { [platform in Platform]: Apk } = {
         ...mobile,
         subid: 537151363,
         sign: hd.sign,
-        name:'A8.9.33.614',
+        name: 'A8.9.33.614',
         version: 'A8.9.33.614',
         display: 'iPad'
     },
