@@ -360,6 +360,7 @@ const map: { [tag: number]: (this: BaseClient, ...args: any[]) => Writer } = {
         return new Writer().writeBytes(this.sig.t547);
     },
     0x548: function () {
+        // copy from https://github.com/Icalingua-plus-plus/oicq-icalingua-plus-plus/blob/master/lib/wtlogin/tlv.js
         const src = crypto.randomBytes(128);
         const srcNum = BigInt('0x' + src.toString("hex"));
         const cnt = 10000;

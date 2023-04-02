@@ -254,13 +254,13 @@ export type Apk = typeof mobile
 const mobile = {
     id: "com.tencent.mobileqq",
     app_key: '0S200MNJT807V3GE',
-    name: "A8.9.35.10440",
-    version: "8.9.35.10440",
-    ver: "8.9.35",
+    name: "A8.9.38",
+    version: "8.9.38",
+    ver: "8.9.38",
     sign: Buffer.from([0xA6, 0xB7, 0x45, 0xBF, 0x24, 0xA2, 0xC2, 0x77, 0x52, 0x77, 0x16, 0xF6, 0xF3, 0x6E, 0xB6, 0x8D]),
-    buildtime: 1676531414,
+    buildtime: 1675839325,
     appid: 16,
-    subid: 537153294,
+    subid: 537154738,
     bitmap: 150470524,
     main_sig_map: 16724722,
     sub_sig_map: 0x10400,
@@ -307,7 +307,7 @@ const apklist: { [platform in Platform]: Apk } = {
     [Platform.Android]: mobile,
     [Platform.aPad]: {
         ...mobile,
-        subid: 537152242,
+        subid: 537154786,
         display: 'aPad'
     },
     [Platform.Watch]: watch,

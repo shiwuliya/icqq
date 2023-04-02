@@ -12,6 +12,7 @@ import { BUF0, BUF4, BUF16, NOOP, md5, timestamp, lock, hide, unzip, int32ip2str
 import { ShortDevice, Device, Platform, Apk, getApkInfo } from "./device"
 import * as log4js from "log4js";
 import { log } from "../common";
+import axios from "axios";
 
 const FN_NEXT_SEQ = Symbol("FN_NEXT_SEQ")
 const FN_SEND = Symbol("FN_SEND")
@@ -84,7 +85,23 @@ export interface BaseClient {
 
     on(name: string | symbol, listener: (this: this, ...args: any[]) => void): ToDispose<this>
 }
-
+async function getT544(this:BaseClient,...cmds:string[]){
+    if(this.sig.t544) return
+    this.sig.t544={}
+    await Promise.all(cmds.map(async (cmd)=>{
+        const {data:{data,code}}=await axios.get('http://icqq.tencentola.com/energy',{
+            params:{
+                version:this.apk.sdkver,
+                uin:this.uin,
+                guid:this.device.guid.toString('hex'),
+                data:cmd,
+            }
+        })
+        if(code===0){
+            this.sig.t544[cmd]=data
+        }
+    }))
+}
 export class BaseClient extends Trapper {
 
     private [IS_ONLINE] = false
@@ -339,6 +356,7 @@ export class BaseClient extends Trapper {
      * @param md5pass 密码的md5值
      */
     async passwordLogin(uin: number, md5pass: Buffer) {
+        if(!this.sig.t544) await getT544.call(this,'810_2','810_7','810_9')
         if (this.apk.display!=='iPad' && !this.device.qImei36 || !this.device.qImei16) {
             await this.device.getQIMEI()
         }
