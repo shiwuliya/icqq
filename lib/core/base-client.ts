@@ -221,7 +221,6 @@ export class BaseClient extends Trapper {
         const src = stream.read(stream.read(2).readUInt16BE());
         const tgt = stream.read(stream.read(2).readUInt16BE());
         const cpy = stream.read(stream.read(2).readUInt16BE());
-
         if (hashType !== 1) {
             this.logger.warn(`Unsupported tlv546 hash type ${hashType}`);
             return Buffer.alloc(0);
