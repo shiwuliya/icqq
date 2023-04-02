@@ -96,7 +96,7 @@ async function getT544(this:BaseClient,...cmds:string[]){
                 guid:this.device.guid.toString('hex'),
                 data:cmd,
             }
-        })
+        }).catch(()=>({data:{code:-1}}))
         if(code===0){
             this.sig.t544[cmd]=data
         }
