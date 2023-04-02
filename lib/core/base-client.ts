@@ -85,20 +85,20 @@ export interface BaseClient {
 
     on(name: string | symbol, listener: (this: this, ...args: any[]) => void): ToDispose<this>
 }
-async function getT544(this:BaseClient,...cmds:string[]){
-    if(this.sig.t544) return
-    this.sig.t544={}
-    await Promise.all(cmds.map(async (cmd)=>{
-        const {data:{data,code}}=await axios.get('http://icqq.tencentola.com/energy',{
-            params:{
-                version:this.apk.sdkver,
-                uin:this.uin,
-                guid:this.device.guid.toString('hex'),
-                data:cmd,
+async function getT544(this: BaseClient, ...cmds: string[]) {
+    if (!this.sig.t544) this.sig.t544 = {}
+    await Promise.all(cmds.map(async (cmd) => {
+        const { data: { data, code } } = await axios.get('http://icqq.tencentola.com/energy', {
+            timeout: 5000,
+            params: {
+                version: this.apk.sdkver,
+                uin: this.uin,
+                guid: this.device.guid.toString('hex'),
+                data: cmd,
             }
-        }).catch(()=>({data:{code:-1}}))
-        if(code===0){
-            this.sig.t544[cmd]=data
+        }).catch(() => ({ data: { code: -1 } }))
+        if (code === 0) {
+            this.sig.t544[cmd] = data
         }
     }))
 }
@@ -257,7 +257,7 @@ export class BaseClient extends Trapper {
                     const start = Date.now();
                     let hash = createHash("sha256").update(Buffer.from(inputNum.toString(16), "hex")).digest();
                     while (Buffer.compare(hash, tgt) !== 0) {
-                        inputNum ++;
+                        inputNum++;
                         hash = createHash("sha256").update(Buffer.from(inputNum.toString(16), "hex")).digest();
                         cnt++;
                         if (cnt > 1000000) {
@@ -308,7 +308,7 @@ export class BaseClient extends Trapper {
     }
 
     /** 使用接收到的token登录 */
-    tokenLogin(token: Buffer) {
+    async tokenLogin(token: Buffer) {
         if (![144, 152, 160].includes(token.length))
             throw new Error("bad token")
         this.sig.session = randomBytes(4)
@@ -324,9 +324,11 @@ export class BaseClient extends Trapper {
         }
         this.sig.tgtgt = md5(this.sig.d2key)
         const t = tlv.getPacker(this)
-        const body = new Writer()
+        let tlv_count = 19
+        if (this.apk.ssover <= 12) tlv_count--
+        const writer = new Writer()
             .writeU16(11)
-            .writeU16(18)
+            .writeU16(tlv_count)
             .writeBytes(t(0x100))
             .writeBytes(t(0x10a))
             .writeBytes(t(0x116))
@@ -346,7 +348,14 @@ export class BaseClient extends Trapper {
             .writeBytes(t(0x194))
             .writeBytes(t(0x511))
             .writeBytes(t(0x202))
-            .read()
+
+        if (this.apk.ssover > 12) {
+            let cmd = '810_b'
+            if (!this.sig.t544 || !this.sig.t544[cmd]) await getT544.call(this, cmd)
+            writer.writeBytes(t(0x544, cmd))
+        }
+
+        const body = writer.read()
         this[FN_SEND_LOGIN]("wtlogin.exchange_emp", body)
     }
 
@@ -356,8 +365,7 @@ export class BaseClient extends Trapper {
      * @param md5pass 密码的md5值
      */
     async passwordLogin(uin: number, md5pass: Buffer) {
-        if(!this.sig.t544) await getT544.call(this,'810_2','810_7','810_9')
-        if (this.apk.display!=='iPad' && !this.device.qImei36 || !this.device.qImei16) {
+        if (this.apk.display !== 'iPad' && !this.device.qImei36 || !this.device.qImei16) {
             await this.device.getQIMEI()
         }
         this.uin = uin
@@ -366,8 +374,8 @@ export class BaseClient extends Trapper {
         this.sig.tgtgt = randomBytes(16)
         this[ECDH] = new Ecdh
         const t = tlv.getPacker(this)
-        let tlv_count = this.device.qImei16 ? 25 : 26;
-        if (this.apk.ssover <= 12) tlv_count--;
+        let tlv_count = this.device.qImei16 ? 25 : 26
+        if (this.apk.ssover <= 12) tlv_count--
         let writer = new Writer()
             .writeU16(9)
             .writeU16(tlv_count)
@@ -392,11 +400,15 @@ export class BaseClient extends Trapper {
         if (!this.device.qImei16) writer.writeBytes(t(0x194))
         writer.writeBytes(t(0x191))
         if (!this.device.qImei16) writer.writeBytes(t(0x202))
-            writer.writeBytes(t(0x177))
+        writer.writeBytes(t(0x177))
             .writeBytes(t(0x516))
             .writeBytes(t(0x521, 0))
             .writeBytes(t(0x525))
-        if (this.apk.ssover > 12) writer.writeBytes(t(0x544, "810_9"))
+        if (this.apk.ssover > 12) {
+            let cmd = '810_9'
+            if (!this.sig.t544 || !this.sig.t544[cmd]) await getT544.call(this, cmd)
+            writer.writeBytes(t(0x544, cmd))
+        }
         if (this.device.qImei16) writer.writeBytes(t(0x545, this.device.qImei16))
         writer
             .writeBytes(t(0x548))
@@ -405,11 +417,11 @@ export class BaseClient extends Trapper {
     }
 
     /** 收到滑动验证码后，用于提交滑动验证码 */
-    submitSlider(ticket: string) {
+    async submitSlider(ticket: string) {
         ticket = String(ticket).trim()
         const t = tlv.getPacker(this)
-        let tlv_count = this.sig.t547.length ? 6 : 5;
-        if (this.apk.ssover <= 12) tlv_count--;
+        let tlv_count = this.sig.t547.length ? 6 : 5
+        if (this.apk.ssover <= 12) tlv_count--
         const writer = new Writer()
             .writeU16(2)
             .writeU16(tlv_count)
@@ -418,7 +430,11 @@ export class BaseClient extends Trapper {
             .writeBytes(t(0x104))
             .writeBytes(t(0x116))
         if (this.sig.t547.length) writer.writeBytes(t(0x547));
-        if (this.apk.ssover > 12) writer.writeBytes(t(0x544, "810_2"))
+        if (this.apk.ssover > 12) {
+            let cmd = '810_2'
+            if (!this.sig.t544 || !this.sig.t544[cmd]) await getT544.call(this, cmd)
+            writer.writeBytes(t(0x544, cmd))
+        }
         this[FN_SEND_LOGIN]("wtlogin.login", writer.read())
     }
 
@@ -439,13 +455,13 @@ export class BaseClient extends Trapper {
     }
 
     /** 提交短信验证码 */
-    submitSmsCode(code: string) {
+    async submitSmsCode(code: string) {
         code = String(code).trim()
         if (Buffer.byteLength(code) !== 6)
             code = "123456"
         const t = tlv.getPacker(this)
-        let tlv_count = 8;
-        if (this.apk.ssover <= 12) tlv_count--;
+        let tlv_count = 8
+        if (this.apk.ssover <= 12) tlv_count--
         const writer = new Writer()
             .writeU16(7)
             .writeU16(tlv_count)
@@ -456,7 +472,11 @@ export class BaseClient extends Trapper {
             .writeBytes(t(0x17c, code))
             .writeBytes(t(0x401))
             .writeBytes(t(0x198))
-        if (this.apk.ssover > 12) writer.writeBytes(t(0x544, "810_7"))
+        if (this.apk.ssover > 12) {
+            let cmd = '810_7'
+            if (!this.sig.t544 || !this.sig.t544[cmd]) await getT544.call(this, cmd)
+            writer.writeBytes(t(0x544, cmd))
+        }
         this[FN_SEND_LOGIN]("wtlogin.login", writer.read())
     }
 
@@ -922,9 +942,11 @@ async function refreshToken(this: BaseClient) {
     if (!this.isOnline() || timestamp() - this.sig.emp_time < 14000)
         return
     const t = tlv.getPacker(this)
-    const body = new Writer()
+    let tlv_count = 17
+    if (this.apk.ssover <= 12) tlv_count--
+    const writer = new Writer()
         .writeU16(11)
-        .writeU16(16)
+        .writeU16(tlv_count)
         .writeBytes(t(0x100))
         .writeBytes(t(0x10a))
         .writeBytes(t(0x116))
@@ -941,7 +963,14 @@ async function refreshToken(this: BaseClient) {
         .writeBytes(t(0x188))
         .writeBytes(t(0x202))
         .writeBytes(t(0x511))
-        .read()
+
+    if (this.apk.ssover > 12) {
+        let cmd = '810_b'
+        if (!this.sig.t544 || !this.sig.t544[cmd]) await getT544.call(this, cmd)
+        writer.writeBytes(t(0x544, cmd))
+    }
+
+    const body = writer.read()
     const pkt = buildLoginPacket.call(this, "wtlogin.exchange_emp", body)
     try {
         let payload = await this[FN_SEND](pkt)
@@ -1015,7 +1044,7 @@ function buildLoginPacket(this: BaseClient, cmd: LoginCmd, body: Buffer, type: L
             .writeU8(0x03)
             .read()
     }
-    const ksid=Buffer.from(`|${this.device.imei}|` + this.apk.name)
+    const ksid = Buffer.from(`|${this.device.imei}|` + this.apk.name)
     let sso = new Writer()
         .writeWithLength(new Writer()
             .writeU32(this.sig.seq)
