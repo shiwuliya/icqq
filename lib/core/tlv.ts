@@ -344,7 +344,7 @@ const map: { [tag: number]: (this: BaseClient, ...args: any[]) => Writer } = {
             return new Writer()
                 .writeBytes(
                     Buffer.concat(
-                        [Buffer.from([0,0x27,0x0c,0x05]),
+                        [Buffer.from([0x0c,0x05]),
                             crypto.randomBytes(25),
                             Buffer.alloc(4),
                             crypto.randomBytes(4),
