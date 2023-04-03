@@ -1,8 +1,11 @@
+name: release-please
 on:
   push:
     tag:
       - 'v*'
-name: release-please
+permissions:
+  contents: write
+  pull-requests: write
 jobs:
   release-please:
     runs-on: ubuntu-latest
@@ -11,4 +14,4 @@ jobs:
         id: release
         with:
           release-type: node
-          package-name: release-please-action
+          package-name: icqq
