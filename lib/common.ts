@@ -149,6 +149,7 @@ export type GroupRole = "owner" | "admin" | "member"
 
 /** 可设置的在线状态 */
 export enum OnlineStatus {
+	Offline,
 	Online = 11,
 	Absent = 31,
 	Invisible = 41,

@@ -1,32 +1,39 @@
 import * as fs from "fs"
 import * as path from "path"
 import * as log4js from "log4js"
-import { BaseClient, Platform, pb, generateShortDevice, ShortDevice, Domain, ApiRejection } from "./core"
+import {ApiRejection, BaseClient, Domain, generateShortDevice, pb, Platform, ShortDevice} from "./core"
+import {Gender, hide, lock, md5, NOOP, OnlineStatus, timestamp} from "./common"
+import {
+    addClass,
+    bindInternalListeners,
+    delClass,
+    delStamp,
+    getStamp,
+    getSysMsg,
+    imageOcr,
+    loadBL,
+    loadFL,
+    loadGL,
+    loadGPL,
+    loadSL,
+    parseFriendRequestFlag,
+    parseGroupRequestFlag,
+    renameClass,
+    setAvatar,
+    setSign,
+    setStatus
+} from "./internal"
+import {FriendInfo, GroupInfo, MemberInfo, StrangerInfo} from "./entities"
+import {EventMap, GroupInviteEvent, GroupMessageEvent, PrivateMessageEvent} from "./events"
+import {Friend, User} from "./friend"
+import {Discuss, Group} from "./group"
+import {Member} from "./member"
+import {Forwardable, Image, ImageElem, parseDmMessageId, parseGroupMessageId, Quotable, Sendable,} from "./message"
+import {Listener, Matcher, ToDispose} from "triptrap";
+import {Guild} from "./guild";
+import {ErrorCode} from "./errors";
 
 const pkg = require("../package.json")
-import { md5, timestamp, NOOP, lock, Gender, OnlineStatus, hide } from "./common"
-import {
-    bindInternalListeners, parseFriendRequestFlag, parseGroupRequestFlag,
-    getSysMsg, setAvatar, setSign, setStatus, addClass, delClass, renameClass,
-    loadBL, loadFL, loadGL, loadSL, getStamp, delStamp, imageOcr, loadGPL
-} from "./internal"
-import { StrangerInfo, FriendInfo, GroupInfo, MemberInfo } from "./entities"
-import { EventMap, GroupInviteEvent, GroupMessageEvent, PrivateMessageEvent } from "./events"
-import { User, Friend } from "./friend"
-import { Discuss, Group } from "./group"
-import { Member } from "./member"
-import {
-    Forwardable,
-    Quotable,
-    Sendable,
-    parseDmMessageId,
-    parseGroupMessageId,
-    Image,
-    ImageElem,
-} from "./message"
-import { Listener, Matcher, ToDispose } from "triptrap";
-import { Guild } from "./guild";
-import { drop, ErrorCode } from "./errors";
 
 /** 事件接口 */
 export interface Client extends BaseClient {
@@ -101,7 +108,7 @@ export class Client extends BaseClient {
     readonly classes = new Map<number, string>()
 
     /** 勿手动修改这些属性 */
-    status: OnlineStatus = 0
+    status: OnlineStatus = OnlineStatus.Offline
     nickname = ""
     sex: Gender = "unknown"
     age = 0
