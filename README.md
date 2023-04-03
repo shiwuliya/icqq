@@ -56,8 +56,11 @@ client.on("system.login.qrcode", function (e) {
 - 建议使用密码登录，只需验证一次设备便长期有效
 [密码登录教程](https://github.com/icqqjs/icqq/wiki/%E5%AF%86%E7%A0%81%E7%99%BB%E5%BD%95%E6%B5%81%E7%A8%8B) 
 
-**鸣谢：**
-* [Miao-Yunzai](https://github.com/yoimiya-kokomi/Miao-Yunzai) 云崽 v3的一个分支，该分支使用icqq来代替oicq，如果你从云崽过来想从oicq迁移到icqq，可以参考这个项目
+**声明：**
+* 本项目为协议实现，不推荐直接使用。
+
+* CQHTTP 用户建议使用基于[onebots](https://github.com/lc-cn/onebots)框架开发。
+* oicq的云崽用户想迁移到icqq，可参考[Miao-Yunzai](https://github.com/yoimiya-kokomi/Miao-Yunzai)，该分支使用icqq来代替oicq
 
 **鸣谢：**
 * [oicq](https://github.com/takayama-lily/oicq) icqq原来的仓库
