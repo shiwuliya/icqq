@@ -396,23 +396,24 @@ export class BaseClient extends Trapper {
             .writeBytes(t(0x511))
             .writeBytes(t(0x187))
             .writeBytes(t(0x188))
-
-        if (!this.device.qImei16) writer.writeBytes(t(0x194))
-        writer.writeBytes(t(0x191))
-        if (!this.device.qImei16) writer.writeBytes(t(0x202))
-        writer.writeBytes(t(0x177))
+            .writeBytes(t(0x177))
             .writeBytes(t(0x516))
             .writeBytes(t(0x521, 0))
             .writeBytes(t(0x525))
+            .writeBytes(t(0x191))
+            .writeBytes(t(0x548))
+            .writeBytes(t(0x542))
+
+        if (!this.device.qImei16) writer.writeBytes(t(0x194))
+        if (!this.device.qImei16) writer.writeBytes(t(0x202))
+        if (this.device.qImei16) writer.writeBytes(t(0x545, this.device.qImei16))
+
         if (this.apk.ssover > 12) {
             let cmd = '810_9'
             if (!this.sig.t544 || !this.sig.t544[cmd]) await getT544.call(this, cmd)
             writer.writeBytes(t(0x544, cmd))
         }
-        if (this.device.qImei16) writer.writeBytes(t(0x545, this.device.qImei16))
-        writer
-            .writeBytes(t(0x548))
-            .writeBytes(t(0x542))
+        
         this[FN_SEND_LOGIN]("wtlogin.login", writer.read())
     }
 
