@@ -2,8 +2,10 @@ name: CI Create Release
 
 on:
   push:
+    branches:
+      - main
     tags:
-      - 'bump version'
+      - 'v*'
 jobs:
   build:
     name: Create Release

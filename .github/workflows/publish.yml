@@ -1,8 +1,10 @@
 name: CI Publish Package
 on:
   push:
+    branches:
+      - main
     tags:
-      - 'bump version'
+      - 'v*'
 jobs:
   build:
     runs-on: ubuntu-latest
