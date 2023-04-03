@@ -59,8 +59,9 @@ client.on("system.login.qrcode", function (e) {
 **声明：**
 * 本项目为协议实现，不推荐直接使用。
 
-* CQHTTP 用户建议使用基于[onebots](https://github.com/lc-cn/onebots)框架开发。
-* oicq的云崽用户想迁移到icqq，可参考[Miao-Yunzai](https://github.com/yoimiya-kokomi/Miao-Yunzai)，该分支使用icqq来代替oicq
+* 想开发机器人的新用户推荐使用[zhin](https://github.com/zhinjs/zhin)框架开发。
+* CQHTTP 用户建议使用[onebots](https://github.com/lc-cn/onebots)，该项目同时支持OneBot V11 和OneBot V12。
+* 云崽用户想迁移到icqq，可参考[Miao-Yunzai](https://github.com/yoimiya-kokomi/Miao-Yunzai)，该分支使用icqq来代替oicq
 
 **鸣谢：**
 * [oicq](https://github.com/takayama-lily/oicq) icqq原来的仓库
