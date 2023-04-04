@@ -15,7 +15,6 @@ import {
 	PrivateMessageEvent
 } from "./events"
 import { FriendInfo } from "./entities"
-import {buildShare, ShareConfig, ShareContent} from "./message/share";
 
 type Client = import("./client").Client
 
