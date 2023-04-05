@@ -211,9 +211,6 @@ const map: { [tag: number]: (this: BaseClient, ...args: any[]) => Writer } = {
     0x154: function () {
         return new Writer().writeU32(this.sig.seq + 1)
     },
-    0x16a: function () {
-        return new Writer().writeBytes(this.sig.srm_token);
-    },
     0x16e: function () {
         return new Writer().writeBytes(this.device.model)
     },
