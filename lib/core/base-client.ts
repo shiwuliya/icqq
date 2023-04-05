@@ -1106,20 +1106,13 @@ function decodeT119(this: BaseClient, t119: Buffer) {
     const r = Readable.from(tea.decrypt(t119, this.sig.tgtgt), { objectMode: false })
     r.read(2)
     const t = readTlv(r)
-    this.sig.srm_token = t[0x16a] ? t[0x16a] : this.sig.srm_token
-    this.sig.tgt = t[0x10a] ? t[0x10a] : this.sig.tgt
-    this.sig.tgt_key = t[0x10d] ? t[0x10d] : this.sig.tgt_key
-    this.sig.st_key = t[0x10e] ? t[0x10e] : this.sig.st_key
-    this.sig.st_web_sig = t[0x103] ? t[0x103] : this.sig.st_web_sig
-    this.sig.t103 = t[0x103] ? t[0x103] : this.sig.t103
-    this.sig.skey = t[0x120] ? t[0x120] : this.sig.skey
+    this.sig.tgt = t[0x10a] || this.sig.tgt
+    this.sig.skey = t[0x120] || this.sig.skey
     this.sig.d2 = t[0x143] ? t[0x143] : this.sig.d2
+    this.sig.d2key = t[0x305] || this.sig.d2key
+    this.sig.tgtgt = md5(this.sig.d2key)
+    this.sig.t103 = t[0x103] ? t[0x103] : this.sig.t103
     this.sig.skid = t[0x108] ? t[0x108] : undefined
-    this.sig.d2key = t[0x305] ? t[0x305] : this.sig.d2key
-    this.sig.sig_key = t[0x133] ? t[0x133] : this.sig.sig_key
-    this.sig.ticket_key = t[0x134] ? t[0x134] : this.sig.ticket_key
-    this.sig.device_token = t[0x322] ? t[0x322] : this.sig.device_token
-    this.sig.tgtgt = t[0x10c] || md5(this.sig.d2key)
     this.sig.emp_time = timestamp()
     if (t[0x512]) {
         const r = Readable.from(t[0x512], { objectMode: false })
