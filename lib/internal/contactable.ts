@@ -71,6 +71,11 @@ export abstract class Contactable {
         lock(this, "c")
     }
 
+    get [Symbol.unscopables]() {
+        return {
+            c: true,
+        }
+    }
     // 取私聊图片fid
     private async _offPicUp(imgs: Image[]) {
         const req: pb.Encodable[] = []
