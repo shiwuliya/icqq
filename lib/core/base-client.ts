@@ -324,8 +324,7 @@ export class BaseClient extends Trapper {
         }
         this.sig.tgtgt = md5(this.sig.d2key)
         const t = tlv.getPacker(this)
-        let tlv_count = 19
-        if (this.apk.ssover <= 12) tlv_count--
+        let tlv_count = 18
         const writer = new Writer()
             .writeU16(11)
             .writeU16(tlv_count)
@@ -348,13 +347,6 @@ export class BaseClient extends Trapper {
             .writeBytes(t(0x194))
             .writeBytes(t(0x511))
             .writeBytes(t(0x202))
-
-        if (this.apk.ssover > 12) {
-            let cmd = '810_b'
-            if (!this.sig.t544 || !this.sig.t544[cmd]) await getT544.call(this, cmd)
-            writer.writeBytes(t(0x544, cmd))
-        }
-
         const body = writer.read()
         this[FN_SEND_LOGIN]("wtlogin.exchange_emp", body)
     }
@@ -943,8 +935,7 @@ async function refreshToken(this: BaseClient) {
     if (!this.isOnline() || timestamp() - this.sig.emp_time < 14000)
         return
     const t = tlv.getPacker(this)
-    let tlv_count = 17
-    if (this.apk.ssover <= 12) tlv_count--
+    let tlv_count = 16
     const writer = new Writer()
         .writeU16(11)
         .writeU16(tlv_count)
@@ -964,13 +955,6 @@ async function refreshToken(this: BaseClient) {
         .writeBytes(t(0x188))
         .writeBytes(t(0x202))
         .writeBytes(t(0x511))
-
-    if (this.apk.ssover > 12) {
-        let cmd = '810_b'
-        if (!this.sig.t544 || !this.sig.t544[cmd]) await getT544.call(this, cmd)
-        writer.writeBytes(t(0x544, cmd))
-    }
-
     const body = writer.read()
     const pkt = buildLoginPacket.call(this, "wtlogin.exchange_emp", body)
     try {
