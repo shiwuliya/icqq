@@ -505,14 +505,24 @@ export abstract class Contactable {
         let MultiMsg = []
         let brief
         for (const fake of msglist) {
+            brief = null;
             if (!Array.isArray(fake.message)) fake.message = [fake.message]
             if (fake.message.length === 1 && typeof fake.message[0] !== "string" && ['xml', 'json'].includes(fake.message[0].type)) {
                 const elem = fake.message[0]
+                let resid;
+                let fileName;
                 if (elem.type === 'xml') {
                     let brief_reg = /brief\=\"(.*?)\"/gm.exec(elem.data)
                     if (brief_reg && brief_reg.length > 0) {
                         brief = brief_reg[1]
                     } else brief = '[XML]'
+
+                    let resid_reg = /m_resid\=\"(.*?)\"/gm.exec(elem.data)
+                    let fileName_reg = /m_fileName\=\"(.*?)\"/gm.exec(elem.data)
+                    if (resid_reg && resid_reg.length > 1 && fileName_reg && fileName_reg.length > 1) {
+                        resid = resid_reg[1]
+                        fileName = fileName_reg[1]
+                    }
                 } else if (elem.type === 'json') {
                     brief = '[JSON]'
                     let json
@@ -522,9 +532,32 @@ export abstract class Contactable {
                     }
                     if (json) {
                         brief = json.prompt
+                        if (json.app = 'com.tencent.multimsg' && json.meta?.detail) {
+                            let detail = json.meta.detail
+                            resid = detail.resid
+                            fileName = detail.uniseq
+                        }
+                    }
+                }
+
+                if (resid && fileName) {
+                    const buff = await this._downloadMultiMsg(resid, this.dm ? 1 : 2)
+                    let arr = pb.decode(buff)[2]
+                    if (!Array.isArray(arr)) arr = [arr]
+                    for (let val of arr) {
+                        let m_fileName = val[1].toString()
+                        if (m_fileName === 'MultiMsg') {
+                            MultiMsg.push({
+                                1: fileName,
+                                2: val[2]
+                            });
+                        } else {
+                            MultiMsg.push(val)
+                        }
                     }
                 }
             }
+
             const maker = new Converter(fake.message, {
                 dm: this.dm,
                 cachedir: path.join(this.c.dir, "image"),
