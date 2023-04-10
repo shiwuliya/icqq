@@ -532,7 +532,7 @@ export abstract class Contactable {
                     }
                     if (json) {
                         brief = json.prompt
-                        if (json.app = 'com.tencent.multimsg' && json.meta?.detail) {
+                        if (json.app === 'com.tencent.multimsg' && json.meta?.detail) {
                             let detail = json.meta.detail
                             resid = detail.resid
                             fileName = detail.uniseq
