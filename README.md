@@ -1,4 +1,4 @@
-# icqq
+﻿# icqq
 
 [![npm version](https://img.shields.io/npm/v/icqq/latest.svg)](https://www.npmjs.com/package/icqq)
 [![dm](https://shields.io/npm/dm/icqq)](https://www.npmjs.com/package/icqq)
@@ -73,4 +73,5 @@ client.on("system.login.qrcode", function (e) {
 
 * [QQWebApi](./web-api.md) QQ Web Api 收集整理 (途中)
 * [TXHook](https://github.com/fuqiuluo/TXHook) 抓包工具推荐
+
 
