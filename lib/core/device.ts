@@ -298,7 +298,7 @@ const hd: Apk = {
     bitmap: 150470524,
     main_sig_map: 1970400,
     sub_sig_map: 66560,
-    sdkver: "6.0.0.2487",
+    sdkver: "6.0.0.2433",
     display: "iMac",
     ssover: 12
 }
