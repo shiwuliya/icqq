@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.2.2](https://github.com/icqqjs/icqq/compare/v0.2.1...v0.2.2) (2023-04-20)
+
+
+### Bug Fixes
+
+* mac协议无法登录问题。 ([c06e734](https://github.com/icqqjs/icqq/commit/c06e734079881b5ac27425ec48cdd863f323ee69))
+
 ## [0.2.1](https://github.com/icqqjs/icqq/compare/v0.2.0...v0.2.1) (2023-04-16)
 
 
