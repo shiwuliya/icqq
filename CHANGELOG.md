@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.2.3](https://github.com/icqqjs/icqq/compare/v0.2.2...v0.2.3) (2023-04-22)
+
+
+### Bug Fixes
+
+* 更新 T544 API ([8ac1c45](https://github.com/icqqjs/icqq/commit/8ac1c457460678e50695a82c773dc3f3bcd2f6b0))
+
 ## [0.2.2](https://github.com/icqqjs/icqq/compare/v0.2.1...v0.2.2) (2023-04-20)
 
 
