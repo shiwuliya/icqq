@@ -88,7 +88,7 @@ export interface BaseClient {
 async function getT544(this: BaseClient, ...cmds: string[]) {
     if (!this.sig.t544) this.sig.t544 = {}
     await Promise.all(cmds.map(async (cmd) => {
-        const { data: { data, code } } = await axios.get('http://icqq.tencentola.com/energy', {
+        const { data: { data, code } } = await axios.get('http://icqq.tencentola.com/txapi/8.9.50/energy', {
             timeout: 5000,
             params: {
                 version: this.apk.sdkver,
