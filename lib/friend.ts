@@ -4,8 +4,8 @@ import fs from "fs"
 import path from "path"
 import { pb, jce } from "./core"
 import { ErrorCode, drop } from "./errors"
-import { Gender, PB_CONTENT, code2uin, timestamp, lock, hide, fileHash, md5, sha, log } from "./common"
-import { Sendable, PrivateMessage, buildMusic, MusicPlatform, Quotable, rand2uuid, genDmMessageId, parseDmMessageId, FileElem } from "./message"
+import { Gender, PB_CONTENT, code2uin, timestamp, lock, hide, fileHash, md5, sha } from "./common"
+import { Sendable, PrivateMessage, Quotable, rand2uuid, genDmMessageId, parseDmMessageId, FileElem } from "./message"
 import { buildSyncCookie, Contactable, highwayHttpUpload, CmdID } from "./internal"
 import {
 	FriendDecreaseEvent,

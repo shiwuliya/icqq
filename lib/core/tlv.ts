@@ -24,7 +24,7 @@ const map: { [tag: number]: (this: BaseClient, ...args: any[]) => Writer } = {
             .writeBytes(crypto.randomBytes(4))
             .writeU32(this.uin)
             .write32(Date.now() & 0xffffffff)
-            .writeBytes(Buffer.alloc(4)) //ip
+            .writeBytes(this.device.ip_address) //ip
             .writeU16(0);
     },
     0x08: function () {
@@ -88,12 +88,12 @@ const map: { [tag: number]: (this: BaseClient, ...args: any[]) => Writer } = {
     0x35: function (deviceType: number) {
         return new Writer().writeU32(deviceType)
     },
-    0x100: function () {
+    0x100: function (sub_id:number) {
         return new Writer()
             .writeU16(1) // db buf ver
             .writeU32(this.apk.ssover) // sso ver
             .write32(this.apk.appid)
-            .writeU32(this.apk.subid)
+            .writeU32(sub_id||this.apk.subid)
             .writeU32(0) // app client ver
             .writeU32(this.apk.main_sig_map);
     },
@@ -336,7 +336,8 @@ const map: { [tag: number]: (this: BaseClient, ...args: any[]) => Writer } = {
     0x542: function () {
         return new Writer().writeBytes(Buffer.from([0x4A, 0x02, 0x60, 0x01]));
     },
-    0x544: function (n='810_9') {
+    0x544: function (n = '810_9') {
+
         if (!this.sig.t544 || !this.sig.t544[n]) {
             return new Writer()
                 .writeBytes(
@@ -351,7 +352,7 @@ const map: { [tag: number]: (this: BaseClient, ...args: any[]) => Writer } = {
         return new Writer().writeBytes(this.sig.t544[n])
     },
     0x545: function (qImei) {
-        return new Writer().writeBytes(Buffer.from(qImei));
+        return new Writer().writeBytes(md5(qImei||this.device.imei));
     },
     0x547: function () {
         return new Writer().writeBytes(this.sig.t547);

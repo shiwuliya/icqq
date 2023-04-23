@@ -226,6 +226,7 @@ export class Client extends BaseClient {
         if (!this.config.auto_server)
             this.setRemoteServer("msfwifi.3g.qq.com", 8080)
     }
+
     /**
      * 只能在初始化Client时传了uin或扫码登录，才能调用
      * * 传了`password`则尝试密码登录
@@ -315,7 +316,7 @@ export class Client extends BaseClient {
 
     /** 设置头像 */
     async setAvatar(file: ImageElem["file"]) {
-        return setAvatar.call(this, new Image({ type: "image", file }))
+        return setAvatar.call(this, new Image({type: "image", file}))
     }
 
     /** 获取漫游表情 */
@@ -398,7 +399,7 @@ export class Client extends BaseClient {
 
     /** Ocr图片转文字 */
     imageOcr(file: ImageElem["file"]) {
-        return imageOcr.call(this, new Image({ type: "image", file }))
+        return imageOcr.call(this, new Image({type: "image", file}))
     }
 
     /** @cqhttp (cqhttp遗留方法) use client.cookies[domain] */
@@ -436,7 +437,7 @@ export class Client extends BaseClient {
      */
     async setEssenceMessage(message_id: string) {
         if (message_id.length <= 24) throw new ApiRejection(ErrorCode.MessageBuilderError, '只能加精群消息')
-        const { group_id, seq, rand } = parseGroupMessageId(message_id)
+        const {group_id, seq, rand} = parseGroupMessageId(message_id)
         return this.pickGroup(group_id).addEssence(seq, rand)
     }
 
@@ -446,7 +447,7 @@ export class Client extends BaseClient {
      */
     async removeEssenceMessage(message_id: string) {
         if (message_id.length <= 24) throw new ApiRejection(ErrorCode.MessageBuilderError, '消息id无效')
-        const { group_id, seq, rand } = parseGroupMessageId(message_id)
+        const {group_id, seq, rand} = parseGroupMessageId(message_id)
         return this.pickGroup(group_id).removeEssence(seq, rand)
     }
 
@@ -530,10 +531,10 @@ export class Client extends BaseClient {
     /** @cqhttp use user.recallMsg() or group.recallMsg() */
     async deleteMsg(message_id: string) {
         if (message_id.length > 24) {
-            const { group_id, seq, rand, pktnum } = parseGroupMessageId(message_id)
+            const {group_id, seq, rand, pktnum} = parseGroupMessageId(message_id)
             return this.pickGroup(group_id).recallMsg(seq, rand, pktnum)
         } else {
-            const { user_id, seq, rand, time } = parseDmMessageId(message_id)
+            const {user_id, seq, rand, time} = parseDmMessageId(message_id)
             return this.pickUser(user_id).recallMsg(seq, rand, time)
         }
     }
@@ -541,10 +542,10 @@ export class Client extends BaseClient {
     /** @cqhttp use user.markRead() or group.markRead() */
     async reportReaded(message_id: string) {
         if (message_id.length > 24) {
-            const { group_id, seq } = parseGroupMessageId(message_id)
+            const {group_id, seq} = parseGroupMessageId(message_id)
             return this.pickGroup(group_id).markRead(seq)
         } else {
-            const { user_id, time } = parseDmMessageId(message_id)
+            const {user_id, time} = parseDmMessageId(message_id)
             return this.pickUser(user_id).markRead(time)
         }
     }
@@ -557,10 +558,10 @@ export class Client extends BaseClient {
     /** @cqhttp use user.getChatHistory() or group.getChatHistory() */
     async getChatHistory(message_id: string, count = 20) {
         if (message_id.length > 24) {
-            const { group_id, seq } = parseGroupMessageId(message_id)
+            const {group_id, seq} = parseGroupMessageId(message_id)
             return this.pickGroup(group_id).getChatHistory(seq, count)
         } else {
-            const { user_id, time } = parseDmMessageId(message_id)
+            const {user_id, time} = parseDmMessageId(message_id)
             return this.pickUser(user_id).getChatHistory(time, count)
         }
     }
@@ -662,14 +663,14 @@ export class Client extends BaseClient {
 
     /** @cqhttp use user.setFriendReq() or user.addFriendBack() */
     async setFriendAddRequest(flag: string, approve = true, remark = "", block = false) {
-        const { user_id, seq, single } = parseFriendRequestFlag(flag)
+        const {user_id, seq, single} = parseFriendRequestFlag(flag)
         const user = this.pickUser(user_id)
         return single ? user.addFriendBack(seq, remark) : user.setFriendReq(seq, approve, remark, block)
     }
 
     /** @cqhttp use user.setGroupInvite() or user.setGroupReq() */
     async setGroupAddRequest(flag: string, approve = true, reason = "", block = false) {
-        const { group_id, user_id, seq, invite } = parseGroupRequestFlag(flag)
+        const {group_id, user_id, seq, invite} = parseGroupRequestFlag(flag)
         const user = this.pickUser(user_id)
         return invite ? user.setGroupInvite(group_id, seq, approve, block) : user.setGroupReq(group_id, seq, approve, reason, block)
     }
@@ -802,7 +803,7 @@ export type Statistics = Client["stat"]
 
 function createDataDir(dir: string) {
     if (!fs.existsSync(dir))
-        fs.mkdirSync(dir, { mode: 0o755, recursive: true })
+        fs.mkdirSync(dir, {mode: 0o755, recursive: true})
     const img_path = path.join(dir, "image")
     if (!fs.existsSync(img_path))
         fs.mkdirSync(img_path)

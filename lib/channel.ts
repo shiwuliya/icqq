@@ -30,6 +30,9 @@ export class Channel{
         lock(this, "guild")
         lock(this, "channel_id")
     }
+    get c(){
+        return this.guild.c
+    }
     _renew(channel_name: string, notify_type: NotifyType, channel_type: ChannelType) {
         this.channel_name = channel_name
         this.notify_type = notify_type
@@ -38,12 +41,12 @@ export class Channel{
     /** 发送网址分享 */
     async shareUrl(content: ShareContent, config?: ShareConfig) {
         const body = buildShare(this.channel_id, this.guild.guild_id, content, config)
-        await this.guild.c.sendOidb("OidbSvc.0xb77_9", pb.encode(body))
+        await this.c.sendOidb("OidbSvc.0xb77_9", pb.encode(body))
     }
     /** 发送音乐分享 */
     async shareMusic(platform: MusicPlatform, id: string) {
         const body = await buildMusic(this.channel_id, this.guild.guild_id, platform, id)
-        await this.guild.c.sendOidb("OidbSvc.0xb77_9", pb.encode(body))
+        await this.c.sendOidb("OidbSvc.0xb77_9", pb.encode(body))
     }
     /**
      * 发送频道消息
@@ -51,13 +54,13 @@ export class Channel{
      */
     async sendMsg(content: Sendable): Promise<{ seq: number, rand: number, time: number}> {
         const {rich,brief}=new Converter(content)
-        const payload = await this.guild.c.sendUni("MsgProxy.SendMsg", pb.encode({
+        const payload = await this.c.sendUni("MsgProxy.SendMsg", pb.encode({
             1: {
                 1: {
                     1: {
                         1: BigInt(this.guild.guild_id),
                         2: Number(this.channel_id),
-                        3: this.guild.c.uin
+                        3: this.c.uin
                     },
                     2: {
                         1: 3840,
@@ -72,8 +75,8 @@ export class Channel{
         const rsp = pb.decode(payload)
         if (rsp[1])
             throw new ApiRejection(rsp[1], rsp[2])
-        this.guild.c.logger.info(`succeed to send: [Guild(${this.guild.guild_name}),Channel(${this.channel_name})] ` + brief)
-        this.guild.c.stat.sent_msg_cnt++
+        this.c.logger.info(`succeed to send: [Guild(${this.guild.guild_name}),Channel(${this.channel_name})] ` + brief)
+        this.c.stat.sent_msg_cnt++
         return {
             seq: rsp[4][2][4],
             rand: rsp[4][2][3],
@@ -88,7 +91,7 @@ export class Channel{
             2: Number(this.channel_id),
             3: Number(seq)
         })
-        await this.guild.c.sendOidbSvcTrpcTcp("OidbSvcTrpcTcp.0xf5e_1", body)
+        await this.c.sendOidbSvcTrpcTcp("OidbSvcTrpcTcp.0xf5e_1", body)
         return true
     }
 }
