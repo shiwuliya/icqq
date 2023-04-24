@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.3.0](https://github.com/icqqjs/icqq/compare/v0.2.3...v0.3.0) (2023-04-24)
+
+
+### Features
+
+* 新增安卓QQ8.8.88版本协议，Platform = 6，无法登录的可尝试。 ([e3baaa6](https://github.com/icqqjs/icqq/commit/e3baaa621d0b2f458e6d113e5df7d3872f0ad467))
+
 ## [0.2.3](https://github.com/icqqjs/icqq/compare/v0.2.2...v0.2.3) (2023-04-22)
 
 
