@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.3.1](https://github.com/icqqjs/icqq/compare/v0.3.0...v0.3.1) (2023-04-24)
+
+
+### Bug Fixes
+
+* . ([d99c3b0](https://github.com/icqqjs/icqq/commit/d99c3b05a93da16e4b13b229f0646b48766ea21c))
+
 ## [0.3.0](https://github.com/icqqjs/icqq/compare/v0.2.3...v0.3.0) (2023-04-24)
 
 
