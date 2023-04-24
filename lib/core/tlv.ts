@@ -17,6 +17,23 @@ function packTlv(this: BaseClient, tag: number, ...args: any[]) {
     return t.read() as Buffer
 }
 
+function createSalt(this: BaseClient, n: string) {
+    const subCmd=parseInt(n.split('_')[1])
+    if (['810_9'].includes(n)) return new Writer()
+        .writeU32(0)
+        .writeBytes(this.device.guid)
+        .writeBytes(this.apk.sdkver)
+        .writeU32(subCmd)
+        .writeU32(0)
+        .read()
+    return new Writer()
+        .writeU32(this.uin)
+        .writeBytes(this.device.guid)
+        .writeBytes(this.apk.sdkver)
+        .writeU32(subCmd)
+        .read()
+}
+
 const map: { [tag: number]: (this: BaseClient, ...args: any[]) => Writer } = {
     0x01: function () {
         return new Writer()
@@ -210,6 +227,9 @@ const map: { [tag: number]: (this: BaseClient, ...args: any[]) => Writer } = {
     },
     0x154: function () {
         return new Writer().writeU32(this.sig.seq + 1)
+    },
+    0x16a:function (srm_token){
+        return new Writer().writeBytes(srm_token||this.sig.srm_token)
     },
     0x16e: function () {
         return new Writer().writeBytes(this.device.model)
