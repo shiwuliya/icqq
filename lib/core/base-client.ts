@@ -86,6 +86,7 @@ export interface BaseClient {
     on(name: string | symbol, listener: (this: this, ...args: any[]) => void): ToDispose<this>
 }
 async function getT544(this: BaseClient, ...cmds: string[]) {
+    if (this.apk.display === 'Android_8.8.88') return
     if (!this.sig.t544) this.sig.t544 = {}
     await Promise.all(cmds.map(async (cmd) => {
         const { data: { data, code } } = await axios.get('http://icqq.tencentola.com/txapi/8.9.50/energy', {
@@ -98,7 +99,7 @@ async function getT544(this: BaseClient, ...cmds: string[]) {
             }
         }).catch(() => ({ data: { code: -1 } }))
         if (code === 0) {
-            this.sig.t544[cmd] = data
+            this.sig.t544[cmd] = Buffer.from(data, 'hex')
         }
     }))
 }
