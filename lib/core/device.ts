@@ -1,7 +1,7 @@
-import {randomBytes} from "crypto"
-import {formatTime, md5, randomString} from "./constants"
+import { randomBytes } from "crypto"
+import { formatTime, md5, randomString } from "./constants"
 import axios from "axios";
-import {aesDecrypt, aesEncrypt, encryptPKCS1} from "./algo";
+import { aesDecrypt, aesEncrypt, encryptPKCS1 } from "./algo";
 
 
 function generateImei() {
@@ -118,23 +118,23 @@ LQ+FLkpncClKVIrBwv6PHyUvuCb0rIarmgDnzkfQAqVufEtR64iazGDKatvJ9y6B
         const payload = this.genRandomPayloadByDevice();
         const params = aesEncrypt(JSON.stringify(payload), k).toString('base64');
         try {
-            const {data} = await axios.post<{ data: string, code: number }>(
+            const { data } = await axios.post<{ data: string, code: number }>(
                 "https://snowflake.qq.com/ola/android", {
-                    key,
-                    params,
-                    time, nonce,
-                    sign: md5(key + params + time + nonce + this.secret).toString("hex"),
-                    extra: ''
-                }, {
-                    headers: {
-                        'User-Agent': `Dalvik/2.1.0 (Linux; U; Android ${this.version.release}; PCRT00 Build/N2G48H)`,
-                        'Content-Type': "application/json"
-                    }
-                });
+                key,
+                params,
+                time, nonce,
+                sign: md5(key + params + time + nonce + this.secret).toString("hex"),
+                extra: ''
+            }, {
+                headers: {
+                    'User-Agent': `Dalvik/2.1.0 (Linux; U; Android ${this.version.release}; PCRT00 Build/N2G48H)`,
+                    'Content-Type': "application/json"
+                }
+            });
             if (data?.code !== 0) {
                 return;
             }
-            const {q16, q36} = JSON.parse(aesDecrypt(data.data, k))
+            const { q16, q36 } = JSON.parse(aesDecrypt(data.data, k))
             this.qImei16 = q16
             this.qImei36 = q36
         } catch {
@@ -247,7 +247,8 @@ export enum Platform {
     aPad = 2,
     Watch = 3,
     iMac = 4,
-    iPad = 5
+    iPad = 5,
+    old_Android = 6
 }
 
 export type Apk = typeof mobile
@@ -267,6 +268,23 @@ const mobile = {
     sdkver: "6.0.0.2535",
     display: "Android",
     ssover: 19,
+}
+const old_mobile = {
+    id: "com.tencent.mobileqq",
+    app_key: '0S200MNJT807V3GE',
+    name: "A8.8.88.7083",
+    version: "8.8.88.7083",
+    ver: "8.8.88",
+    sign: Buffer.from([0xA6, 0xB7, 0x45, 0xBF, 0x24, 0xA2, 0xC2, 0x77, 0x52, 0x77, 0x16, 0xF6, 0xF3, 0x6E, 0xB6, 0x8D]),
+    buildtime: 1648004515,
+    appid: 16,
+    subid: 537118044,
+    bitmap: 150470524,
+    main_sig_map: 16724722,
+    sub_sig_map: 0x10400,
+    sdkver: "6.0.0.2497",
+    display: "Android_8.8.88",
+    ssover: 18,
 }
 const watch: Apk = {
     id: "com.tencent.qqlite",
@@ -305,13 +323,14 @@ const hd: Apk = {
 
 const apklist: { [platform in Platform]: Apk } = {
     [Platform.Android]: mobile,
+    [Platform.old_Android]: old_mobile,
     [Platform.aPad]: {
         ...mobile,
         subid: 537155599,
         display: 'aPad'
     },
     [Platform.Watch]: watch,
-    [Platform.iMac]: {...hd},
+    [Platform.iMac]: { ...hd },
     [Platform.iPad]: {
         ...mobile,
         subid: 537155074,

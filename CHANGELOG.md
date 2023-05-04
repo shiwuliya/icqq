@@ -1,5 +1,33 @@
 # Changelog
 
+## [0.3.1](https://github.com/icqqjs/icqq/compare/v0.3.0...v0.3.1) (2023-04-24)
+
+
+### Bug Fixes
+
+* . ([d99c3b0](https://github.com/icqqjs/icqq/commit/d99c3b05a93da16e4b13b229f0646b48766ea21c))
+
+## [0.3.0](https://github.com/icqqjs/icqq/compare/v0.2.3...v0.3.0) (2023-04-24)
+
+
+### Features
+
+* 新增安卓QQ8.8.88版本协议，Platform = 6，无法登录的可尝试。 ([e3baaa6](https://github.com/icqqjs/icqq/commit/e3baaa621d0b2f458e6d113e5df7d3872f0ad467))
+
+## [0.2.3](https://github.com/icqqjs/icqq/compare/v0.2.2...v0.2.3) (2023-04-22)
+
+
+### Bug Fixes
+
+* 更新 T544 API ([8ac1c45](https://github.com/icqqjs/icqq/commit/8ac1c457460678e50695a82c773dc3f3bcd2f6b0))
+
+## [0.2.2](https://github.com/icqqjs/icqq/compare/v0.2.1...v0.2.2) (2023-04-20)
+
+
+### Bug Fixes
+
+* mac协议无法登录问题。 ([c06e734](https://github.com/icqqjs/icqq/commit/c06e734079881b5ac27425ec48cdd863f323ee69))
+
 ## [0.2.1](https://github.com/icqqjs/icqq/compare/v0.2.0...v0.2.1) (2023-04-16)
 
 
