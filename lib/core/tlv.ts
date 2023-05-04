@@ -3,6 +3,7 @@ import * as tea from "./tea"
 import * as pb from "./protobuf"
 import Writer from "./writer"
 import {md5, BUF0} from "./constants"
+import {sign} from "../internal/enctyption";
 
 type BaseClient = import("./base-client").BaseClient
 
@@ -91,13 +92,13 @@ const map: { [tag: number]: (this: BaseClient, ...args: any[]) => Writer } = {
     },
     0x1F: function () {
         return new Writer()
-            .writeU8(0)
-            .writeTlv("android")
-            .writeTlv("7.1.2")
-            .writeU16(2)
-            .writeTlv("China Mobile GSM")
+            .writeU8(0) // isRoot
+            .writeTlv("android") // OS type
+            .writeTlv("7.1.2") // OS version
+            .writeU16(2) // Network Type
+            .writeTlv("China Mobile GSM") // simOperatorName
             .writeTlv(BUF0)
-            .writeTlv("wifi")
+            .writeTlv("wifi") // APN
     },
     0x33: function () {
         return new Writer().writeBytes(this.device.guid)
@@ -332,7 +333,7 @@ const map: { [tag: number]: (this: BaseClient, ...args: any[]) => Writer } = {
         return new Writer()
             .writeU16(1) // tlv cnt
             .writeU16(0x536) // tag
-            .writeTlv(Buffer.from([0x1, 0x0])); // zero
+            .writeTlv(Buffer.from([0x2,0x1, 0x0])); // zero
     },
     0x523: function () {
         return new Writer()
@@ -356,20 +357,21 @@ const map: { [tag: number]: (this: BaseClient, ...args: any[]) => Writer } = {
     0x542: function () {
         return new Writer().writeBytes(Buffer.from([0x4A, 0x02, 0x60, 0x01]));
     },
-    0x544: function (n = '810_9') {
-
-        if (!this.sig.t544 || !this.sig.t544[n]) {
-            return new Writer()
-                .writeBytes(
-                    Buffer.concat(
-                        [Buffer.from([0x0c,0x05]),
-                            crypto.randomBytes(25),
-                            Buffer.alloc(4),
-                            crypto.randomBytes(4),
-                            Buffer.alloc(4),
-                        ]));
+    0x544: function (v: number, subCmd: number) {
+        const salt = new Writer()
+        if (v === 2) {
+            salt.writeU32(0)
+            salt.writeTlv(this.device.guid)
+            salt.writeTlv(Buffer.from(this.apk.sdkver))
+            salt.writeU32(subCmd)
+            salt.writeU32(0)
+        } else {
+            salt.writeU64(this.uin)
+            salt.writeTlv(this.device.guid)
+            salt.writeTlv(Buffer.from(this.apk.sdkver))
+            salt.writeU32(subCmd)
         }
-        return new Writer().writeBytes(this.sig.t544[n])
+        return new Writer().writeBytes(sign((new Date()).getTime(), salt.read()))
     },
     0x545: function (qImei) {
         return new Writer().writeBytes(md5(qImei||this.device.imei));

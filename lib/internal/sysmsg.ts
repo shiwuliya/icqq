@@ -40,7 +40,7 @@ export function parseGroupRequestFlag(flag: string) {
 
 function parseFrdSysMsg(proto: pb.Proto): Omit<FriendRequestEvent, "approve"> {
     let single: boolean
-    if (proto[50][1] === 9 && String(proto[50][6]) === "")
+    if ((proto[50][1] === 9 || proto[50][1] === 10) && String(proto[50][6]) === "")
         single = true
     else if (proto[50][1] === 1)
         single = false
@@ -50,7 +50,7 @@ function parseFrdSysMsg(proto: pb.Proto): Omit<FriendRequestEvent, "approve"> {
     const user_id = proto[5]
     const nickname = String(proto[50][51])
     const seq = proto[3]
-    const flag = genFriendRequestFlag(user_id, proto[3], proto[50][1] === 9 ? true : false)
+    const flag = genFriendRequestFlag(user_id, proto[3], proto[50][1] === 9 || proto[50][1] === 1)
     const source = String(proto[50][5])
     const comment = String(proto[50][4] ? proto[50][4] : "")
     const sex = proto[50][67] === 0 ? "male" : (proto[50][67] === 1 ? "female" : "unknown")

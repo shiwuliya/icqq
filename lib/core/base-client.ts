@@ -13,6 +13,7 @@ import {ShortDevice, Device, Platform, Apk, getApkInfo} from "./device"
 import * as log4js from "log4js";
 import {log} from "../common";
 import axios from "axios";
+import crypto from "crypto";
 
 const FN_NEXT_SEQ = Symbol("FN_NEXT_SEQ")
 const FN_SEND = Symbol("FN_SEND")
@@ -85,25 +86,6 @@ export interface BaseClient {
 
     on(name: string | symbol, listener: (this: this, ...args: any[]) => void): ToDispose<this>
 }
-
-async function getT544(this: BaseClient, ...cmds: string[]) {
-    if (!this.sig.t544) this.sig.t544 = {}
-    await Promise.all(cmds.map(async (cmd) => {
-        const {data: {data, code}} = await axios.get('http://icqq.tencentola.com/energy', {
-            timeout: 5000,
-            params: {
-                version: this.apk.sdkver,
-                uin: this.uin,
-                guid: this.device.guid.toString('hex'),
-                data: cmd,
-            }
-        }).catch(() => ({data: {code: -1}}))
-        if (code === 0) {
-            this.sig.t544[cmd] = data
-        }
-    }))
-}
-
 export class BaseClient extends Trapper {
 
     private [IS_ONLINE] = false
@@ -398,11 +380,11 @@ export class BaseClient extends Trapper {
             .writeBytes(t(0x511))
             .writeBytes(t(0x187))
             .writeBytes(t(0x188))
+            .writeBytes(t(0x191))
             .writeBytes(t(0x177))
             .writeBytes(t(0x516))
             .writeBytes(t(0x521, 0))
             .writeBytes(t(0x525))
-            .writeBytes(t(0x191))
             .writeBytes(t(0x548))
             .writeBytes(t(0x542))
 
@@ -411,9 +393,7 @@ export class BaseClient extends Trapper {
         if (this.device.qImei16) writer.writeBytes(t(0x545, this.device.qImei16))
 
         if (this.apk.ssover > 12) {
-            let cmd = '810_9'
-            if (!this.sig.t544 || !this.sig.t544[cmd]) await getT544.call(this, cmd)
-            writer.writeBytes(t(0x544, cmd))
+            writer.writeBytes(t(0x544, 2, 9))
         }
 
         this[FN_SEND_LOGIN]("wtlogin.login", writer.read())
@@ -434,9 +414,7 @@ export class BaseClient extends Trapper {
             .writeBytes(t(0x116))
         if (this.sig.t547.length) writer.writeBytes(t(0x547));
         if (this.apk.ssover > 12) {
-            let cmd = '810_2'
-            if (!this.sig.t544 || !this.sig.t544[cmd]) await getT544.call(this, cmd)
-            writer.writeBytes(t(0x544, cmd))
+            writer.writeBytes(t(0x544, 0, 2))
         }
         this[FN_SEND_LOGIN]("wtlogin.login", writer.read())
     }
@@ -444,17 +422,19 @@ export class BaseClient extends Trapper {
     /** 收到设备锁验证请求后，用于发短信 */
     sendSmsCode() {
         const t = tlv.getPacker(this)
-        const body = new Writer()
-            .writeU16(8)
-            .writeU16(6)
+        let tlv_count = 7
+        if (this.apk.ssover <= 12) tlv_count--
+        const writer = new Writer()
+            .writeU16(7)
+            .writeU16(tlv_count)
             .writeBytes(t(0x8))
             .writeBytes(t(0x104))
             .writeBytes(t(0x116))
             .writeBytes(t(0x174))
             .writeBytes(t(0x17a))
             .writeBytes(t(0x197))
-            .read()
-        this[FN_SEND_LOGIN]("wtlogin.login", body)
+        if(this.apk.ssover>12) writer.writeBytes(t(0x544,0,7))
+        this[FN_SEND_LOGIN]("wtlogin.login", writer.read())
     }
 
     /** 提交短信验证码 */
@@ -476,9 +456,7 @@ export class BaseClient extends Trapper {
             .writeBytes(t(0x401))
             .writeBytes(t(0x198))
         if (this.apk.ssover > 12) {
-            let cmd = '810_7'
-            if (!this.sig.t544 || !this.sig.t544[cmd]) await getT544.call(this, cmd)
-            writer.writeBytes(t(0x544, cmd))
+            writer.writeBytes(t(0x544, 0, 7))
         }
         this[FN_SEND_LOGIN]("wtlogin.login", writer.read())
     }
@@ -1158,6 +1136,17 @@ function decodeLoginResponse(this: BaseClient, payload: Buffer): any {
     const type = r.read(1).readUInt8() as number
     r.read(2)
     const t = readTlv(r)
+    if(t[0x402]){
+        this.sig.dPwd=crypto.randomBytes(16)
+        this.sig.t402=t[0x402]
+        this.sig.g=md5(Buffer.concat([
+            Buffer.concat([
+                Buffer.from(this.device.guid),
+                this.sig.dPwd
+            ]),
+            this.sig.t402
+        ]))
+    }
     if (t[0x546]) this.sig.t547 = this.calcPoW(t[0x546]);
     if (type === 204) {
         this.sig.t104 = t[0x104]
@@ -1177,7 +1166,10 @@ function decodeLoginResponse(this: BaseClient, payload: Buffer): any {
     if (type === 0) {
         this.sig.t104 = BUF0
         this.sig.t174 = BUF0
-        const {token, nickname, gender, age} = decodeT119.call(this, t[0x119])
+        if(t[0x403]){
+            this.sig.randomSeed=t[0x403]
+        }
+        const { token, nickname, gender, age } = decodeT119.call(this, t[0x119])
         return register.call(this).then(() => {
             if (this[IS_ONLINE]) {
                 this.emit("internal.online", token, nickname, gender, age)
@@ -1195,7 +1187,9 @@ function decodeLoginResponse(this: BaseClient, payload: Buffer): any {
             return this.emit("internal.slider", String(t[0x192]))
         return this.emit("internal.error.login", type, "[登陆失败]未知格式的验证码")
     }
-
+    if(type===40){
+        return this.emit('internal.error.login',type,'账号被冻结')
+    }
     if (type === 160 || type === 162 || type === 239) {
         if (!t[0x204] && !t[0x174])
             return this.emit("internal.verbose", "已向密保手机发送短信验证码", VerboseLevel.Mark)

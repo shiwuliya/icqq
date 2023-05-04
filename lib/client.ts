@@ -274,8 +274,12 @@ export class Client extends BaseClient {
         } catch (e) {
             if (this.password_md5 && uin)
                 return await this.passwordLogin(uin as number, this.password_md5)
-            else
+            else{
+                if (this.apk.display != "Watch") {
+                    return this.logger.error("当前协议不支持扫码登入，请配置密码重新登入")
+                }
                 return this.sig.qrsig.length ? this.qrcodeLogin() : this.fetchQrcode()
+            }
         }
     }
 
