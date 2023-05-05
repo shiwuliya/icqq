@@ -1,5 +1,15 @@
 # Changelog
 
+## [0.3.2](https://github.com/icqqjs/icqq/compare/v0.3.1...v0.3.2) (2023-05-05)
+
+
+### Bug Fixes
+
+* 544改为本地计算 ([df2a208](https://github.com/icqqjs/icqq/commit/df2a20845f4119dc437afc5133e0ea75b95dd522))
+* token登录提示 ([d2002f8](https://github.com/icqqjs/icqq/commit/d2002f88e21d955383549eeba9a07bcf283df82c))
+* 升级triptrap ([eb007a2](https://github.com/icqqjs/icqq/commit/eb007a292acb1dc7347b1706ceee4f2a90a2ce77))
+* 移除lodash依赖 ([b437b51](https://github.com/icqqjs/icqq/commit/b437b5115295f626e2d2f3cf5f3f7e9c31594ca1))
+
 ## [0.3.1](https://github.com/icqqjs/icqq/compare/v0.3.0...v0.3.1) (2023-04-24)
 
 
