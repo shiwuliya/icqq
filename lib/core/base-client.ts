@@ -304,16 +304,21 @@ export class BaseClient extends Trapper {
         this.sig.session = randomBytes(4)
         this.sig.randkey = randomBytes(16)
         this[ECDH] = new Ecdh
-        const stream = Readable.from(token, {objectMode: false});
-        this.sig.d2key = stream.read(stream.read(2).readUInt16BE());
-        this.sig.d2 = stream.read(stream.read(2).readUInt16BE());
-        this.sig.tgt = stream.read(stream.read(2).readUInt16BE());
-        this.sig.ticket_key = stream.read(stream.read(2).readUInt16BE());
-        this.sig.sig_key = stream.read(stream.read(2).readUInt16BE());
-        this.sig.srm_token = stream.read(stream.read(2).readUInt16BE());
-        this.sig.tgt = stream.read(stream.read(2).readUInt16BE());
-        this.sig.md5Pass = stream.read(stream.read(2).readUInt16BE());
-        this.sig.device_token = stream.read(stream.read(2).readUInt16BE());
+        try{
+            const stream = Readable.from(token, {objectMode: false});
+            this.sig.d2key = stream.read(stream.read(2).readUInt16BE());
+            this.sig.d2 = stream.read(stream.read(2).readUInt16BE());
+            this.sig.tgt = stream.read(stream.read(2).readUInt16BE());
+            this.sig.ticket_key = stream.read(stream.read(2).readUInt16BE());
+            this.sig.sig_key = stream.read(stream.read(2).readUInt16BE());
+            this.sig.srm_token = stream.read(stream.read(2).readUInt16BE());
+            this.sig.tgt = stream.read(stream.read(2).readUInt16BE());
+            this.sig.md5Pass = stream.read(stream.read(2).readUInt16BE());
+            this.sig.device_token = stream.read(stream.read(2).readUInt16BE());
+        }catch {
+            this.logger.error('旧版token于当前版本不兼容，请手动删除token后重新运行')
+            this.logger.warn('若非无法登录，请勿随意升级版本')
+        }
         this.sig.tgtgt = md5(this.sig.d2key)
         const t = tlv.getPacker(this)
         let tlv_count = 18
