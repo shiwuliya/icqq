@@ -1,17 +1,18 @@
-
-import lodash = require('lodash')
 import {MessageElem} from "./elements";
 const mCQ = {
     "&#91;": "[",
     "&#93;": "]",
     "&amp;": "&",
 };
-const mCQInside = {
+const mCQInside:Record<string, string> = {
     "&": "&amp;",
     ",": "&#44;",
     "[": "&#91;",
     "]": "&#93;",
 };
+const mCQInvert=Object.fromEntries(Object.keys(mCQInside).map((key)=>{
+    return [mCQInside[key] as string,key]
+}))
 function matchBracket(text:string, index:number, brackets = ["[", "]"]) {
     let stackSize = 0;
 
@@ -118,7 +119,7 @@ export function qs(text:string, sep = ",", equal = "=") {
 
         ret[c.substring(0, i) as keyof (typeof ret)] = c
             .substring(i + 1)
-            .replace(new RegExp(Object.values(mCQInside).join("|"), "g"), (s) => lodash.invert(mCQInside)[s] || "");
+            .replace(new RegExp(Object.values(mCQInside).join("|"), "g"), (s) => mCQInvert[s] || "");
     });
 
     for (const k in ret) {

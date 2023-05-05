@@ -31,7 +31,6 @@
   "changelogs": "https://github.com/icqqjs/icqq/releases",
   "dependencies": {
     "axios": "^1.1.2",
-    "lodash": "^4.17.21",
     "log4js": "^6.3.0",
     "long": "^4.0.0",
     "pngjs": "^6.0.0",
@@ -39,7 +38,6 @@
     "triptrap": "^0.0.17"
   },
   "devDependencies": {
-    "@types/lodash": "^4.14.186",
     "@types/node": "^16.7.2",
     "@types/pngjs": "^6.0.1",
     "@types/probe-image-size": "^7.0.1",
