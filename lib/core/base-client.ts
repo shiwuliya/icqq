@@ -430,7 +430,7 @@ export class BaseClient extends Trapper {
         let tlv_count = 7
         if (this.apk.ssover <= 12) tlv_count--
         const writer = new Writer()
-            .writeU16(7)
+            .writeU16(8)
             .writeU16(tlv_count)
             .writeBytes(t(0x8))
             .writeBytes(t(0x104))
