@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.3.4](https://github.com/icqqjs/icqq/compare/v0.3.3...v0.3.4) (2023-05-10)
+
+
+### Bug Fixes
+
+* 修复node16以上版本无法正常使用问题。 ([c570689](https://github.com/icqqjs/icqq/commit/c570689835627c5e2c64fb50ebfaf355aa3147fa))
+
 ## [0.3.3](https://github.com/icqqjs/icqq/compare/v0.3.2...v0.3.3) (2023-05-10)
 
 
