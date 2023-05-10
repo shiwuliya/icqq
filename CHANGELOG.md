@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.3.3](https://github.com/icqqjs/icqq/compare/v0.3.2...v0.3.3) (2023-05-10)
+
+
+### Bug Fixes
+
+* login error 16 ([f4d9c4f](https://github.com/icqqjs/icqq/commit/f4d9c4fc82462ca2238b36fb7dcf1f0c7e18b687))
+
 ## [0.3.2](https://github.com/icqqjs/icqq/compare/v0.3.1...v0.3.2) (2023-05-05)
 
 
