@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.3.5](https://github.com/icqqjs/icqq/compare/v0.3.4...v0.3.5) (2023-05-10)
+
+
+### Bug Fixes
+
+* 修复无法发送短信验证码问题。 ([8d397bd](https://github.com/icqqjs/icqq/commit/8d397bd7965e6b9b6c7c5814c03114898d5b515e))
+
 ## [0.3.4](https://github.com/icqqjs/icqq/compare/v0.3.3...v0.3.4) (2023-05-10)
 
 
