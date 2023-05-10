@@ -474,6 +474,26 @@ function roll(a: number, n: number) {
     return a << n | a >>> (32 - n)
 }
 
+function rc4(key: Buffer, data: Buffer) {
+    const S = [...Array(256).keys()];
+    let j = 0;
+    for (let i = 0; i < 256; i++) {
+        j = (j + S[i] + key[i % key.length]) % 256;
+        [S[i], S[j]] = [S[j], S[i]];
+    }
+    let i = 0;
+    j = 0;
+    const ciphertext = Buffer.alloc(data.length);
+    for (let idx = 0; idx < data.length; idx++) {
+        i = (i + 1) % 256;
+        j = (j + S[i]) % 256;
+        [S[i], S[j]] = [S[j], S[i]];
+        const K = S[(S[i] + S[j]) % 256];
+        ciphertext[idx] = data[idx] ^ K;
+    }
+    return ciphertext;
+}
+
 /**
  * t544 algorithm
  * @param curr
@@ -502,10 +522,17 @@ export function sign(curr: number, input: Buffer) {
     kt[5] = kt[13]
     kt[12] = kt[13] = 0
     let key = kt.slice(4, 12)
-    const cipher = crypto.createCipheriv('rc4', key, '');
-    cipher.setAutoPadding(false);
-    let encryptedKey = cipher.update(key);
-    encryptedKey = Buffer.concat([encryptedKey, cipher.final()]);
+    let encryptedKey;
+
+    try {
+        const cipher = crypto.createCipheriv('rc4', key, '')
+        cipher.setAutoPadding(false)
+        encryptedKey = cipher.update(key)
+        encryptedKey = Buffer.concat([encryptedKey, cipher.final()])
+    } catch (err) {
+        encryptedKey = rc4(key, key);
+    }
+
     encryptedKey.copy(kt, 4, 0)
     crcData.writeBigUint64LE(BigInt(0x6EEDCF0DC4675540n), 4)
     tencentEncryptionA(input, kt.slice(4, 36), crcData.slice(4, 12))
