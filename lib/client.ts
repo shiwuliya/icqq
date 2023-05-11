@@ -274,7 +274,7 @@ export class Client extends BaseClient {
         } catch (e) {
             if (this.password_md5 && uin){
                 if (this.apk.display === "Watch") {
-                    this.logger.error("手表协议不支持密码登入，请扫码登入！")
+                    this.logger.warn("手表协议不支持密码登入，将使用扫码登入")
                     return this.sig.qrsig.length ? this.qrcodeLogin() : this.fetchQrcode()
                 }
                 return await this.passwordLogin(uin as number, this.password_md5)
