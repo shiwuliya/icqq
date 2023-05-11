@@ -272,9 +272,13 @@ export class Client extends BaseClient {
             const token = await fs.promises.readFile(path.join(this.dir, uin + '_token'))
             return this.tokenLogin(token)
         } catch (e) {
-            if (this.password_md5 && uin)
+            if (this.password_md5 && uin){
+                if (this.apk.display === "Watch") {
+                    this.logger.error("手表协议不支持密码登入，请扫码登入！")
+                    return this.sig.qrsig.length ? this.qrcodeLogin() : this.fetchQrcode()
+                }
                 return await this.passwordLogin(uin as number, this.password_md5)
-            else{
+            }else{
                 if (this.apk.display != "Watch") {
                     return this.logger.error("当前协议不支持扫码登入，请配置密码重新登入")
                 }
