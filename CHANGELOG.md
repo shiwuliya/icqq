@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.3.8](https://github.com/icqqjs/icqq/compare/v0.3.7...v0.3.8) (2023-05-11)
+
+
+### Bug Fixes
+
+* 修复扫码登录提示密码错误问题。 ([fc7c80e](https://github.com/icqqjs/icqq/commit/fc7c80ea066b0170515aed1337b13759959bc246))
+
 ## [0.3.7](https://github.com/icqqjs/icqq/compare/v0.3.6...v0.3.7) (2023-05-11)
 
 
