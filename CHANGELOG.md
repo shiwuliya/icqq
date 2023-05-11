@@ -1,5 +1,13 @@
 # Changelog
 
+## [0.3.9](https://github.com/icqqjs/icqq/compare/v0.3.8...v0.3.9) (2023-05-11)
+
+
+### Bug Fixes
+
+* 刷新token错误 ([15bd8b4](https://github.com/icqqjs/icqq/commit/15bd8b4c0074d047e0793f08c6a0f07befa92ddd))
+* 更改watch自动扫码登陆提示 ([68b4743](https://github.com/icqqjs/icqq/commit/68b474374c1e855db369e00097d6e13c63252285))
+
 ## [0.3.8](https://github.com/icqqjs/icqq/compare/v0.3.7...v0.3.8) (2023-05-11)
 
 
