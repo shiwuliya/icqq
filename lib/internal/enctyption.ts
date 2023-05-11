@@ -522,7 +522,7 @@ export function sign(curr: number, input: Buffer) {
     kt[5] = kt[13]
     kt[12] = kt[13] = 0
     let key = kt.slice(4, 12)
-    let encryptedKey;
+    let encryptedKey:Buffer;
 
     try {
         const cipher = crypto.createCipheriv('rc4', key, '')

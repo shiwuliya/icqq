@@ -481,7 +481,7 @@ export class BaseClient extends Trapper {
             .writeBytes(t(0x1D))
             .writeBytes(t(0x1F))
             .writeBytes(t(0x33))
-            .writeBytes(t(0x35, 3))
+            .writeBytes(t(0x35, 8))
             .read()
         const pkt = buildCode2dPacket.call(this, 0x31, 0x11100, body)
         this[FN_SEND](pkt).then(payload => {
