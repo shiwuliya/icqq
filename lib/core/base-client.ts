@@ -111,6 +111,7 @@ export class BaseClient extends Trapper {
         d2key: BUF0,
         t103: BUF0,
         t104: BUF0,
+        t106: BUF0,
         t174: BUF0,
         qrsig: BUF0,
         t547: BUF0,
@@ -927,7 +928,8 @@ async function refreshToken(this: BaseClient) {
         .writeU16(25)
         .writeBytes(t(0x18))
         .writeBytes(t(0x1))
-        .writeBytes(t(0x106, this.sig.md5Pass))
+        .writeU16(0x106)
+        .writeTlv(this.sig.t106)
         .writeBytes(t(0x16a))
         .writeBytes(t(0x116))
         .writeBytes(t(0x100, 2))
@@ -1092,7 +1094,7 @@ function decodeT119(this: BaseClient, t119: Buffer) {
     this.sig.tgt_key = t[0x10d] || this.sig.tgt_key
     this.sig.st_key = t[0x10e] || this.sig.st_key
     this.sig.t103 = t[0x103] || this.sig.t103
-    this.sig.md5Pass = t[0x106] || this.sig.md5Pass
+    this.sig.t106 = t[0x106] || this.sig.t106
     this.sig.srm_token = t[0x16a] || this.sig.srm_token
     this.sig.skey = t[0x120] || this.sig.skey
     this.sig.d2 = t[0x143] || this.sig.d2
