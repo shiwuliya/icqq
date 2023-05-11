@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.3.10](https://github.com/icqqjs/icqq/compare/v0.3.9...v0.3.10) (2023-05-11)
+
+
+### Bug Fixes
+
+* 修复token刷新失败问题，刷新间隔修改为12小时。 ([bdbfb44](https://github.com/icqqjs/icqq/commit/bdbfb44e2bb39976ecc28a6d0990dd8b4381ccc6))
+
 ## [0.3.9](https://github.com/icqqjs/icqq/compare/v0.3.8...v0.3.9) (2023-05-11)
 
 
