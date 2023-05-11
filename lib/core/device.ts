@@ -44,7 +44,7 @@ export function generateShortDevice() {
         mac_address: `2D:${randstr(2).toUpperCase()}:${randstr(2).toUpperCase()}:${randstr(2,).toUpperCase()}:${randstr(2).toUpperCase()}:${randstr(2).toUpperCase()}`,
         ip_address: `192.168.${randstr(2, true)}.${randstr(2, true)}`,
         imei: `${generateImei()}`,
-        incremental: `${randstr(10).toUpperCase()}`,
+        incremental: `${randstr(10, true).toUpperCase()}`,
         "--end--": "修改后可能需要重新验证设备。"
     }
 }
@@ -258,7 +258,7 @@ const mobile = {
     name: "A8.9.50.f5a7d351",
     version: "8.9.50.10650",
     ver: "8.9.50",
-    sign: Buffer.from('A6 B7 45 BF 24 A2 C2 77 52 77 16 F6 F3 6E B6 8D'.split(' ').map(s=>parseInt(s,16))),
+    sign: Buffer.from('A6 B7 45 BF 24 A2 C2 77 52 77 16 F6 F3 6E B6 8D'.split(' ').map(s => parseInt(s, 16))),
     buildtime: 1676531414,
     appid: 16,
     subid: 537155547,
@@ -292,7 +292,7 @@ const watch: Apk = {
     name: "A2.0.8",
     version: "2.0.8",
     ver: "2.0.8",
-    sign: Buffer.from('A6 B7 45 BF 24 A2 C2 77 52 77 16 F6 F3 6E B6 8D'.split(' ').map(s=>parseInt(s,16))),
+    sign: Buffer.from('A6 B7 45 BF 24 A2 C2 77 52 77 16 F6 F3 6E B6 8D'.split(' ').map(s => parseInt(s, 16))),
     buildtime: 1559564731,
     appid: 16,
     subid: 537065138,
@@ -309,7 +309,7 @@ const hd: Apk = {
     name: "A5.9.3.3468",
     version: "5.9.3.3468",
     ver: "5.9.3",
-    sign: Buffer.from('AA 39 78 F4 1F D9 6F F9 91 4A 66 9E 18 64 74 C7'.split(' ').map(s=>parseInt(s,16))),
+    sign: Buffer.from('AA 39 78 F4 1F D9 6F F9 91 4A 66 9E 18 64 74 C7'.split(' ').map(s => parseInt(s, 16))),
     buildtime: 1637427966,
     appid: 16,
     subid: 537128930,

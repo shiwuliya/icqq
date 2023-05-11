@@ -1,5 +1,57 @@
 # Changelog
 
+## [0.3.8](https://github.com/icqqjs/icqq/compare/v0.3.7...v0.3.8) (2023-05-11)
+
+
+### Bug Fixes
+
+* 修复扫码登录提示密码错误问题。 ([fc7c80e](https://github.com/icqqjs/icqq/commit/fc7c80ea066b0170515aed1337b13759959bc246))
+
+## [0.3.7](https://github.com/icqqjs/icqq/compare/v0.3.6...v0.3.7) (2023-05-11)
+
+
+### Bug Fixes
+
+* 修复watch 扫码登陆 ([02a5749](https://github.com/icqqjs/icqq/commit/02a5749477fdd62e39f8275b1fd23ac82695d8c5))
+
+## [0.3.6](https://github.com/icqqjs/icqq/compare/v0.3.5...v0.3.6) (2023-05-10)
+
+
+### Bug Fixes
+
+* 。 ([64682e8](https://github.com/icqqjs/icqq/commit/64682e839c6908cb0c361bd557b9d61e5fdb5706))
+
+## [0.3.5](https://github.com/icqqjs/icqq/compare/v0.3.4...v0.3.5) (2023-05-10)
+
+
+### Bug Fixes
+
+* 修复无法发送短信验证码问题。 ([8d397bd](https://github.com/icqqjs/icqq/commit/8d397bd7965e6b9b6c7c5814c03114898d5b515e))
+
+## [0.3.4](https://github.com/icqqjs/icqq/compare/v0.3.3...v0.3.4) (2023-05-10)
+
+
+### Bug Fixes
+
+* 修复node16以上版本无法正常使用问题。 ([c570689](https://github.com/icqqjs/icqq/commit/c570689835627c5e2c64fb50ebfaf355aa3147fa))
+
+## [0.3.3](https://github.com/icqqjs/icqq/compare/v0.3.2...v0.3.3) (2023-05-10)
+
+
+### Bug Fixes
+
+* login error 16 ([f4d9c4f](https://github.com/icqqjs/icqq/commit/f4d9c4fc82462ca2238b36fb7dcf1f0c7e18b687))
+
+## [0.3.2](https://github.com/icqqjs/icqq/compare/v0.3.1...v0.3.2) (2023-05-05)
+
+
+### Bug Fixes
+
+* 544改为本地计算 ([df2a208](https://github.com/icqqjs/icqq/commit/df2a20845f4119dc437afc5133e0ea75b95dd522))
+* token登录提示 ([d2002f8](https://github.com/icqqjs/icqq/commit/d2002f88e21d955383549eeba9a07bcf283df82c))
+* 升级triptrap ([eb007a2](https://github.com/icqqjs/icqq/commit/eb007a292acb1dc7347b1706ceee4f2a90a2ce77))
+* 移除lodash依赖 ([b437b51](https://github.com/icqqjs/icqq/commit/b437b5115295f626e2d2f3cf5f3f7e9c31594ca1))
+
 ## [0.3.1](https://github.com/icqqjs/icqq/compare/v0.3.0...v0.3.1) (2023-04-24)
 
 

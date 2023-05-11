@@ -41,7 +41,7 @@ const map: { [tag: number]: (this: BaseClient, ...args: any[]) => Writer } = {
             .writeU16(1) // ip ver
             .writeBytes(crypto.randomBytes(4))
             .writeU32(this.uin)
-            .write32(Date.now() & 0xffffffff)
+            .write32((Date.now() / 1000) & 0xffffffff)
             .writeBytes(this.device.ip_address) //ip
             .writeU16(0);
     },
@@ -53,13 +53,13 @@ const map: { [tag: number]: (this: BaseClient, ...args: any[]) => Writer } = {
     },
     0x16: function () {
         return new Writer()
-            .writeU32(7)
-            .writeU32(16)
-            .writeU32(537067759)
+            .writeU32(this.apk.ssover)
+            .writeU32(this.apk.appid)
+            .writeU32(this.apk.subid)
             .writeBytes(this.device.guid)
-            .writeTlv("com.tencent.qqlite")
-            .writeTlv("4.0.2")
-            .writeTlv(Buffer.from([0xA6, 0xB7, 0x45, 0xBF, 0x24, 0xA2, 0xC2, 0x77, 0x52, 0x77, 0x16, 0xF6, 0xF3, 0x6E, 0xB6, 0x8D]));
+            .writeTlv(this.apk.id)
+            .writeTlv(this.apk.ver)
+            .writeTlv(this.apk.sign);
     },
     0x18: function () {
         return new Writer()
@@ -85,7 +85,7 @@ const map: { [tag: number]: (this: BaseClient, ...args: any[]) => Writer } = {
     0x1D: function () {
         return new Writer()
             .writeU8(1)
-            .writeU32(184024956)
+            .writeU32(this.apk.bitmap)
             .writeU32(0)
             .writeU8(0)
             .writeU32(0)
@@ -126,7 +126,7 @@ const map: { [tag: number]: (this: BaseClient, ...args: any[]) => Writer } = {
             .writeU32(this.apk.appid)
             .writeU32(0) // app client ver
             .writeU64(this.uin)
-            .write32(Date.now() & 0xffffffff)
+            .write32((Date.now() / 1000) & 0xffffffff)
             .writeBytes(Buffer.alloc(4)) // dummy ip
             .writeU8(1) // save password
             .writeBytes(md5pass)
@@ -284,7 +284,7 @@ const map: { [tag: number]: (this: BaseClient, ...args: any[]) => Writer } = {
             .writeBytes(crypto.randomBytes(16))
             .write32(1)
             .write32(16)
-            .write32(Date.now() & 0xffffffff)
+            .write32((Date.now() / 1000) & 0xffffffff)
             .writeBytes(Buffer.alloc(0))
     },
     0x401: function () {
