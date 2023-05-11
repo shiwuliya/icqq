@@ -925,38 +925,28 @@ function syncTimeDiff(this: BaseClient) {
 }
 
 async function refreshToken(this: BaseClient) {
-    if (!this.isOnline() || timestamp() - this.sig.emp_time < 14000)
+    if (!this.isOnline() || timestamp() - this.sig.emp_time < 43000)
         return
     const t = tlv.getPacker(this)
     const writer = new Writer()
-        .writeU16(15)
-        .writeU16(25)
-        .writeBytes(t(0x18))
-        .writeBytes(t(0x1))
-        .writeBytes(t(0x106, this.sig.md5Pass))
-        .writeBytes(t(0x16a))
+        .writeU16(11)
+        .writeU16(16)
+        .writeBytes(t(0x100))
+        .writeBytes(t(0x10a))
         .writeBytes(t(0x116))
-        .writeBytes(t(0x100, 2))
-        .writeBytes(t(0x107))
-        //.writeBytes(t(0x108))
         .writeBytes(t(0x144))
+        .writeBytes(t(0x143))
         .writeBytes(t(0x142))
-        .writeBytes(t(0x145))
-        .writeBytes(t(0x16a))
         .writeBytes(t(0x154))
+        .writeBytes(t(0x18))
         .writeBytes(t(0x141))
         .writeBytes(t(0x8))
-        .writeBytes(t(0x511))
         .writeBytes(t(0x147))
         .writeBytes(t(0x177))
-        .writeBytes(t(0x400))
         .writeBytes(t(0x187))
         .writeBytes(t(0x188))
-        .writeBytes(t(0x194))
         .writeBytes(t(0x202))
-        .writeBytes(t(0x516))
-        .writeBytes(t(0x521))
-        .writeBytes(t(0x525))
+        .writeBytes(t(0x511))
     const body = writer.read()
     const pkt = buildLoginPacket.call(this, "wtlogin.exchange_emp", body)
     try {
@@ -1094,7 +1084,6 @@ function decodeT119(this: BaseClient, t119: Buffer) {
     r.read(2)
     const t = readTlv(r)
     this.sig.tgt = t[0x10a] || this.sig.tgt
-    this.sig.tgtgt = t[0x10c] || md5(this.sig.d2key)
     this.sig.tgt_key = t[0x10d] || this.sig.tgt_key
     this.sig.st_key = t[0x10e] || this.sig.st_key
     this.sig.t103 = t[0x103] || this.sig.t103
@@ -1103,6 +1092,7 @@ function decodeT119(this: BaseClient, t119: Buffer) {
     this.sig.skey = t[0x120] || this.sig.skey
     this.sig.d2 = t[0x143] || this.sig.d2
     this.sig.d2key = t[0x305] || this.sig.d2key
+    this.sig.tgtgt = t[0x10c] || md5(this.sig.d2key)
     this.sig.ksid = t[0x108] || Buffer.from(`|${this.device.imei}|` + this.apk.name)
     this.sig.sig_key = t[0x133] || this.sig.sig_key
     this.sig.ticket_key = t[0x134] || this.sig.ticket_key
