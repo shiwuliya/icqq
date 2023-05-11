@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.3.7](https://github.com/icqqjs/icqq/compare/v0.3.6...v0.3.7) (2023-05-11)
+
+
+### Bug Fixes
+
+* 修复watch 扫码登陆 ([02a5749](https://github.com/icqqjs/icqq/commit/02a5749477fdd62e39f8275b1fd23ac82695d8c5))
+
 ## [0.3.6](https://github.com/icqqjs/icqq/compare/v0.3.5...v0.3.6) (2023-05-10)
 
 
