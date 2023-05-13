@@ -256,7 +256,7 @@ export class BaseClient extends Trapper {
                         if (cnt > 1000000) {
                             this.logger.error("Calculating PoW cost too much time, maybe something wrong");
                             throw new Error("Calculating PoW cost too much time, maybe something wrong");
-                        }a
+                        }
                     }
                     ok = true;
                     dst = Buffer.from(inputNum.toString(16), "hex");
