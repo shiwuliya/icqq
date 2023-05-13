@@ -256,12 +256,12 @@ export class BaseClient extends Trapper {
                         if (cnt > 1000000) {
                             this.logger.error("Calculating PoW cost too much time, maybe something wrong");
                             throw new Error("Calculating PoW cost too much time, maybe something wrong");
-                        }
+                        }a
                     }
                     ok = true;
                     dst = Buffer.from(inputNum.toString(16), "hex");
                     elp = Date.now() - start;
-                    this.logger.info(`Calculating PoW of plus ${cnt} times cost ${elp} ms`);
+                    this.logger.debug(`Calculating PoW of plus ${cnt} times cost ${elp} ms`);
                 }
                 if (!ok) return Buffer.alloc(0);
                 const body = new Writer()
