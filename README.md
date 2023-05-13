@@ -52,7 +52,6 @@ client.on("system.login.qrcode", function (e) {
 
 注意：
 - 扫码登录仅能使用Watch协议登录下进行，如需扫码登陆，请在creatClient时按照上方示例代码传入platform，其他协议暂时无法登陆
-- 现在使用iPad改为生成登录二维码，不在统一局域网下也能扫码登陆成功啦
 - 建议使用密码登录，只需验证一次设备便长期有效
 [密码登录教程](https://github.com/icqqjs/icqq/wiki/%E5%AF%86%E7%A0%81%E7%99%BB%E5%BD%95%E6%B5%81%E7%A8%8B) 
 

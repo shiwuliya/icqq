@@ -467,7 +467,7 @@ export class BaseClient extends Trapper {
         this[FN_SEND_LOGIN]("wtlogin.login", writer.read())
     }
 
-    /** 获取登录二维码(模拟IPad协议扫码登录) */
+    /** 获取登录二维码 */
     fetchQrcode() {
         const t = tlv.getPacker(this)
         const body = new Writer()
