@@ -1,8 +1,8 @@
 import * as fs from "fs"
 import * as path from "path"
 import * as log4js from "log4js"
-import {ApiRejection, BaseClient, Domain, generateShortDevice, pb, Platform, ShortDevice} from "./core"
-import {Gender, hide, lock, md5, NOOP, OnlineStatus, timestamp} from "./common"
+import { ApiRejection, BaseClient, Domain, generateShortDevice, pb, Platform, ShortDevice } from "./core"
+import { Gender, hide, lock, md5, NOOP, OnlineStatus, timestamp } from "./common"
 import {
     addClass,
     bindInternalListeners,
@@ -23,15 +23,15 @@ import {
     setSign,
     setStatus
 } from "./internal"
-import {FriendInfo, GroupInfo, MemberInfo, StrangerInfo} from "./entities"
-import {EventMap, GroupInviteEvent, GroupMessageEvent, PrivateMessageEvent} from "./events"
-import {Friend, User} from "./friend"
-import {Discuss, Group} from "./group"
-import {Member} from "./member"
-import {Forwardable, Image, ImageElem, parseDmMessageId, parseGroupMessageId, Quotable, Sendable,} from "./message"
-import {Listener, Matcher, ToDispose} from "triptrap";
-import {Guild} from "./guild";
-import {ErrorCode} from "./errors";
+import { FriendInfo, GroupInfo, MemberInfo, StrangerInfo } from "./entities"
+import { EventMap, GroupInviteEvent, GroupMessageEvent, PrivateMessageEvent } from "./events"
+import { Friend, User } from "./friend"
+import { Discuss, Group } from "./group"
+import { Member } from "./member"
+import { Forwardable, Image, ImageElem, parseDmMessageId, parseGroupMessageId, Quotable, Sendable, } from "./message"
+import { Listener, Matcher, ToDispose } from "triptrap";
+import { Guild } from "./guild";
+import { ErrorCode } from "./errors";
 
 const pkg = require("../package.json")
 
@@ -266,19 +266,21 @@ export class Client extends BaseClient {
                 md5pass = md5(String(password))
             this.password_md5 = md5pass
         }
+        let apk_info = this.apk.display == 'Android_8.8.88' ? this.apk.display : `${this.apk.display}_${this.apk.version}`
+        this.logger.info(`[${uin}]使用协议：${apk_info}`)
         try {
             if (!uin) throw new Error()
             this.uin = uin
             const token = await fs.promises.readFile(path.join(this.dir, uin + '_token'))
             return this.tokenLogin(token)
         } catch (e) {
-            if (this.password_md5 && uin){
+            if (this.password_md5 && uin) {
                 if (this.apk.display === "Watch") {
                     this.logger.warn("手表协议不支持密码登入，将使用扫码登入")
                     return this.sig.qrsig.length ? this.qrcodeLogin() : this.fetchQrcode()
                 }
                 return await this.passwordLogin(uin as number, this.password_md5)
-            }else{
+            } else {
                 if (this.apk.display != "Watch") {
                     return this.logger.error("当前协议不支持扫码登入，请配置密码重新登入")
                 }
@@ -324,7 +326,7 @@ export class Client extends BaseClient {
 
     /** 设置头像 */
     async setAvatar(file: ImageElem["file"]) {
-        return setAvatar.call(this, new Image({type: "image", file}))
+        return setAvatar.call(this, new Image({ type: "image", file }))
     }
 
     /** 获取漫游表情 */
@@ -385,7 +387,7 @@ export class Client extends BaseClient {
     /** 清空缓存文件 fs.rm need v14.14 */
     cleanCache() {
         const dir = path.join(this.dir, "image")
-        fs.rm?.(dir, {recursive: true}, () => {
+        fs.rm?.(dir, { recursive: true }, () => {
             fs.mkdir(dir, NOOP)
         })
     }
@@ -407,7 +409,7 @@ export class Client extends BaseClient {
 
     /** Ocr图片转文字 */
     imageOcr(file: ImageElem["file"]) {
-        return imageOcr.call(this, new Image({type: "image", file}))
+        return imageOcr.call(this, new Image({ type: "image", file }))
     }
 
     /** @cqhttp (cqhttp遗留方法) use client.cookies[domain] */
@@ -445,7 +447,7 @@ export class Client extends BaseClient {
      */
     async setEssenceMessage(message_id: string) {
         if (message_id.length <= 24) throw new ApiRejection(ErrorCode.MessageBuilderError, '只能加精群消息')
-        const {group_id, seq, rand} = parseGroupMessageId(message_id)
+        const { group_id, seq, rand } = parseGroupMessageId(message_id)
         return this.pickGroup(group_id).addEssence(seq, rand)
     }
 
@@ -455,7 +457,7 @@ export class Client extends BaseClient {
      */
     async removeEssenceMessage(message_id: string) {
         if (message_id.length <= 24) throw new ApiRejection(ErrorCode.MessageBuilderError, '消息id无效')
-        const {group_id, seq, rand} = parseGroupMessageId(message_id)
+        const { group_id, seq, rand } = parseGroupMessageId(message_id)
         return this.pickGroup(group_id).removeEssence(seq, rand)
     }
 
@@ -539,10 +541,10 @@ export class Client extends BaseClient {
     /** @cqhttp use user.recallMsg() or group.recallMsg() */
     async deleteMsg(message_id: string) {
         if (message_id.length > 24) {
-            const {group_id, seq, rand, pktnum} = parseGroupMessageId(message_id)
+            const { group_id, seq, rand, pktnum } = parseGroupMessageId(message_id)
             return this.pickGroup(group_id).recallMsg(seq, rand, pktnum)
         } else {
-            const {user_id, seq, rand, time} = parseDmMessageId(message_id)
+            const { user_id, seq, rand, time } = parseDmMessageId(message_id)
             return this.pickUser(user_id).recallMsg(seq, rand, time)
         }
     }
@@ -550,10 +552,10 @@ export class Client extends BaseClient {
     /** @cqhttp use user.markRead() or group.markRead() */
     async reportReaded(message_id: string) {
         if (message_id.length > 24) {
-            const {group_id, seq} = parseGroupMessageId(message_id)
+            const { group_id, seq } = parseGroupMessageId(message_id)
             return this.pickGroup(group_id).markRead(seq)
         } else {
-            const {user_id, time} = parseDmMessageId(message_id)
+            const { user_id, time } = parseDmMessageId(message_id)
             return this.pickUser(user_id).markRead(time)
         }
     }
@@ -566,10 +568,10 @@ export class Client extends BaseClient {
     /** @cqhttp use user.getChatHistory() or group.getChatHistory() */
     async getChatHistory(message_id: string, count = 20) {
         if (message_id.length > 24) {
-            const {group_id, seq} = parseGroupMessageId(message_id)
+            const { group_id, seq } = parseGroupMessageId(message_id)
             return this.pickGroup(group_id).getChatHistory(seq, count)
         } else {
-            const {user_id, time} = parseDmMessageId(message_id)
+            const { user_id, time } = parseDmMessageId(message_id)
             return this.pickUser(user_id).getChatHistory(time, count)
         }
     }
@@ -671,14 +673,14 @@ export class Client extends BaseClient {
 
     /** @cqhttp use user.setFriendReq() or user.addFriendBack() */
     async setFriendAddRequest(flag: string, approve = true, remark = "", block = false) {
-        const {user_id, seq, single} = parseFriendRequestFlag(flag)
+        const { user_id, seq, single } = parseFriendRequestFlag(flag)
         const user = this.pickUser(user_id)
         return single ? user.addFriendBack(seq, remark) : user.setFriendReq(seq, approve, remark, block)
     }
 
     /** @cqhttp use user.setGroupInvite() or user.setGroupReq() */
     async setGroupAddRequest(flag: string, approve = true, reason = "", block = false) {
-        const {group_id, user_id, seq, invite} = parseGroupRequestFlag(flag)
+        const { group_id, user_id, seq, invite } = parseGroupRequestFlag(flag)
         const user = this.pickUser(user_id)
         return invite ? user.setGroupInvite(group_id, seq, approve, block) : user.setGroupReq(group_id, seq, approve, reason, block)
     }
@@ -811,7 +813,7 @@ export type Statistics = Client["stat"]
 
 function createDataDir(dir: string) {
     if (!fs.existsSync(dir))
-        fs.mkdirSync(dir, {mode: 0o755, recursive: true})
+        fs.mkdirSync(dir, { mode: 0o755, recursive: true })
     const img_path = path.join(dir, "image")
     if (!fs.existsSync(img_path))
         fs.mkdirSync(img_path)
