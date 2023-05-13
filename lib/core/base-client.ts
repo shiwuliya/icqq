@@ -10,10 +10,10 @@ import * as pb from "./protobuf"
 import * as jce from "./jce"
 import { BUF0, BUF4, BUF16, NOOP, md5, timestamp, lock, hide, unzip, int32ip2str } from "./constants"
 import { ShortDevice, Device, Platform, Apk, getApkInfo } from "./device"
-import * as log4js from "log4js";
-import { log } from "../common";
-import axios from "axios";
-import crypto from "crypto";
+import * as log4js from "log4js"
+import { log } from "../common"
+import crypto from "crypto"
+import * as path from "path"
 
 const FN_NEXT_SEQ = Symbol("FN_NEXT_SEQ")
 const FN_SEND = Symbol("FN_SEND")
@@ -1197,6 +1197,16 @@ function decodeLoginResponse(this: BaseClient, payload: Buffer): any {
             phone = String(t[0x178]).substr(t[0x178].indexOf("\x0b") + 1, 11)
         }
         return this.emit("internal.verify", t[0x204]?.toString() || "", phone)
+    }
+
+    if(type === 235){
+        let dir = path.resolve(this.config.data_dir)
+        let device_path = path.join(dir, `device.json`)
+        this.logger.warn(`[${type}]当前设备信息被拉黑，建议删除"${device_path}"后重新登录！`)
+    }
+
+    if(type === 237){
+        this.logger.warn(`[${type}]当前QQ登录频繁，暂时被限制登录，建议更换QQ或稍后再尝试登录！`)
     }
 
     if (t[0x149]) {
