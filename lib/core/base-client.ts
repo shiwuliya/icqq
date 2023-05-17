@@ -99,6 +99,7 @@ export class BaseClient extends Trapper {
     // 回包的回调函数
     private readonly [HANDLERS] = new Map<number, (buf: Buffer) => void>()
     public logger: log4js.Logger = log4js.getLogger(`[icqq]`)
+    readonly config: any
     readonly apk: Apk
     readonly device: Device
     readonly sig: Record<string, any> = {
