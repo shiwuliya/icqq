@@ -1202,7 +1202,7 @@ function decodeLoginResponse(this: BaseClient, payload: Buffer): any {
     }
 
     if(type === 45 && this.apk.display != 'Android_8.8.88'){
-        this.logger.error(`(${type}])此协议可能已被禁止登录，建议更换Android_8.8.88（platform: 6）协议后再尝试登录！`)
+        this.logger.error(`(${type})此协议可能已被禁止登录，建议更换Android_8.8.88（platform: 6）协议后再尝试登录！`)
     }
 
     if (type === 235) {
