@@ -271,7 +271,11 @@ export class Client extends BaseClient {
         try {
             if (!uin) throw new Error()
             this.uin = uin
-            const token = await fs.promises.readFile(path.join(this.dir, uin + '_token'))
+            const token_path = path.join(this.dir, this.uin + '_token')
+            if (!fs.existsSync(token_path) && fs.existsSync(token_path + '_bak')) {
+                fs.renameSync(token_path + '_bak', token_path)
+            }
+            const token = await fs.promises.readFile(token_path)
             return this.tokenLogin(token)
         } catch (e) {
             if (this.password_md5 && uin) {

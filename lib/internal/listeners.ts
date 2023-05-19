@@ -93,7 +93,11 @@ async function onlineListener(this: Client, token: Buffer, nickname: string, gen
 }
 
 function tokenUpdatedListener(this: Client, token: Buffer) {
-    fs.writeFile(path.join(this.dir, this.uin + '_token'), token, NOOP)
+    const token_path = path.join(this.dir, this.uin + '_token')
+    if (fs.existsSync(token_path)) {
+        fs.copyFileSync(token_path, token_path + '_bak')
+    }
+    fs.writeFile(token_path, token, NOOP)
 }
 
 function kickoffListener(this: Client, message: string) {

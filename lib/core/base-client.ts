@@ -321,6 +321,7 @@ export class BaseClient extends Trapper {
         } catch {
             this.logger.error('旧版token于当前版本不兼容，请手动删除token后重新运行')
             this.logger.warn('若非无法登录，请勿随意升级版本')
+            return this.emit("internal.error.login", 123456, `token不兼容`)
         }
         this.sig.tgtgt = md5(this.sig.d2key)
         const t = tlv.getPacker(this)
