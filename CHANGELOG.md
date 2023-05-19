@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.3.13](https://github.com/icqqjs/icqq/compare/v0.3.12...v0.3.13) (2023-05-19)
+
+
+### Bug Fixes
+
+* 刷新token时备份上次token，登录时如找不到token将使用上次的token进行登录 ([8b2a872](https://github.com/icqqjs/icqq/commit/8b2a872a915b6c05b37a6441cf23e2d4879c61eb))
+
 ## [0.3.12](https://github.com/icqqjs/icqq/compare/v0.3.11...v0.3.12) (2023-05-17)
 
 
