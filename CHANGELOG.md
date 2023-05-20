@@ -1,5 +1,13 @@
 # Changelog
 
+## [0.3.14](https://github.com/icqqjs/icqq/compare/v0.3.13...v0.3.14) (2023-05-20)
+
+
+### Bug Fixes
+
+* PoW 算法错误 ([5f47445](https://github.com/icqqjs/icqq/commit/5f4744596b78b88c12189f5b9ac89b2f294be299))
+* 提交验证码时计算t547。 ([8b21c01](https://github.com/icqqjs/icqq/commit/8b21c01a7af3c86267fd29b8322531a6fd1e95ca))
+
 ## [0.3.13](https://github.com/icqqjs/icqq/compare/v0.3.12...v0.3.13) (2023-05-19)
 
 
