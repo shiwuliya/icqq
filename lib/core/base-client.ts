@@ -116,6 +116,7 @@ export class BaseClient extends Trapper {
         t106: BUF0,
         t174: BUF0,
         qrsig: BUF0,
+        t546: BUF0,
         t547: BUF0,
         /** 大数据上传通道 */
         bigdata: {
@@ -410,6 +411,7 @@ export class BaseClient extends Trapper {
 
     /** 收到滑动验证码后，用于提交滑动验证码 */
     async submitSlider(ticket: string) {
+        if (this.sig.t546) this.sig.t547 = this.calcPoW(this.sig.t546)
         ticket = String(ticket).trim()
         const t = tlv.getPacker(this)
         let tlv_count = this.sig.t547.length ? 6 : 5
@@ -421,7 +423,7 @@ export class BaseClient extends Trapper {
             .writeBytes(t(0x8))
             .writeBytes(t(0x104))
             .writeBytes(t(0x116))
-        if (this.sig.t547.length) writer.writeBytes(t(0x547));
+        if (this.sig.t547.length) writer.writeBytes(t(0x547))
         if (this.apk.ssover > 12) {
             writer.writeBytes(t(0x544, 0, 2))
         }
@@ -1147,7 +1149,7 @@ function decodeLoginResponse(this: BaseClient, payload: Buffer): any {
             this.sig.t402
         ]))
     }
-    if (t[0x546]) this.sig.t547 = this.calcPoW(t[0x546]);
+    this.sig.t546 = t[0x546]
     if (type === 204) {
         this.sig.t104 = t[0x104]
         this.emit("internal.verbose", "unlocking...", VerboseLevel.Mark)
