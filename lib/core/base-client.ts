@@ -256,7 +256,7 @@ export class BaseClient extends Trapper {
                         inputNum++;
                         hash = createHash("sha256").update(Buffer.from(inputNum.toString(16), "hex")).digest();
                         cnt++;
-                        if (cnt > 1000000) {
+                        if (cnt > 6000000) {
                             this.logger.error("Calculating PoW cost too much time, maybe something wrong");
                             throw new Error("Calculating PoW cost too much time, maybe something wrong");
                         }
@@ -411,7 +411,9 @@ export class BaseClient extends Trapper {
 
     /** 收到滑动验证码后，用于提交滑动验证码 */
     async submitSlider(ticket: string) {
-        if (this.sig.t546.length) this.sig.t547 = this.calcPoW(this.sig.t546)
+        try {
+            if (this.sig.t546.length) this.sig.t547 = this.calcPoW(this.sig.t546)
+        } catch (err) { }
         ticket = String(ticket).trim()
         const t = tlv.getPacker(this)
         let tlv_count = this.sig.t547.length ? 6 : 5
@@ -1149,7 +1151,7 @@ function decodeLoginResponse(this: BaseClient, payload: Buffer): any {
             this.sig.t402
         ]))
     }
-    this.sig.t546 = t[0x546] || this.sig.t546
+    if (t[0x546]) this.sig.t546 = t[0x546]
     if (type === 204) {
         this.sig.t104 = t[0x104]
         this.emit("internal.verbose", "unlocking...", VerboseLevel.Mark)
@@ -1204,7 +1206,7 @@ function decodeLoginResponse(this: BaseClient, payload: Buffer): any {
         return this.emit("internal.verify", t[0x204]?.toString() || "", phone)
     }
 
-    if(type === 45 && this.apk.display != 'Android_8.8.88'){
+    if (type === 45 && this.apk.display != 'Android_8.8.88') {
         this.logger.error(`(${type})此协议可能已被禁止登录，建议更换Android_8.8.88（platform: 6）协议后再尝试登录！`)
     }
 
