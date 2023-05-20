@@ -411,7 +411,7 @@ export class BaseClient extends Trapper {
 
     /** 收到滑动验证码后，用于提交滑动验证码 */
     async submitSlider(ticket: string) {
-        if (this.sig.t546) this.sig.t547 = this.calcPoW(this.sig.t546)
+        if (this.sig.t546.length) this.sig.t547 = this.calcPoW(this.sig.t546)
         ticket = String(ticket).trim()
         const t = tlv.getPacker(this)
         let tlv_count = this.sig.t547.length ? 6 : 5
@@ -1149,7 +1149,7 @@ function decodeLoginResponse(this: BaseClient, payload: Buffer): any {
             this.sig.t402
         ]))
     }
-    this.sig.t546 = t[0x546]
+    this.sig.t546 = t[0x546] || this.sig.t546
     if (type === 204) {
         this.sig.t104 = t[0x104]
         this.emit("internal.verbose", "unlocking...", VerboseLevel.Mark)
