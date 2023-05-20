@@ -251,10 +251,10 @@ export class BaseClient extends Trapper {
                 let elp = 0, cnt = 0;
                 if (tgt.length === 32) {
                     const start = Date.now();
-                    let hash = createHash("sha256").update(Buffer.from(inputNum.toString(16), "hex")).digest();
+                    let hash = createHash("sha256").update(Buffer.from(inputNum.toString(16).padStart(256, "0"), "hex")).digest();
                     while (Buffer.compare(hash, tgt) !== 0) {
                         inputNum++;
-                        hash = createHash("sha256").update(Buffer.from(inputNum.toString(16), "hex")).digest();
+                        hash = createHash("sha256").update(Buffer.from(inputNum.toString(16).padStart(256, "0"), "hex")).digest();
                         cnt++;
                         if (cnt > 6000000) {
                             this.logger.error("Calculating PoW cost too much time, maybe something wrong");
@@ -262,7 +262,7 @@ export class BaseClient extends Trapper {
                         }
                     }
                     ok = true;
-                    dst = Buffer.from(inputNum.toString(16), "hex");
+                    dst = Buffer.from(inputNum.toString(16).padStart(256, "0"), "hex");
                     elp = Date.now() - start;
                     this.logger.debug(`Calculating PoW of plus ${cnt} times cost ${elp} ms`);
                 }
