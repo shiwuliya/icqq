@@ -382,8 +382,7 @@ const map: { [tag: number]: (this: BaseClient, ...args: any[]) => Writer } = {
     0x548: function () {
         // copy from https://github.com/Icalingua-plus-plus/oicq-icalingua-plus-plus/blob/master/lib/wtlogin/tlv.js
         const src = crypto.randomBytes(128);
-        while (src[0] === 0) src[0] = crypto.randomBytes(1)[0];
-        while (src[0] === 255) src[1] = crypto.randomBytes(1)[0];
+        while (src[0] === 0 || src[0] === 255) src[0] = crypto.randomBytes(1)[0];
         const srcNum = BigInt('0x' + src.toString("hex"));
         const cnt = 10000;
         const dstNum = srcNum + BigInt(cnt);
