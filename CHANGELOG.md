@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.3.15](https://github.com/icqqjs/icqq/compare/v0.3.14...v0.3.15) (2023-05-30)
+
+
+### Bug Fixes
+
+* t548 算法错误 ([790f5ff](https://github.com/icqqjs/icqq/commit/790f5ff07c56f1a2773ab9461ac2f456e61cc4df))
+
 ## [0.3.14](https://github.com/icqqjs/icqq/compare/v0.3.13...v0.3.14) (2023-05-20)
 
 
