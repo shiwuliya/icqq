@@ -1,5 +1,6 @@
 // import * as pb from "protobufjs"
 import pb from "./protobuf.min.js"
+import * as zlib from "zlib";
 
 export interface Encodable {
 	[tag: number]: any

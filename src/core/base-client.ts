@@ -991,7 +991,7 @@ type LoginCmd =
     | "wtlogin.trans_emp"
     | "StatSvc.register"
     | "Client.CorrectTime"
-type LoginCmdType = 0 | 1 | 2
+type LoginCmdType = 0 | 1 | 2 // 0: 心跳 1: 上线 2: 登录
 
 function buildLoginPacket(this: BaseClient, cmd: LoginCmd, body: Buffer, type: LoginCmdType = 2): Buffer {
     this[FN_NEXT_SEQ]()
@@ -1086,6 +1086,7 @@ function buildCode2dPacket(this: BaseClient, cmdid: number, head: number, body: 
         .read()
     return buildLoginPacket.call(this, "wtlogin.trans_emp", body)
 }
+
 
 function decodeT119(this: BaseClient, t119: Buffer) {
     const r = Readable.from(tea.decrypt(t119, this.sig.tgtgt), { objectMode: false })
