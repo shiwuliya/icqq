@@ -10,30 +10,38 @@ import { FileElem } from "./message"
 
 type Client = import("./client").Client
 
-/** (群文件/目录)共通属性 */
+/** 群文件/目录共通属性 */
 export interface GfsBaseStat {
-	/** 文件或目录的id (目录以/开头) */
+	/** 文件/目录的id (目录以/开头) */
 	fid: string
 	/** 父目录id */
 	pid: string
+	/** 文件/目录名 */
 	name: string
+	/** 创建该文件/目录的群员账号 */
 	user_id: number
+	/** 创建时间 */
 	create_time: number
+	/** 是否为目录 */
 	is_dir: boolean
 }
 
 /** 文件属性 */
 export interface GfsFileStat extends GfsBaseStat {
+	/** 文件大小 */
 	size: number
 	busid: number
 	md5: string
 	sha1: string
+	/** 文件存在时间 */
 	duration: number
+	/** 下载次数 */
 	download_times: number
 }
 
 /** 目录属性 */
 export interface GfsDirStat extends GfsBaseStat {
+	/** 目录包含的文件数 */
 	file_count: number
 }
 
@@ -44,13 +52,12 @@ function checkRsp(rsp: pb.Proto) {
 
 /**
  * 群文件系统
- * fid表示一个文件或目录的id，pid表示它所在目录的id
+ * `fid`表示一个文件或目录的id，`pid`表示它所在目录的id
  * 根目录的id为"/"
  * 只能在根目录下创建目录
- * 删除一个目录会删除下面的全部文本
+ * 删除一个目录会删除下面的全部文件
  */
 export class Gfs {
-
 	/** `this.gid`的别名 */
 	get group_id() {
 		return this.gid
@@ -71,7 +78,7 @@ export class Gfs {
 
 	/** 获取使用空间和文件数 */
 	async df() {
-		const [a, b] = await Promise.all([(async()=>{
+		const [a, b] = await Promise.all([(async () => {
 			const body = pb.encode({
 				4: {
 					1: this.gid,
@@ -82,10 +89,15 @@ export class Gfs {
 			const rsp = pb.decode(payload)[4][4]
 			const total = Number(rsp[4]), used = Number(rsp[5]), free = total - used
 			return {
-				total, used, free
+				/** 总空间 */
+				total,
+				/** 已使用的空间 */
+				used,
+				/** 剩余空间 */
+				free
 			}
 		})(),
-		(async()=>{
+		(async () => {
 			const body = pb.encode({
 				3: {
 					1: this.gid,
@@ -96,7 +108,10 @@ export class Gfs {
 			const rsp = pb.decode(payload)[4][3]
 			const file_count = Number(rsp[4]), max_file_count = Number(rsp[6])
 			return {
-				file_count, max_file_count
+				/** 文件数 */
+				file_count,
+				/** 文件数量上限 */
+				max_file_count
 			}
 		})()])
 		return Object.assign(a, b)
@@ -116,7 +131,10 @@ export class Gfs {
 		return genGfsFileStat(rsp[4])
 	}
 
-	/** 获取文件或目录属性 */
+	/**
+	 * 获取文件或目录属性
+	 * @param fid 目标文件id
+	 */
 	async stat(fid: string) {
 		try {
 			return await this._resolve(fid)
@@ -132,7 +150,13 @@ export class Gfs {
 		}
 	}
 
-	/** 列出目录下的所有文件和目录(默认pid为根目录`/`) */
+	/**
+	 * 列出`pid`目录下的所有文件和目录
+	 * @param pid 目标目录，默认为根目录，即`"/"`
+	 * @param start @todo 未知参数
+	 * @param limit 文件/目录上限，超过此上限就停止获取，默认`100`
+	 * @returns 文件和目录列表
+	 */
 	async dir(pid = "/", start = 0, limit = 100) {
 		const body = pb.encode({
 			2: {
@@ -146,7 +170,7 @@ export class Gfs {
 		const payload = await this.c.sendOidb("OidbSvc.0x6d8_1", body)
 		const rsp = pb.decode(payload)[4][2]
 		checkRsp(rsp)
-		const arr: (GfsDirStat|GfsFileStat)[] = []
+		const arr: (GfsDirStat | GfsFileStat)[] = []
 		if (!rsp[5]) return arr
 		const files = Array.isArray(rsp[5]) ? rsp[5] : [rsp[5]]
 		for (let file of files) {
@@ -157,7 +181,7 @@ export class Gfs {
 		}
 		return arr
 	}
-	/** `this.dir`的别名 */
+	/** {@link dir} 的别名 */
 	ls(pid = "/", start = 0, limit = 100) {
 		return this.dir(pid, start, limit)
 	}
@@ -178,7 +202,7 @@ export class Gfs {
 		return genGfsDirStat(rsp[4])
 	}
 
-	/** 删除文件或目录(删除目录会删除下面的所有文件) */
+	/** 删除文件/目录(删除目录会删除下面的所有文件) */
 	async rm(fid: string) {
 		fid = String(fid)
 		let rsp
@@ -209,7 +233,11 @@ export class Gfs {
 		checkRsp(rsp)
 	}
 
-	/** 重命名文件或目录 */
+	/**
+	 * 重命名文件/目录
+	 * @param fid 文件id
+	 * @param name 新命名
+	 */
 	async rename(fid: string, name: string) {
 		fid = String(fid)
 		let rsp
@@ -227,7 +255,7 @@ export class Gfs {
 			})
 			const payload = await this.c.sendOidb("OidbSvc.0x6d6_4", body)
 			rsp = pb.decode(payload)[4][5]
-			
+
 		} else { //rename dir
 			const body = pb.encode({
 				3: {
@@ -243,7 +271,11 @@ export class Gfs {
 		checkRsp(rsp)
 	}
 
-	/** 移动文件 */
+	/**
+	 * 移动文件
+	 * @param fid 要移动的文件id
+	 * @param pid 目标目录id
+	 */
 	async mv(fid: string, pid: string) {
 		const file = await this._resolve(fid)
 		const body = pb.encode({
@@ -284,10 +316,11 @@ export class Gfs {
 
 	/**
 	 * 上传一个文件
-	 * @param file string表示从该本地文件路径上传，Buffer表示直接上传这段内容
-	 * @param pid 上传到此目录(默认根目录)
-	 * @param name file为Buffer时，若留空则自动以md5命名
+	 * @param file `string`表示从该本地文件路径上传，`Buffer`表示直接上传这段内容
+	 * @param pid 上传的目标目录id，默认根目录
+	 * @param name 上传的文件名，`file`为`Buffer`时，若留空则自动以md5命名
 	 * @param callback 监控上传进度的回调函数，拥有一个"百分比进度"的参数
+	 * @returns 上传的文件属性
 	 */
 	async upload(file: string | Buffer | Uint8Array, pid = "/", name?: string, callback?: (percentage: string) => void) {
 		let size, md5, sha1
@@ -300,7 +333,7 @@ export class Gfs {
 		} else {
 			file = String(file)
 			size = (await fs.promises.stat(file)).size
-			;[md5, sha1] = await common.fileHash(file)
+				;[md5, sha1] = await common.fileHash(file)
 			name = name ? String(name) : path.basename(file)
 		}
 		const body = pb.encode({
@@ -375,9 +408,10 @@ export class Gfs {
 
 	/**
 	 * 将文件转发到当前群
-	 * @param stat 另一个群中的文件属性()
-	 * @param pid 转发后的目录(默认根目录)
-	 * @param name 转发后的文件名(默认不变)
+	 * @param stat 另一个群中的文件属性
+	 * @param pid 转发的目标目录，默认根目录
+	 * @param name 转发后的文件名，默认不变
+	 * @returns 转发的文件在当前群的属性
 	 */
 	async forward(stat: GfsFileStat, pid = "/", name?: string) {
 		const body = pb.encode({
@@ -403,7 +437,10 @@ export class Gfs {
 		return await this._feed(String(rsp[7]), rsp[6])
 	}
 
-	/** 获取文件下载地址 */
+	/**
+	 * 获取文件下载地址
+	 * @param fid 文件id
+	 */
 	async download(fid: string) {
 		const file = await this._resolve(fid)
 		const body = pb.encode({

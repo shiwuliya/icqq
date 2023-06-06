@@ -1,22 +1,31 @@
-export { Client, createClient, Config, LogLevel, Statistics } from "./client"
+export { Client, Config, LogLevel, Statistics, createClient } from "./client"
 export { User, Friend } from "./friend"
 export { Discuss, Group } from "./group"
 export { Member } from "./member"
+export { Guild, GuildMember, GuildRole } from './guild'
+export { Channel, ChannelType, NotifyType } from "./channel"
 export { StrangerInfo, FriendInfo, GroupInfo, MemberInfo } from "./entities"
 export { Gfs, GfsDirStat, GfsFileStat } from "./gfs"
 export { Gender, GroupRole, OnlineStatus } from "./common"
 export { ErrorCode, LoginErrorCode } from "./errors"
-export { Message, PrivateMessage, GroupMessage, DiscussMessage, ForwardMessage, Forwardable, Quotable,
-	MusicPlatform, Sendable, Anonymous, MessageElem, FileElem, ReplyElem,
-	TextElem, AtElem, FaceElem, BfaceElem, MfaceElem, ImageElem, MiraiElem,
-	FlashElem, PttElem, VideoElem, XmlElem, JsonElem, ShareElem, LocationElem, PokeElem,
-	parseDmMessageId, parseGroupMessageId, parseImageFileParam, getGroupImageUrl, segment, genGroupMessageId, genDmMessageId } from "./message"
-export { PrivateMessageEvent, GroupMessageEvent, DiscussMessageEvent, MessageRet,
+export {
+	Anonymous, Message, PrivateMessage, GroupMessage, DiscussMessage, ForwardMessage,
+	genDmMessageId, parseDmMessageId, genGroupMessageId, parseGroupMessageId,
+	TextElem, AtElem, FaceElem, BfaceElem, MfaceElem, ImageElem, FlashElem,
+	PttElem, VideoElem, LocationElem, ShareElem, JsonElem, XmlElem, PokeElem,
+	MiraiElem, FileElem, ReplyElem, MusicElem, QuoteElem, Quotable,
+	Forwardable, ForwardNode, MessageElem, Sendable, segment,
+	Image, parseImageFileParam, Converter, ConverterExt,
+	Parser, getGroupImageUrl, MusicPlatform, ShareContent, ShareConfig
+} from "./message"
+export {
+	PrivateMessageEvent, GroupMessageEvent, DiscussMessageEvent, MessageRet,
 	MessageEvent, RequestEvent, FriendNoticeEvent, GroupNoticeEvent,
 	FriendRequestEvent, GroupRequestEvent, GroupInviteEvent, EventMap,
 	FriendIncreaseEvent, FriendDecreaseEvent, FriendRecallEvent, FriendPokeEvent,
 	MemberIncreaseEvent, MemberDecreaseEvent, GroupRecallEvent, GroupPokeEvent,
-	GroupAdminEvent, GroupMuteEvent, GroupTransferEvent } from "./events"
+	GroupAdminEvent, GroupMuteEvent, GroupTransferEvent, GroupSignEvent
+} from "./events"
 export { ApiRejection, Device, Apk, Platform, Domain } from "./core"
 export * as core from "./core"
-export { OcrResult } from "./internal"
+export { OcrResult, GuildMessageEvent } from "./internal"

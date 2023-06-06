@@ -1,9 +1,9 @@
 import { pb, jce, Platform } from "../core"
 import { drop } from "../errors"
-import {timestamp, Gender, OnlineStatus, uuid, log, NOOP} from "../common"
+import { timestamp, Gender, OnlineStatus, uuid, log, NOOP } from "../common"
 import { Image } from "../message"
 import { CmdID, highwayUpload } from "./highway"
-import {Guild} from "../guild";
+import { Guild } from "../guild";
 
 type Client = import("../client").Client
 
@@ -189,7 +189,7 @@ export async function loadFL(this: Client) {
 				remark: v[3] || "",
 				class_id: v[1],
 			}
-			this.fl.set(uid, Object.assign(this.fl.get(uid) || { }, info))
+			this.fl.set(uid, Object.assign(this.fl.get(uid) || {}, info))
 			set.add(uid)
 		}
 		start += limit
@@ -226,14 +226,14 @@ export async function loadSL(this: Client) {
 	}
 }
 
-export function loadGPL(this:Client){
+export function loadGPL(this: Client) {
 	this.sendUni("trpc.group_pro.synclogic.SyncLogic.SyncFirstView", pb.encode({ 1: 0, 2: 0, 3: 0 })).then(payload => {
 		this.tiny_id = String(pb.decode(payload)[6])
 	}).catch(NOOP)
 	return new Promise<void>((resolve, reject) => {
 		const id = setTimeout(reject, 5000)
-		this.on('internal.sso',(cmd,payload)=>{
-			if(cmd==='trpc.group_pro.synclogic.SyncLogic.PushFirstView'){
+		this.on('internal.sso', (cmd, payload) => {
+			if (cmd === 'trpc.group_pro.synclogic.SyncLogic.PushFirstView') {
 				const proto = pb.decode(payload)
 				if (!proto[3]) return
 				if (!Array.isArray(proto[3])) proto[3] = [proto[3]]
@@ -278,7 +278,7 @@ export async function loadGL(this: Client) {
 			admin_flag: !!v[11],
 			update_time: 0,
 		}
-		this.gl.set(gid, Object.assign(this.gl.get(gid) || { }, info))
+		this.gl.set(gid, Object.assign(this.gl.get(gid) || {}, info))
 		set.add(gid)
 	}
 	for (const [gid, _] of this.gl) {

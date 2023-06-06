@@ -1,5 +1,5 @@
 import { randomBytes } from "crypto"
-import {pb, jce} from "../core"
+import { pb, jce } from "../core"
 import { uin2code, NOOP, timestamp } from "../common"
 import { PrivateMessage } from "../message"
 import { PrivateMessageEvent } from "../events"

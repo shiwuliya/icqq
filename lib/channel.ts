@@ -1,9 +1,9 @@
-import {randomBytes} from "crypto";
-import {Guild} from "./guild";
-import {ApiRejection, pb} from "./core"
-import {lock} from "./core/constants";
-import {buildMusic, Converter, MusicPlatform, Sendable} from "./message";
-import {buildShare, ShareConfig, ShareContent} from "./message/share";
+import { randomBytes } from "crypto";
+import { Guild } from "./guild";
+import { ApiRejection, pb } from "./core"
+import { lock } from "./core/constants";
+import { buildMusic, Converter, MusicPlatform, Sendable } from "./message";
+import { buildShare, ShareConfig, ShareContent } from "./message/share";
 
 export enum NotifyType {
     Unknown = 0,
@@ -20,7 +20,7 @@ export enum ChannelType {
     Forum = 7,
 }
 
-export class Channel{
+export class Channel {
 
     channel_name = ""
     channel_type = ChannelType.Unknown
@@ -30,7 +30,7 @@ export class Channel{
         lock(this, "guild")
         lock(this, "channel_id")
     }
-    get c(){
+    get c() {
         return this.guild.c
     }
     _renew(channel_name: string, notify_type: NotifyType, channel_type: ChannelType) {
@@ -52,8 +52,8 @@ export class Channel{
      * 发送频道消息
      * 暂时仅支持发送： 文本、AT、表情
      */
-    async sendMsg(content: Sendable): Promise<{ seq: number, rand: number, time: number}> {
-        const {rich,brief}=new Converter(content)
+    async sendMsg(content: Sendable): Promise<{ seq: number, rand: number, time: number }> {
+        const { rich, brief } = new Converter(content)
         const payload = await this.c.sendUni("MsgProxy.SendMsg", pb.encode({
             1: {
                 1: {

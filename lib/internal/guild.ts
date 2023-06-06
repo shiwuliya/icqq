@@ -5,23 +5,30 @@ import { parse, MessageElem, Sendable } from "../message"
 
 type Client = import("../client").Client
 
+/** 频道消息事件 */
 export class GuildMessageEvent {
 	/** 频道id */
 	guild_id: string
+	/** 频道名 */
 	guild_name: string
 	/** 子频道id */
 	channel_id: string
+	/** 子频道名 */
 	channel_name: string
-	post_type:'message'='message'
-	detail_type:string='guild'
-	/** 消息序号(同一子频道中一般顺序递增) */
+	post_type: 'message' = 'message'
+	detail_type: string = 'guild'
+	/** 消息序号（同一子频道中一般顺序递增） */
 	seq: number
 	rand: number
 	time: number
+	/** 消息内容 */
 	message: MessageElem[]
 	raw_message: string
+	/** 发送方信息 */
 	sender: {
+		/** 账号 */
 		tiny_id: string
+		/** 昵称 */
 		nickname: string
 	}
 
@@ -64,7 +71,7 @@ export function guildMsgListener(this: Client, payload: Buffer) {
 	this.stat.recv_msg_cnt++
 	this.logger.info(`recv from: [Guild: ${msg.guild_name}, Member: ${msg.sender.nickname}]` + msg.raw_message)
 	msg.reply = (content: Sendable) => {
-		return this.sendGuildMsg(msg.guild_id,msg.channel_id,content)
+		return this.sendGuildMsg(msg.guild_id, msg.channel_id, content)
 	}
 	this.em("message.guild", msg)
 }

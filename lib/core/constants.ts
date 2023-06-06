@@ -29,9 +29,9 @@ export const md5 = (data: BinaryLike) => createHash("md5").update(data).digest()
 
 /** sha hash */
 export const sha = (data: BinaryLike) => createHash("sha1").update(data).digest()
-export const randomString=(n:number,template='abcdef1234567890')=>{
-	const len=template.length
-	return new Array(n).fill(false).map(()=>template.charAt(Math.floor(Math.random()*len))).join('')
+export const randomString = (n: number, template = 'abcdef1234567890') => {
+	const len = template.length
+	return new Array(n).fill(false).map(() => template.charAt(Math.floor(Math.random() * len))).join('')
 }
 
 export function formatTime(value: Date | number | string, template: string = 'yyyy-MM-dd HH:mm:ss') {
@@ -45,11 +45,11 @@ export function formatTime(value: Date | number | string, template: string = 'yy
 		"q+": Math.floor((date.getMonth() + 3) / 3), //季度
 		"S": date.getMilliseconds() //毫秒
 	};
-	if (/(y+)/.test(template)) template = template.replace(/(y+)/, (sub)=>(date.getFullYear() + "").slice(0,sub.length));
-	for (let k in o){
-		const reg=new RegExp("(" + k + ")")
+	if (/(y+)/.test(template)) template = template.replace(/(y+)/, (sub) => (date.getFullYear() + "").slice(0, sub.length));
+	for (let k in o) {
+		const reg = new RegExp("(" + k + ")")
 		if (reg.test(template)) {
-			template = template.replace(reg, (v)=>`${o[k]}`.padStart(v.length,''));
+			template = template.replace(reg, (v) => `${o[k]}`.padStart(v.length, ''));
 		}
 	}
 	return template;

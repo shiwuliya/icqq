@@ -1,11 +1,11 @@
 import * as stream from "stream"
 import * as net from "net"
-import {randomBytes} from "crypto"
+import { randomBytes } from "crypto"
 import http from "http"
-import axios, {CancelTokenSource} from "axios"
-import {tea, pb, ApiRejection} from "../core"
-import {ErrorCode} from "../errors"
-import {md5, NOOP, BUF0, int32ip2str, log} from "../common"
+import axios, { CancelTokenSource } from "axios"
+import { tea, pb, ApiRejection } from "../core"
+import { ErrorCode } from "../errors"
+import { md5, NOOP, BUF0, int32ip2str, log } from "../common"
 
 type Client = import("../client").Client
 
@@ -102,7 +102,7 @@ export function highwayUpload(this: Client, readable: stream.Readable, obj: High
         const socket = net.connect(
             port as number, ip as string,
             () => {
-                readable.pipe(highway).pipe(socket, {end: false})
+                readable.pipe(highway).pipe(socket, { end: false })
             }
         )
         const handleRspHeader = (header: Buffer) => {
@@ -160,7 +160,7 @@ export function highwayUpload(this: Client, readable: stream.Readable, obj: High
     })
 }
 
-const agent = new http.Agent({maxSockets: 10})
+const agent = new http.Agent({ maxSockets: 10 })
 
 export function highwayHttpUpload(this: Client, readable: stream.Readable, obj: HighwayUploadExt) {
     const ip = this.sig.bigdata.ip

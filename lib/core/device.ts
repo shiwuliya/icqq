@@ -243,14 +243,21 @@ LQ+FLkpncClKVIrBwv6PHyUvuCb0rIarmgDnzkfQAqVufEtR64iazGDKatvJ9y6B
 
 /** 支持的登录设备平台 */
 export enum Platform {
+    /** 安卓手机 */
     Android = 1,
+    /** 安卓平板 */
     aPad = 2,
+    /** 安卓手表 */
     Watch = 3,
+    /** MacOS */
     iMac = 4,
+    /** iPad */
     iPad = 5,
+    /** 旧版安卓手机 */
     old_Android = 6
 }
 
+/** 登录设备通用属性 */
 export type Apk = typeof mobile
 const mobile = {
     id: "com.tencent.mobileqq",
