@@ -241,7 +241,11 @@ LQ+FLkpncClKVIrBwv6PHyUvuCb0rIarmgDnzkfQAqVufEtR64iazGDKatvJ9y6B
     }
 }
 
-/** 支持的登录设备平台 */
+/**
+ * 支持的登录设备平台
+ * * `aPad`和`Watch`协议无法设置在线状态、无法接收某些群事件（包括戳一戳等）
+ * * 目前仅`Watch`支持扫码登录，可能会支持`iPad`扫码登录
+ */
 export enum Platform {
     /** 安卓手机 */
     Android = 1,
@@ -253,7 +257,7 @@ export enum Platform {
     iMac = 4,
     /** iPad */
     iPad = 5,
-    /** 旧版安卓手机 */
+    /** 旧版安卓手机，其他协议登录失败的可尝试此协议 */
     old_Android = 6
 }
 
