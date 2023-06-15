@@ -193,9 +193,8 @@ export class Client extends BaseClient {
      * @param conf 配置
      */
     constructor(conf?: Config)
-    constructor(...args: [number, Config?] | [Config?]) {
-        let [uin, conf = uin] = args
-        if (typeof conf === "number") conf = {}
+    constructor(uin?: number | Config, conf?: Config) {
+        if (typeof uin !== "number") conf = uin
         const config = {
             log_level: "info" as LogLevel,
             platform: Platform.Android,
@@ -290,8 +289,8 @@ export class Client extends BaseClient {
      * @param password 可以为密码原文，或密码的md5值
      */
     async login(uin?: number, password?: string | Buffer): Promise<void>
-    async login(...args: [number?, (string | Buffer)?] | [(string | Buffer)?]) {
-        let [uin, password] = args
+    async login(uin?: number | string | Buffer, password?: string | Buffer) {
+        // let [uin, password] = args
         if (typeof uin !== "number") {
             password = uin
             uin = this.uin
