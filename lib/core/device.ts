@@ -72,7 +72,7 @@ export function generateFullDevice(apk: Apk, d?: ShortDevice) {
         wifi_bssid: d.mac_address,
         wifi_ssid: d.wifi_ssid,
         imei: d.imei,
-        android_id: d.android_id,
+        android_id: md5(d.android_id).toString("hex"),
         apn: "wifi",
         version: {
             incremental: d.incremental,
@@ -267,6 +267,7 @@ const mobile = {
     sub_sig_map: 0x10400,
     sdkver: "6.0.0.2535",
     display: "Android",
+	qua: 'V1_AND_SQ_8.9.50_3898_YYB_D',
     ssover: 19,
 }
 const old_mobile = {
@@ -284,6 +285,7 @@ const old_mobile = {
     sub_sig_map: 0x10400,
     sdkver: "6.0.0.2497",
     display: "Android_8.8.88",
+	qua: '',
     ssover: 18,
 }
 const watch: Apk = {
@@ -301,6 +303,7 @@ const watch: Apk = {
     sub_sig_map: 0x10400,
     sdkver: "6.0.0.2365",
     display: "Watch",
+	qua: '',
     ssover: 5
 }
 const hd: Apk = {
@@ -318,6 +321,7 @@ const hd: Apk = {
     sub_sig_map: 66560,
     sdkver: "6.0.0.2433",
     display: "iMac",
+	qua: '',
     ssover: 12
 }
 
@@ -338,6 +342,7 @@ const apklist: { [platform in Platform]: Apk } = {
         name: 'A8.9.50.611',
         version: 'A8.9.50.611',
         sdkver: '6.0.0.2535',
+		qua: '',
         display: 'iPad'
     },
 }

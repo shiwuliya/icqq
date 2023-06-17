@@ -14,7 +14,53 @@ import * as log4js from "log4js"
 import { log } from "../common"
 import crypto from "crypto"
 import * as path from "path"
-import * as fs from "fs"
+import axios from "axios";
+
+async function getSign(client: BaseClient, cmd: String, seq: number, body: Buffer) {
+    let params = BUF0;
+    let qImei36 = client.device.qImei36 || client.device.qImei16;
+    if (qImei36 && client.apk.qua) {
+        let url = `http://127.0.0.1:8086/sign`;
+        let post_params = {
+            ver: client.apk.ver,
+            qua: client.apk.qua,
+            uin: client.uin,
+            cmd: cmd,
+            seq: seq,
+            androidId: client.device.android_id,
+            qimei36: qImei36,
+            buffer: body.toString('hex')
+        };
+        const { data } = await axios.post(url, post_params, {
+            timeout: 5000,
+            headers: {
+                'User-Agent': `Dalvik/2.1.0 (Linux; U; Android ${client.device.version.release}; PCRT00 Build/N2G48H)`,
+                'Content-Type': "application/x-www-form-urlencoded"
+            }
+        }).catch(() => ({ data: { code: -1 } }));
+        console.log(cmd, data);
+        if (data.code == 0) {
+            let pbdata = {
+                9: 1,
+                12: qImei36,
+                14: 0,
+                16: client.uin,
+                18: 0,
+                19: 1,
+                20: 1,
+                21: 0,
+                24: {
+                    1: Buffer.from(data.data.sign, 'hex'),
+                    2: Buffer.from(data.data.token, 'hex'),
+                    3: Buffer.from(data.data.extra, 'hex')
+                },
+                28: 3
+            };
+            params = Buffer.from(pb.encode(pbdata));
+        }
+    }
+    return params;
+}
 
 const FN_NEXT_SEQ = Symbol("FN_NEXT_SEQ")
 const FN_SEND = Symbol("FN_SEND")
@@ -159,6 +205,12 @@ export class BaseClient extends Trapper {
         remote_ip: "",
         remote_port: 0,
     }
+    protected SignLoginCmd = [
+        'wtlogin.login'
+    ];
+    protected SignCmd = [
+        'MessageSvc.PbSendMsg'
+    ];
 
     constructor(p: Platform = Platform.Android, d?: ShortDevice) {
         super()
@@ -305,6 +357,9 @@ export class BaseClient extends Trapper {
 
     /** 使用接收到的token登录 */
     async tokenLogin(token: Buffer) {
+        if (!this.device.qImei36 || !this.device.qImei16) {
+            await this.device.getQIMEI()
+        }
         this.sig.session = randomBytes(4)
         this.sig.randkey = randomBytes(16)
         this[ECDH] = new Ecdh
@@ -359,7 +414,7 @@ export class BaseClient extends Trapper {
      * @param md5pass 密码的md5值
      */
     async passwordLogin(uin: number, md5pass: Buffer) {
-        if (this.apk.display !== 'iPad' && !this.device.qImei36 || !this.device.qImei16) {
+        if (!this.device.qImei36 || !this.device.qImei16) {
             await this.device.getQIMEI()
         }
         this.uin = uin
@@ -475,7 +530,7 @@ export class BaseClient extends Trapper {
     }
 
     /** 获取登录二维码 */
-    fetchQrcode() {
+    async fetchQrcode() {
         const t = tlv.getPacker(this)
         const body = new Writer()
             .writeU16(0)
@@ -491,7 +546,7 @@ export class BaseClient extends Trapper {
             .writeBytes(t(0x33))
             .writeBytes(t(0x35, 8))
             .read()
-        const pkt = buildCode2dPacket.call(this, 0x31, 0x11100, body)
+        const pkt = await buildCode2dPacket.call(this, 0x31, 0x11100, body)
         this[FN_SEND](pkt).then(payload => {
             payload = tea.decrypt(payload.slice(16, -1), this[ECDH].share_key)
             const stream = Readable.from(payload, { objectMode: false })
@@ -590,7 +645,7 @@ export class BaseClient extends Trapper {
             .writeTlv(BUF0)
             .writeU16(0)
             .read()
-        const pkt = buildCode2dPacket.call(this, 0x12, 0x6200, body)
+        const pkt = await buildCode2dPacket.call(this, 0x12, 0x6200, body)
         try {
             let payload = await this[FN_SEND](pkt)
             payload = tea.decrypt(payload.slice(16, -1), this[ECDH].share_key)
@@ -653,7 +708,7 @@ export class BaseClient extends Trapper {
     private async [FN_SEND_LOGIN](cmd: LoginCmd, body: Buffer) {
         if (this[IS_ONLINE] || this[LOGIN_LOCK])
             return
-        const pkt = buildLoginPacket.call(this, cmd, body)
+        const pkt = await buildLoginPacket.call(this, cmd, body)
         try {
             this[LOGIN_LOCK] = true
             decodeLoginResponse.call(this, await this[FN_SEND](pkt))
@@ -666,8 +721,12 @@ export class BaseClient extends Trapper {
     }
 
     /** 发送一个业务包不等待返回 */
-    writeUni(cmd: string, body: Uint8Array, seq = 0) {
+    async writeUni(cmd: string, body: Uint8Array, seq = 0) {
         this.statistics.sent_pkt_cnt++
+        if (this.SignCmd.includes(cmd)) {
+            this[NET].write(await buildUniPktSign.call(this, cmd, body, seq))
+            return;
+        }
         this[NET].write(buildUniPkt.call(this, cmd, body, seq))
     }
 
@@ -695,8 +754,8 @@ export class BaseClient extends Trapper {
 
     /** 发送一个业务包并等待返回 */
     async sendUni(cmd: string, body: Uint8Array, timeout = 5) {
-        if (!this[IS_ONLINE])
-            throw new ApiRejection(-1, `client not online`)
+        if (!this[IS_ONLINE]) throw new ApiRejection(-1, `client not online`)
+        if (this.SignCmd.includes(cmd)) return this[FN_SEND](await buildUniPktSign.call(this, cmd, body), timeout)
         return this[FN_SEND](buildUniPkt.call(this, cmd, body), timeout)
     }
 
@@ -719,20 +778,35 @@ export class BaseClient extends Trapper {
     }
 }
 
-function buildUniPkt(this: BaseClient, cmd: string, body: Uint8Array, seq = 0) {
+async function buildUniPktSign(this: BaseClient, cmd: string, body: Uint8Array, seq = 0) {
+    let BodySign = await getSign(this, cmd, this.sig.seq, Buffer.from(body));
+    return buildUniPkt.call(this, cmd, body, seq, BodySign);
+}
+
+function buildUniPkt(this: BaseClient, cmd: string, body: Uint8Array, seq = 0, BodySign = BUF0) {
     seq = seq || this[FN_NEXT_SEQ]()
     this.emit("internal.verbose", `send:${cmd} seq:${seq}`, VerboseLevel.Debug)
     let len = cmd.length + 20
-    const sso = Buffer.allocUnsafe(len + body.length + 4)
-    sso.writeUInt32BE(len, 0)
-    sso.writeUInt32BE(cmd.length + 4, 4)
-    sso.fill(cmd, 8)
-    let offset = cmd.length + 8
-    sso.writeUInt32BE(8, offset)
-    sso.fill(this.sig.session, offset + 4)
-    sso.writeUInt32BE(4, offset + 8)
-    sso.writeUInt32BE(body.length + 4, offset + 12)
-    sso.fill(body, offset + 16)
+    //const sso = Buffer.allocUnsafe(len + body.length + 4)
+    //sso.writeUInt32BE(len, 0)
+    //sso.writeUInt32BE(cmd.length + 4, 4)
+    //sso.fill(cmd, 8)
+    //let offset = cmd.length + 8
+    //sso.writeUInt32BE(8, offset)
+    //sso.fill(this.sig.session, offset + 4)
+    //sso.writeUInt32BE(4, offset + 8)
+    //sso.writeUInt32BE(body.length + 4, offset + 12)
+    ///sso.fill(body, offset + 16)
+
+    let sso = new Writer()
+        .writeWithLength(new Writer()
+            .writeWithLength(cmd)
+            .writeWithLength(this.sig.session)
+            .writeWithLength(BodySign || BUF0)
+            .read())
+        .writeWithLength(body)
+        .read();
+
     const encrypted = tea.encrypt(sso, this.sig.d2key)
     const uin = String(this.uin)
     len = encrypted.length + uin.length + 18
@@ -893,7 +967,7 @@ async function register(this: BaseClient, logout = false, reflush = false) {
         0, null, 1000, 98
     ])
     const body = jce.encodeWrapper({ SvcReqRegister }, "PushService", "SvcReqRegister")
-    const pkt = buildLoginPacket.call(this, "StatSvc.register", body, 1)
+    const pkt = await buildLoginPacket.call(this, "StatSvc.register", body, 1)
     try {
         const payload = await this[FN_SEND](pkt, 10)
         if (logout) return
@@ -922,8 +996,8 @@ async function register(this: BaseClient, logout = false, reflush = false) {
     }
 }
 
-function syncTimeDiff(this: BaseClient) {
-    const pkt = buildLoginPacket.call(this, "Client.CorrectTime", BUF4, 0)
+async function syncTimeDiff(this: BaseClient) {
+    const pkt = await buildLoginPacket.call(this, "Client.CorrectTime", BUF4, 0)
     this[FN_SEND](pkt).then(buf => {
         try {
             this.sig.time_diff = buf.readInt32BE() - timestamp()
@@ -956,7 +1030,7 @@ async function refreshToken(this: BaseClient) {
         .writeBytes(t(0x202))
         .writeBytes(t(0x511))
     const body = writer.read()
-    const pkt = buildLoginPacket.call(this, "wtlogin.exchange_emp", body)
+    const pkt = await buildLoginPacket.call(this, "wtlogin.exchange_emp", body)
     try {
         let payload = await this[FN_SEND](pkt)
         payload = tea.decrypt(payload.slice(16, payload.length - 1), this[ECDH].share_key)
@@ -993,7 +1067,7 @@ type LoginCmd =
     | "Client.CorrectTime"
 type LoginCmdType = 0 | 1 | 2
 
-function buildLoginPacket(this: BaseClient, cmd: LoginCmd, body: Buffer, type: LoginCmdType = 2): Buffer {
+async function buildLoginPacket(this: BaseClient, cmd: LoginCmd, body: Buffer, type: LoginCmdType = 2): Promise<Buffer> {
     this[FN_NEXT_SEQ]()
     this.emit("internal.verbose", `send:${cmd} seq:${this.sig.seq}`, VerboseLevel.Debug)
     let uin = this.uin, cmdid = 0x810, subappid = this.apk.subid
@@ -1029,6 +1103,12 @@ function buildLoginPacket(this: BaseClient, cmd: LoginCmd, body: Buffer, type: L
             .writeU8(0x03)
             .read()
     }
+
+    let BodySign;
+    if (this.SignLoginCmd.includes(cmd)) {
+        BodySign = await getSign(this, cmd, this.sig.seq, Buffer.from(body));
+    }
+
     const ksid = this.sig.ksid ||= Buffer.from(`|${this.device.imei}|` + this.apk.name)
     let sso = new Writer()
         .writeWithLength(new Writer()
@@ -1043,7 +1123,7 @@ function buildLoginPacket(this: BaseClient, cmd: LoginCmd, body: Buffer, type: L
             .writeU32(4)
             .writeU16(ksid.length + 2)
             .writeBytes(ksid)
-            .writeWithLength(this.device.qImei16 || BUF0)
+            .writeWithLength(BodySign || BUF0)
             .read()
         )
         .writeWithLength(body)
