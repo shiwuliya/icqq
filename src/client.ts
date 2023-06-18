@@ -172,7 +172,9 @@ export class Client extends BaseClient {
         const file = path.join(dir, `device.json`)
         let device: ShortDevice, isNew: boolean = false
         try {
-            device = require(file) as ShortDevice
+            // device = require(file) as ShortDevice
+            const rawFile = fs.readFileSync(file)
+            device = JSON.parse(rawFile.toString()) as ShortDevice
         } catch {
             device = generateShortDevice()
             isNew = true
