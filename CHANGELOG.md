@@ -1,5 +1,19 @@
 # Changelog
 
+## [0.4.0](https://github.com/icqqjs/icqq/compare/v0.3.15...v0.4.0) (2023-06-18)
+
+
+### Features
+
+* 实现消息签名组包（test）。 ([e75fa03](https://github.com/icqqjs/icqq/commit/e75fa0334ab01bb56c9824058831931f63e90f94))
+
+
+### Bug Fixes
+
+* Config增加签名接口地址配置，可自行实现签名API，供ICQQ调用 ([412c387](https://github.com/icqqjs/icqq/commit/412c3871ed84bd03d53d8f61127e4bbb29c431fd))
+* prettier log ([984d59b](https://github.com/icqqjs/icqq/commit/984d59be7b62333f73a3446a4b2349c30170d660))
+* 更新ts文件到src，便于区分编译文件和源文件 ([dbca2bb](https://github.com/icqqjs/icqq/commit/dbca2bbb8b98b8f2c68294fcf4024dcc1b8a5dd4))
+
 ## [0.3.15](https://github.com/icqqjs/icqq/compare/v0.3.14...v0.3.15) (2023-05-30)
 
 
