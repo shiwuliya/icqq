@@ -17,8 +17,12 @@ import * as path from "path"
 import axios from "axios";
 import {Client} from "../client";
 
-async function getSign(this: BaseClient, cmd: String, seq: number, body: Buffer) {
+async function getSign(this: BaseClient, cmd: string, seq: number, body: Buffer) {
     let params = BUF0;
+    if(!this.sig.sign_api_addr) {
+        this.logger.warn(`未配置签名API地址，${this.SignLoginCmd.includes(cmd)?'登录':'消息发送'}可能失败`)
+        return params
+    }
     let qImei36 = this.device.qImei36 || this.device.qImei16;
     if (qImei36 && this.apk.qua) {
         let url = this.sig.sign_api_addr;
@@ -39,7 +43,7 @@ async function getSign(this: BaseClient, cmd: String, seq: number, body: Buffer)
                 'Content-Type': "application/x-www-form-urlencoded"
             }
         }).catch(() => ({ data: { code: -1 } }));
-        console.log(cmd, data);
+        this.logger.debug(`sign ${cmd} result: ${JSON.stringify(data)}`);
         if (data.code == 0) {
             let pbdata = {
                 9: 1,
@@ -788,10 +792,6 @@ export class BaseClient extends Trapper {
 }
 
 async function buildUniPktSign(this: BaseClient, cmd: string, body: Uint8Array, seq = 0) {
-    if(!this.sig.sign_api_addr) {
-        this.logger.warn(`未配置签名API地址，${this.SignLoginCmd.includes(cmd)?'登录':'消息发送'}可能失败`)
-        return buildUniPkt.call(this, cmd, body, seq)
-    }
     let BodySign = await getSign.call(this, cmd, this.sig.seq, Buffer.from(body));
     return buildUniPkt.call(this, cmd, body, seq, BodySign);
 }
@@ -1117,7 +1117,7 @@ async function buildLoginPacket(this: BaseClient, cmd: LoginCmd, body: Buffer, t
             .read()
     }
 
-    let BodySign;
+    let BodySign=BUF0;
     if (this.SignLoginCmd.includes(cmd)) {
         BodySign = await getSign.call(this, cmd, this.sig.seq, Buffer.from(body));
     }
@@ -1136,7 +1136,7 @@ async function buildLoginPacket(this: BaseClient, cmd: LoginCmd, body: Buffer, t
             .writeU32(4)
             .writeU16(ksid.length + 2)
             .writeBytes(ksid)
-            .writeWithLength(BodySign || BUF0)
+            .writeWithLength(BodySign)
             .read()
         )
         .writeWithLength(body)
