@@ -181,6 +181,7 @@ export class Client extends BaseClient {
             fs.writeFileSync(file, JSON.stringify(device, null, 2))
         }
         super(config.platform, device);
+        this.setSignServer(config.sign_api_addr);
         if (typeof uin === "number") this.uin = uin
         this.device.mtime = Math.floor(fs.statSync(file).mtimeMs || Date.now())
         this.logger.level = config.log_level
@@ -805,6 +806,10 @@ export interface Config {
      * 设置为0则不会自动重连，然后你可以监听此事件自己处理
      */
     reconn_interval?: number
+    /**
+     * 签名服务器地址，未配置可能会导致登录失败和无法收发消息
+     */
+    sign_api_addr?: string
     /** 是否缓存群员列表(默认true)，群多的时候(500~1000)会多占据约100MB+内存，关闭后进程只需不到20MB内存 */
     cache_group_member?: boolean
     /** 自动选择最优服务器(默认true)，关闭后会一直使用`msfwifi.3g.qq.com:8080`进行连接 */
