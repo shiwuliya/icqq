@@ -2,15 +2,15 @@
   "name": "icqq",
   "version": "0.3.15",
   "upday": "2023/6/18",
-  "description": "QQ protocol!",
+  "description": "QQ protocol for NodeJS!",
   "main": "lib/index.js",
   "types": "lib/index.d.ts",
   "scripts": {
-    "build": "tsc",
-    "docs": "typedoc lib/index.ts",
-    "dev": "ts-node ./lib/test.ts",
+    "build": "tsc && cp -r src/core/protobuf/*.min.* lib/core/protobuf",
+    "docs": "typedoc src/index.ts",
+    "dev": "ts-node src/test.ts",
     "pub": "npm publish --access public",
-    "clean": "rm -rf ./lib/*.js && rm -rf ./lib/**/*.js && rm -rf ./lib/*.d.ts && rm -rf ./lib/**/*.d.ts"
+    "clean": "rm -rf lib"
   },
   "engines": {
     "node": ">= v14"
@@ -28,7 +28,7 @@
   "license": "MPL-2.0",
   "bugs": "https://github.com/icqqjs/icqq/issues",
   "homepage": "https://github.com/icqqjs/icqq#readme",
-  "changelogs": "https://github.com/icqqjs/icqq/releases",
+  "changelogs": "https://github.com/icqqjs/icqq/blob/main/CHANGELOG.md",
   "dependencies": {
     "axios": "^1.1.2",
     "log4js": "^6.3.0",
@@ -46,8 +46,8 @@
     "ws": "^8.2.3"
   },
   "files": [
-    "/lib/**/*.js",
-    "/lib/**/*.d.ts",
-    "/lib/**/LICENSE"
+    "/src/**/*.js",
+    "/src/**/*.d.ts",
+    "/src/**/LICENSE"
   ]
 }

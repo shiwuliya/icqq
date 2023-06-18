@@ -8,43 +8,48 @@ import * as tlv from "./tlv"
 import * as tea from "./tea"
 import * as pb from "./protobuf"
 import * as jce from "./jce"
-import { BUF0, BUF4, BUF16, NOOP, md5, timestamp, lock, hide, unzip, int32ip2str } from "./constants"
+import {BUF0, BUF4, BUF16, NOOP, md5, timestamp, lock, hide, unzip, int32ip2str, unlock} from "./constants"
 import { ShortDevice, Device, Platform, Apk, getApkInfo } from "./device"
 import * as log4js from "log4js"
 import { log } from "../common"
 import crypto from "crypto"
 import * as path from "path"
 import axios from "axios";
+import {Client} from "../client";
 
-async function getSign(client: BaseClient, cmd: String, seq: number, body: Buffer) {
+async function getSign(this: BaseClient, cmd: string, seq: number, body: Buffer) {
     let params = BUF0;
-    let qImei36 = client.device.qImei36 || client.device.qImei16;
-    if (qImei36 && client.apk.qua) {
-        let url = `http://127.0.0.1:8086/sign`;
+    if(!this.sig.sign_api_addr) {
+        this.logger.warn(`未配置签名API地址，${this.SignLoginCmd.includes(cmd)?'登录':'消息发送'}可能失败`)
+        return params
+    }
+    let qImei36 = this.device.qImei36 || this.device.qImei16;
+    if (qImei36 && this.apk.qua) {
+        let url = this.sig.sign_api_addr;
         let post_params = {
-            ver: client.apk.ver,
-            qua: client.apk.qua,
-            uin: client.uin,
+            ver: this.apk.ver,
+            qua: this.apk.qua,
+            uin: this.uin,
             cmd: cmd,
             seq: seq,
-            androidId: client.device.android_id,
+            androidId: this.device.android_id,
             qimei36: qImei36,
             buffer: body.toString('hex')
         };
         const { data } = await axios.post(url, post_params, {
             timeout: 5000,
             headers: {
-                'User-Agent': `Dalvik/2.1.0 (Linux; U; Android ${client.device.version.release}; PCRT00 Build/N2G48H)`,
+                'User-Agent': `Dalvik/2.1.0 (Linux; U; Android ${this.device.version.release}; PCRT00 Build/N2G48H)`,
                 'Content-Type': "application/x-www-form-urlencoded"
             }
         }).catch(() => ({ data: { code: -1 } }));
-        console.log(cmd, data);
+        this.logger.debug(`sign ${cmd} result: ${JSON.stringify(data)}`);
         if (data.code == 0) {
             let pbdata = {
                 9: 1,
                 12: qImei36,
                 14: 0,
-                16: client.uin,
+                16: this.uin,
                 18: 0,
                 19: 1,
                 20: 1,
@@ -203,6 +208,7 @@ export class BaseClient extends Trapper {
         sent_msg_cnt: 0,
         msg_cnt_per_min: 0,
         remote_ip: "",
+        sign_api_addr: "",
         remote_port: 0,
     }
     protected SignLoginCmd = [
@@ -251,6 +257,13 @@ export class BaseClient extends Trapper {
         } else {
             this[NET].auto_search = true
         }
+    }
+    setSignServer(addr?: string):void{
+        if(!addr)  return
+        unlock(this, "sig")
+        if(!/http(s)?:\/\//.test(addr)) addr = `http://${addr}`
+        this.sig.sign_api_addr = addr
+        lock(this, "sig")
     }
 
     on(matcher: Matcher, listener: Listener) {
@@ -779,7 +792,7 @@ export class BaseClient extends Trapper {
 }
 
 async function buildUniPktSign(this: BaseClient, cmd: string, body: Uint8Array, seq = 0) {
-    let BodySign = await getSign(this, cmd, this.sig.seq, Buffer.from(body));
+    let BodySign = await getSign.call(this, cmd, this.sig.seq, Buffer.from(body));
     return buildUniPkt.call(this, cmd, body, seq, BodySign);
 }
 
@@ -1065,7 +1078,7 @@ type LoginCmd =
     | "wtlogin.trans_emp"
     | "StatSvc.register"
     | "Client.CorrectTime"
-type LoginCmdType = 0 | 1 | 2
+type LoginCmdType = 0 | 1 | 2 // 0: 心跳 1: 上线 2: 登录
 
 async function buildLoginPacket(this: BaseClient, cmd: LoginCmd, body: Buffer, type: LoginCmdType = 2): Promise<Buffer> {
     this[FN_NEXT_SEQ]()
@@ -1104,9 +1117,9 @@ async function buildLoginPacket(this: BaseClient, cmd: LoginCmd, body: Buffer, t
             .read()
     }
 
-    let BodySign;
+    let BodySign=BUF0;
     if (this.SignLoginCmd.includes(cmd)) {
-        BodySign = await getSign(this, cmd, this.sig.seq, Buffer.from(body));
+        BodySign = await getSign.call(this, cmd, this.sig.seq, Buffer.from(body));
     }
 
     const ksid = this.sig.ksid ||= Buffer.from(`|${this.device.imei}|` + this.apk.name)
@@ -1123,7 +1136,7 @@ async function buildLoginPacket(this: BaseClient, cmd: LoginCmd, body: Buffer, t
             .writeU32(4)
             .writeU16(ksid.length + 2)
             .writeBytes(ksid)
-            .writeWithLength(BodySign || BUF0)
+            .writeWithLength(BodySign)
             .read()
         )
         .writeWithLength(body)
@@ -1166,6 +1179,7 @@ function buildCode2dPacket(this: BaseClient, cmdid: number, head: number, body: 
         .read()
     return buildLoginPacket.call(this, "wtlogin.trans_emp", body)
 }
+
 
 function decodeT119(this: BaseClient, t119: Buffer) {
     const r = Readable.from(tea.decrypt(t119, this.sig.tgtgt), { objectMode: false })

@@ -4,6 +4,7 @@
     "target": "ES2020",
     "module": "commonjs",
     "moduleResolution": "node",
+    "outDir": "lib",
     "declaration": true,
     "esModuleInterop": true,
     "forceConsistentCasingInFileNames": true,
@@ -11,5 +12,10 @@
     "skipLibCheck": true,
     "outDir": "./dist", // 指定输出目录
   },
-  "include": ["lib"]
+  "include": [
+    "src"
+  ],
+  "exclude": [
+    "src/test.ts"
+  ]
 }

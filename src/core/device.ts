@@ -35,7 +35,7 @@ export function generateShortDevice() {
         device: `${randstr(5).toUpperCase()}`,
         board: `${randstr(5).toUpperCase()}`,
         brand: `${randstr(4).toUpperCase()}`,
-        model: `ILPP ${randstr(4).toUpperCase()}`,
+        model: `ICQQ ${randstr(4).toUpperCase()}`,
         wifi_ssid: `HUAWEI-${randstr(7)}`,
         bootloader: `U-boot`,
         android_id: `IL.${randstr(7, true)}.${randstr(4, true)}`,
