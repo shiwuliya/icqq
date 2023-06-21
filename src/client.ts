@@ -181,6 +181,9 @@ export class Client extends BaseClient {
             fs.writeFileSync(file, JSON.stringify(device, null, 2))
         }
         super(config.platform, device);
+        if(!config.sign_api_addr){
+            this.logger.warn(`未配置签名API地址，登录/消息发送可能失败`)
+        }
         this.setSignServer(config.sign_api_addr);
         if (typeof uin === "number") this.uin = uin
         this.device.mtime = Math.floor(fs.statSync(file).mtimeMs || Date.now())

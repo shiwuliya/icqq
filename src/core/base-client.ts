@@ -20,7 +20,6 @@ import {Client} from "../client";
 async function getSign(this: BaseClient, cmd: string, seq: number, body: Buffer) {
     let params = BUF0;
     if(!this.sig.sign_api_addr) {
-        this.logger.warn(`未配置签名API地址，${this.SignLoginCmd.includes(cmd)?'登录':'消息发送'}可能失败`)
         return params
     }
     let qImei36 = this.device.qImei36 || this.device.qImei16;
