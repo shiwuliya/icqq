@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.4.1](https://github.com/icqqjs/icqq/compare/v0.4.0...v0.4.1) (2023-06-21)
+
+
+### Bug Fixes
+
+* publish error ([ec80b45](https://github.com/icqqjs/icqq/commit/ec80b454bc0a236fd0348945b862ca0e66fd750b))
+
 ## [0.4.0](https://github.com/icqqjs/icqq/compare/v0.3.15...v0.4.0) (2023-06-18)
 
 
