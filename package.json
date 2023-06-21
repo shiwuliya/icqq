@@ -46,8 +46,9 @@
     "ws": "^8.2.3"
   },
   "files": [
-    "/src/**/*.js",
-    "/src/**/*.d.ts",
-    "/src/**/LICENSE"
+    "/lib/**/*.js",
+    "/lib/**/*.d.ts",
+    "/LICENSE",
+    "/README.md"
   ]
 }
