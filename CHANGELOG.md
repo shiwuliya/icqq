@@ -1,5 +1,13 @@
 # Changelog
 
+## [0.4.2](https://github.com/icqqjs/icqq/compare/v0.4.1...v0.4.2) (2023-06-21)
+
+
+### Bug Fixes
+
+* 未配置sign API改为只提示一次 ([45e6040](https://github.com/icqqjs/icqq/commit/45e604043a97ee49fac6a055a1f409801780a8b3))
+* 未配置sign API改为只提示一次 ([45e6040](https://github.com/icqqjs/icqq/commit/45e604043a97ee49fac6a055a1f409801780a8b3))
+
 ## [0.4.1](https://github.com/icqqjs/icqq/compare/v0.4.0...v0.4.1) (2023-06-21)
 
 
