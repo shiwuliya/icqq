@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.4.5](https://github.com/icqqjs/icqq/compare/v0.4.4...v0.4.5) (2023-06-23)
+
+
+### Bug Fixes
+
+* 禁止Tim协议设置在线状态 ([baa7612](https://github.com/icqqjs/icqq/commit/baa76125b1eaf9d475e171138337fad85fd554d5))
+
 ## [0.4.4](https://github.com/icqqjs/icqq/compare/v0.4.3...v0.4.4) (2023-06-23)
 
 
