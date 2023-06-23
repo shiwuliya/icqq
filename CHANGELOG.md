@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.4.3](https://github.com/icqqjs/icqq/compare/v0.4.2...v0.4.3) (2023-06-23)
+
+
+### Bug Fixes
+
+* 将安卓8.8.88协议替换为Tim3.5.1（platform: 6）需配合签名api使用 ([6ef5b26](https://github.com/icqqjs/icqq/commit/6ef5b26f33921298f774c54ed0906c8b3ae0f0e4))
+
 ## [0.4.2](https://github.com/icqqjs/icqq/compare/v0.4.1...v0.4.2) (2023-06-21)
 
 
