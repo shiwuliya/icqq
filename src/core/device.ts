@@ -248,7 +248,7 @@ export enum Platform {
     Watch = 3,
     iMac = 4,
     iPad = 5,
-    tim = 6
+    Tim = 6
 }
 
 export type Apk = typeof mobile
@@ -327,7 +327,7 @@ const hd: Apk = {
 
 const apklist: { [platform in Platform]: Apk } = {
     [Platform.Android]: mobile,
-    [Platform.tim]: tim,
+    [Platform.Tim]: tim,
     [Platform.aPad]: {
         ...mobile,
         subid: 537155599,

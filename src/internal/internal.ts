@@ -19,7 +19,7 @@ const d50 = pb.encode({
 export async function setStatus(this: Client, status: OnlineStatus) {
 	if (!status)
 		return false
-	if ([Platform.Watch, Platform.aPad].includes(this.config.platform as Platform))
+	if ([Platform.Watch, Platform.aPad, Platform.Tim].includes(this.config.platform as Platform))
 		return false
 	const d = this.device
 	const SvcReqRegister = jce.encodeStruct([
