@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.4.6](https://github.com/icqqjs/icqq/compare/v0.4.5...v0.4.6) (2023-06-23)
+
+
+### Bug Fixes
+
+* ipad ver ([58e2529](https://github.com/icqqjs/icqq/commit/58e2529642a011ce8f29dd5d1a6b95590d479c8b))
+
 ## [0.4.5](https://github.com/icqqjs/icqq/compare/v0.4.4...v0.4.5) (2023-06-23)
 
 
