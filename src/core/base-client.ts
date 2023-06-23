@@ -992,9 +992,10 @@ async function register(this: BaseClient, logout = false, reflush = false) {
                 syncTimeDiff.call(this)
                 if (typeof this.heartbeat === "function")
                     await this.heartbeat()
-                this.sendUni("OidbSvc.0x480_9_IMCore", this.sig.hb480).catch(() => {
+                let heartbeat_cmd = this.apk.id == 'com.tencent.tim' ? 'OidbSvc.0x480_9' : 'OidbSvc.0x480_9_IMCore'
+                this.sendUni(heartbeat_cmd, this.sig.hb480).catch(() => {
                     this.emit("internal.verbose", "heartbeat timeout", VerboseLevel.Warn)
-                    this.sendUni("OidbSvc.0x480_9_IMCore", this.sig.hb480).catch(() => {
+                    this.sendUni(heartbeat_cmd, this.sig.hb480).catch(() => {
                         this.emit("internal.verbose", "heartbeat timeout x 2", VerboseLevel.Error)
                         this[NET].destroy()
                     })
