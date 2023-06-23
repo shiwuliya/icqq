@@ -339,8 +339,8 @@ const apklist: { [platform in Platform]: Apk } = {
         ...mobile,
         subid: 537155074,
         sign: hd.sign,
-        name: 'A8.9.50.611',
-        version: 'A8.9.50.611',
+        name: '8.9.50.611',
+        ver: '8.9.50',
         sdkver: '6.0.0.2535',
         qua: 'V1_AND_SQ_8.9.50_3898_YYB_D',
         display: 'iPad'
