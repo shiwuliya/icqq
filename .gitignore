@@ -7,3 +7,4 @@ lib/**/*.js
 !src/**/protobuf.min.d.ts
 !src/**/protobuf.min.js
 package-lock.json
+pnpm-lock.yaml

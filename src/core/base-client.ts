@@ -8,18 +8,17 @@ import * as tlv from "./tlv"
 import * as tea from "./tea"
 import * as pb from "./protobuf"
 import * as jce from "./jce"
-import {BUF0, BUF4, BUF16, NOOP, md5, timestamp, lock, hide, unzip, int32ip2str, unlock} from "./constants"
+import { BUF0, BUF4, BUF16, NOOP, md5, timestamp, lock, hide, unzip, int32ip2str, unlock } from "./constants"
 import { ShortDevice, Device, Platform, Apk, getApkInfo } from "./device"
 import * as log4js from "log4js"
 import { log } from "../common"
 import crypto from "crypto"
 import * as path from "path"
 import axios from "axios";
-import {Client} from "../client";
 
 async function getSign(this: BaseClient, cmd: string, seq: number, body: Buffer) {
     let params = BUF0;
-    if(!this.sig.sign_api_addr) {
+    if (!this.sig.sign_api_addr) {
         return params
     }
     let qImei36 = this.device.qImei36 || this.device.qImei16;
@@ -257,10 +256,10 @@ export class BaseClient extends Trapper {
             this[NET].auto_search = true
         }
     }
-    setSignServer(addr?: string):void{
-        if(!addr)  return
+    setSignServer(addr?: string): void {
+        if (!addr) return
         unlock(this, "sig")
-        if(!/http(s)?:\/\//.test(addr)) addr = `http://${addr}`
+        if (!/http(s)?:\/\//.test(addr)) addr = `http://${addr}`
         this.sig.sign_api_addr = addr
         lock(this, "sig")
     }
@@ -1116,7 +1115,7 @@ async function buildLoginPacket(this: BaseClient, cmd: LoginCmd, body: Buffer, t
             .read()
     }
 
-    let BodySign=BUF0;
+    let BodySign = BUF0;
     if (this.SignLoginCmd.includes(cmd)) {
         BodySign = await getSign.call(this, cmd, this.sig.seq, Buffer.from(body));
     }
@@ -1297,10 +1296,6 @@ function decodeLoginResponse(this: BaseClient, payload: Buffer): any {
             phone = String(t[0x178]).substr(t[0x178].indexOf("\x0b") + 1, 11)
         }
         return this.emit("internal.verify", t[0x204]?.toString() || "", phone)
-    }
-
-    if (type === 45 && this.apk.display != 'Android_8.8.88') {
-        this.logger.error(`(${type})此协议可能已被禁止登录，建议更换Android_8.8.88（platform: 6）协议后再尝试登录！`)
     }
 
     if (type === 235) {

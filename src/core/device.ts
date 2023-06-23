@@ -248,7 +248,7 @@ export enum Platform {
     Watch = 3,
     iMac = 4,
     iPad = 5,
-    old_Android = 6
+    tim = 6
 }
 
 export type Apk = typeof mobile
@@ -267,25 +267,25 @@ const mobile = {
     sub_sig_map: 0x10400,
     sdkver: "6.0.0.2535",
     display: "Android",
-	qua: 'V1_AND_SQ_8.9.50_3898_YYB_D',
+    qua: 'V1_AND_SQ_8.9.50_3898_YYB_D',
     ssover: 19,
 }
-const old_mobile = {
-    id: "com.tencent.mobileqq",
+const tim = {
+    id: "com.tencent.tim",
     app_key: '0S200MNJT807V3GE',
-    name: "A8.8.88.7083",
-    version: "8.8.88.7083",
-    ver: "8.8.88",
-    sign: Buffer.from([0xA6, 0xB7, 0x45, 0xBF, 0x24, 0xA2, 0xC2, 0x77, 0x52, 0x77, 0x16, 0xF6, 0xF3, 0x6E, 0xB6, 0x8D]),
-    buildtime: 1648004515,
+    name: "A3.5.1.3168",
+    version: "3.5.1.3168",
+    ver: "3.5.1",
+    sign: Buffer.from('775e696d09856872fdd8ab4f3f06b1e0', 'hex'),
+    buildtime: 1630062176,
     appid: 16,
-    subid: 537118044,
+    subid: 537150355,
     bitmap: 150470524,
     main_sig_map: 16724722,
     sub_sig_map: 0x10400,
-    sdkver: "6.0.0.2497",
-    display: "Android_8.8.88",
-	qua: '',
+    sdkver: "6.0.0.2484",
+    display: "Tim",
+    qua: "V1_AND_SQ_8.3.9_351_TIM_D",
     ssover: 18,
 }
 const watch: Apk = {
@@ -303,7 +303,7 @@ const watch: Apk = {
     sub_sig_map: 0x10400,
     sdkver: "6.0.0.2365",
     display: "Watch",
-	qua: '',
+    qua: '',
     ssover: 5
 }
 const hd: Apk = {
@@ -321,13 +321,13 @@ const hd: Apk = {
     sub_sig_map: 66560,
     sdkver: "6.0.0.2433",
     display: "iMac",
-	qua: '',
+    qua: '',
     ssover: 12
 }
 
 const apklist: { [platform in Platform]: Apk } = {
     [Platform.Android]: mobile,
-    [Platform.old_Android]: old_mobile,
+    [Platform.tim]: tim,
     [Platform.aPad]: {
         ...mobile,
         subid: 537155599,
@@ -342,7 +342,7 @@ const apklist: { [platform in Platform]: Apk } = {
         name: 'A8.9.50.611',
         version: 'A8.9.50.611',
         sdkver: '6.0.0.2535',
-		qua: '',
+        qua: 'V1_AND_SQ_8.9.50_3898_YYB_D',
         display: 'iPad'
     },
 }
