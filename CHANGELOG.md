@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.4.4](https://github.com/icqqjs/icqq/compare/v0.4.3...v0.4.4) (2023-06-23)
+
+
+### Bug Fixes
+
+* Tim协议心跳超时问题 ([a7d950e](https://github.com/icqqjs/icqq/commit/a7d950e8148949add76f933065de0433b8421f7c))
+
 ## [0.4.3](https://github.com/icqqjs/icqq/compare/v0.4.2...v0.4.3) (2023-06-23)
 
 
