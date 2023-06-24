@@ -42,7 +42,7 @@ async function getSign(this: BaseClient, cmd: string, seq: number, body: Buffer)
             }
         }).catch(() => ({ data: { code: -1 } }));
         this.logger.debug(`sign ${cmd} result: ${JSON.stringify(data)}`);
-        if (data.code == 0) {
+        if (data.code >= 0) {
             let pbdata = {
                 9: 1,
                 12: qImei36,
