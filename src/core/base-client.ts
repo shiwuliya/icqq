@@ -16,55 +16,6 @@ import crypto from "crypto"
 import * as path from "path"
 import axios from "axios";
 
-async function getSign(this: BaseClient, cmd: string, seq: number, body: Buffer) {
-    let params = BUF0;
-    if (!this.sig.sign_api_addr) {
-        return params
-    }
-    let qImei36 = this.device.qImei36 || this.device.qImei16;
-    if (qImei36 && this.apk.qua) {
-        let url = this.sig.sign_api_addr;
-        let post_params = {
-            ver: this.apk.ver,
-            qua: this.apk.qua,
-            uin: this.uin,
-            cmd: cmd,
-            seq: seq,
-            androidId: this.device.android_id,
-            qimei36: qImei36,
-            buffer: body.toString('hex')
-        };
-        const { data } = await axios.post(url, post_params, {
-            timeout: 5000,
-            headers: {
-                'User-Agent': `Dalvik/2.1.0 (Linux; U; Android ${this.device.version.release}; PCRT00 Build/N2G48H)`,
-                'Content-Type': "application/x-www-form-urlencoded"
-            }
-        }).catch(() => ({ data: { code: -1 } }));
-        this.logger.debug(`sign ${cmd} result: ${JSON.stringify(data)}`);
-        if (data.code >= 0) {
-            let pbdata = {
-                9: 1,
-                12: qImei36,
-                14: 0,
-                16: this.uin,
-                18: 0,
-                19: 1,
-                20: 1,
-                21: 0,
-                24: {
-                    1: Buffer.from(data.data.sign, 'hex'),
-                    2: Buffer.from(data.data.token, 'hex'),
-                    3: Buffer.from(data.data.extra, 'hex')
-                },
-                28: 3
-            };
-            params = Buffer.from(pb.encode(pbdata));
-        }
-    }
-    return params;
-}
-
 const FN_NEXT_SEQ = Symbol("FN_NEXT_SEQ")
 const FN_SEND = Symbol("FN_SEND")
 const FN_SEND_LOGIN = Symbol("FN_SEND_LOGIN")
@@ -283,6 +234,55 @@ export class BaseClient extends Trapper {
     /** 是否为在线状态 (可以收发业务包的状态) */
     isOnline() {
         return this[IS_ONLINE]
+    }
+
+    async getSign(cmd: string, seq: number, body: Buffer) {
+        let params = BUF0;
+        if (!this.sig.sign_api_addr) {
+            return params
+        }
+        let qImei36 = this.device.qImei36 || this.device.qImei16;
+        if (qImei36 && this.apk.qua) {
+            let url = this.sig.sign_api_addr;
+            let post_params = {
+                ver: this.apk.ver,
+                qua: this.apk.qua,
+                uin: this.uin,
+                cmd: cmd,
+                seq: seq,
+                androidId: this.device.android_id,
+                qimei36: qImei36,
+                buffer: body.toString('hex')
+            };
+            const { data } = await axios.post(url, post_params, {
+                timeout: 5000,
+                headers: {
+                    'User-Agent': `Dalvik/2.1.0 (Linux; U; Android ${this.device.version.release}; PCRT00 Build/N2G48H)`,
+                    'Content-Type': "application/x-www-form-urlencoded"
+                }
+            }).catch(() => ({ data: { code: -1 } }));
+            this.logger.debug(`sign ${cmd} result: ${JSON.stringify(data)}`);
+            if (data.code >= 0) {
+                let pbdata = {
+                    9: 1,
+                    12: qImei36,
+                    14: 0,
+                    16: this.uin,
+                    18: 0,
+                    19: 1,
+                    20: 1,
+                    21: 0,
+                    24: {
+                        1: Buffer.from(data.data.sign, 'hex'),
+                        2: Buffer.from(data.data.token, 'hex'),
+                        3: Buffer.from(data.data.extra, 'hex')
+                    },
+                    28: 3
+                };
+                params = Buffer.from(pb.encode(pbdata));
+            }
+        }
+        return params;
     }
 
     calcPoW(data: any) {
@@ -790,7 +790,7 @@ export class BaseClient extends Trapper {
 }
 
 async function buildUniPktSign(this: BaseClient, cmd: string, body: Uint8Array, seq = 0) {
-    let BodySign = await getSign.call(this, cmd, this.sig.seq, Buffer.from(body));
+    let BodySign = await this.getSign(cmd, this.sig.seq, Buffer.from(body));
     return buildUniPkt.call(this, cmd, body, seq, BodySign);
 }
 
@@ -1118,7 +1118,7 @@ async function buildLoginPacket(this: BaseClient, cmd: LoginCmd, body: Buffer, t
 
     let BodySign = BUF0;
     if (this.SignLoginCmd.includes(cmd)) {
-        BodySign = await getSign.call(this, cmd, this.sig.seq, Buffer.from(body));
+        BodySign = await this.getSign(cmd, this.sig.seq, Buffer.from(body));
     }
 
     const ksid = this.sig.ksid ||= Buffer.from(`|${this.device.imei}|` + this.apk.name)
