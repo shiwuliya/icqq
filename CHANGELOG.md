@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.4.7](https://github.com/icqqjs/icqq/compare/v0.4.6...v0.4.7) (2023-06-24)
+
+
+### Bug Fixes
+
+* 支持重写client.getSign（可自行实现调用第三方签名api） ([e87a275](https://github.com/icqqjs/icqq/commit/e87a275c8d0214bdded3ac9401a8be29a3ff5a77))
+
 ## [0.4.6](https://github.com/icqqjs/icqq/compare/v0.4.5...v0.4.6) (2023-06-23)
 
 
