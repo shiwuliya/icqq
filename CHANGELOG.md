@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.4.8](https://github.com/icqqjs/icqq/compare/v0.4.7...v0.4.8) (2023-07-01)
+
+
+### Bug Fixes
+
+* 更新8.9.63、默认关闭auto_server ([86a345c](https://github.com/icqqjs/icqq/commit/86a345ca089e9d38b73d22c6caf25003393b2951))
+
 ## [0.4.7](https://github.com/icqqjs/icqq/compare/v0.4.6...v0.4.7) (2023-06-24)
 
 
