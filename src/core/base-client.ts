@@ -280,6 +280,8 @@ export class BaseClient extends Trapper {
                     28: 3
                 };
                 params = Buffer.from(pb.encode(pbdata));
+            }else{
+                this.logger.error(`签名api异常： ${cmd} result: ${JSON.stringify(data)}`);
             }
         }
         return params;

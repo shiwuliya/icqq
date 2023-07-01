@@ -159,7 +159,7 @@ export class Client extends BaseClient {
         const config = {
             log_level: "info" as LogLevel,
             platform: Platform.Android,
-            auto_server: true,
+            auto_server: false,
             ignore_self: true,
             resend: true,
             cache_group_member: true,
