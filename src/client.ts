@@ -225,7 +225,7 @@ export class Client extends BaseClient {
             n++
             if (n > 10) {
                 n = 0
-                this.setOnlineStatus()
+                this.setOnlineStatus().catch(NOOP)
             }
         }
 
