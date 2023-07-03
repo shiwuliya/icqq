@@ -351,7 +351,7 @@ export class BaseClient extends Trapper {
             androidId: this.device.android_id,
             qimei36: qImei36
         };
-        const { data } = await axios.get(url.replace('/sign', '/request_token'), {
+        const { data } = await axios.get(url.replace(/\/sign$/, '/request_token'), {
             params: post_params,
             timeout: 10000,
             headers: {
@@ -385,7 +385,7 @@ export class BaseClient extends Trapper {
             qimei36: qImei36,
             buffer: body.toString('hex')
         };
-        const { data } = await axios.get(url.replace('/sign', '/submit'), {
+        const { data } = await axios.get(url.replace(/\/sign$/, '/submit'), {
             params: post_params,
             timeout: 10000,
             headers: {
