@@ -160,12 +160,18 @@ export class BaseClient extends Trapper {
         sign_api_addr: "",
         remote_port: 0,
     }
-    protected SignLoginCmd = [
-        'wtlogin.login'
+    protected signLoginCmd = [
+        'wtlogin.login',
+        'wtlogin.exchange_emp'
     ];
-    protected SignCmd = [
-        'MessageSvc.PbSendMsg'
+    protected signCmd = [
+        'MessageSvc.PbSendMsg',
+        'trpc.o3.ecdh_access.EcdhAccess.SsoEstablishShareKey',
+        'trpc.o3.ecdh_access.EcdhAccess.SsoSecureA2Establish',
+        'trpc.o3.ecdh_access.EcdhAccess.SsoSecureA2Access'
     ];
+    private ssoPacketList = [];
+    private requestTokenTime = 0;
 
     constructor(p: Platform = Platform.Android, d?: ShortDevice) {
         super()
@@ -255,7 +261,7 @@ export class BaseClient extends Trapper {
                 buffer: body.toString('hex')
             };
             const { data } = await axios.post(url, post_params, {
-                timeout: 5000,
+                timeout: 10000,
                 headers: {
                     'User-Agent': `Dalvik/2.1.0 (Linux; U; Android ${this.device.version.release}; PCRT00 Build/N2G48H)`,
                     'Content-Type': "application/x-www-form-urlencoded"
@@ -280,12 +286,113 @@ export class BaseClient extends Trapper {
                     28: 3
                 };
                 params = Buffer.from(pb.encode(pbdata));
-            }else{
+                let list = data.data?.ssoPacketList || data.data?.requestCallback || [];
+                if (list.length < 1 && cmd.includes('wtlogin')) {
+                    this.requestToken();
+                } else {
+                    this.ssoPacketListHandler(list);
+                }
+            } else {
                 this.logger.error(`签名api异常： ${cmd} result: ${JSON.stringify(data)}`);
             }
         }
         return params;
     }
+
+    async ssoPacketListHandler(list: any) {
+        if(list === null && this.isOnline()){
+            if(this.ssoPacketList.length > 0){
+                list = this.ssoPacketList;
+                this.ssoPacketList = [];
+            }
+        }
+        
+        if (!list || list.length < 1) return;
+        if(!this.isOnline()){
+            this.ssoPacketList = this.ssoPacketList.concat(list);
+            return;
+        }
+
+        for (let ssoPacket of list) {
+            let cmd = ssoPacket.cmd;
+            let body = Buffer.from(ssoPacket.body, 'hex');
+            let callbackId = ssoPacket.callbackId;
+            let payload = await this.sendUni(cmd, body);
+            this.logger.debug(`sendUni ${cmd} result: ${payload.toString('hex')}`);
+            this.submitSsoPacket(cmd, callbackId, payload);
+        }
+    }
+
+    async requestToken() {
+        if((Date.now() - this.requestTokenTime) >= 60){
+            this.requestTokenTime = Date.now();
+        }
+        let list = await this.requestSignToken();
+        await this.ssoPacketListHandler(list);
+    }
+
+    async requestSignToken() {
+        if (!this.sig.sign_api_addr) {
+            return [];
+        }
+        let qImei36 = this.device.qImei36 || this.device.qImei16;
+        let url = this.sig.sign_api_addr;
+        let post_params = {
+            ver: this.apk.ver,
+            qua: this.apk.qua,
+            uin: this.uin,
+            androidId: this.device.android_id,
+            qimei36: qImei36
+        };
+        const { data } = await axios.post(url.replace('/sign', '/request_token'), post_params, {
+            timeout: 10000,
+            headers: {
+                'User-Agent': `Dalvik/2.1.0 (Linux; U; Android ${this.device.version.release}; PCRT00 Build/N2G48H)`,
+                'Content-Type': "application/x-www-form-urlencoded"
+            }
+        }).catch(() => ({ data: { code: -1 } }));
+        this.logger.debug(`requestSignToken result: ${JSON.stringify(data)}`);
+        if (data.code >= 0) {
+            let ssoPacketList = data.data?.ssoPacketList || data.data?.requestCallback;
+            if (!ssoPacketList || ssoPacketList.length < 1) return [];
+            return ssoPacketList;
+        }
+        return [];
+    }
+
+    async submitSsoPacket(cmd: string, callbackId: number, body: Buffer) {
+        if (!this.sig.sign_api_addr) {
+            return [];
+        }
+        let qImei36 = this.device.qImei36 || this.device.qImei16;
+        let url = this.sig.sign_api_addr;
+        let post_params = {
+            ver: this.apk.ver,
+            qua: this.apk.qua,
+            uin: this.uin,
+            cmd: cmd,
+            callbackId: callbackId,
+            callback_id: callbackId,
+            androidId: this.device.android_id,
+            qimei36: qImei36,
+            buffer: body.toString('hex')
+        };
+        const { data } = await axios.post(url.replace('/sign', '/submit'), post_params, {
+            timeout: 10000,
+            headers: {
+                'User-Agent': `Dalvik/2.1.0 (Linux; U; Android ${this.device.version.release}; PCRT00 Build/N2G48H)`,
+                'Content-Type': "application/x-www-form-urlencoded"
+            }
+        }).catch(() => ({ data: { code: -1 } }));
+        this.logger.debug(`submitSsoPacket result: ${JSON.stringify(data)}`);
+        if (data.code >= 0) {
+            let ssoPacketList = data.data?.ssoPacketList || data.data?.requestCallback;
+            if (!ssoPacketList || ssoPacketList.length < 1) return [];
+            return ssoPacketList;
+        }
+        return [];
+    }
+
 
     calcPoW(data: any) {
         if (!data || data.length === 0) return Buffer.alloc(0);
@@ -736,7 +843,7 @@ export class BaseClient extends Trapper {
     /** 发送一个业务包不等待返回 */
     async writeUni(cmd: string, body: Uint8Array, seq = 0) {
         this.statistics.sent_pkt_cnt++
-        if (this.SignCmd.includes(cmd)) {
+        if (this.signCmd.includes(cmd)) {
             this[NET].write(await buildUniPktSign.call(this, cmd, body, seq))
             return;
         }
@@ -768,7 +875,7 @@ export class BaseClient extends Trapper {
     /** 发送一个业务包并等待返回 */
     async sendUni(cmd: string, body: Uint8Array, timeout = 5) {
         if (!this[IS_ONLINE]) throw new ApiRejection(-1, `client not online`)
-        if (this.SignCmd.includes(cmd)) return this[FN_SEND](await buildUniPktSign.call(this, cmd, body), timeout)
+        if (this.signCmd.includes(cmd)) return this[FN_SEND](await buildUniPktSign.call(this, cmd, body), timeout)
         return this[FN_SEND](buildUniPkt.call(this, cmd, body), timeout)
     }
 
@@ -1119,7 +1226,7 @@ async function buildLoginPacket(this: BaseClient, cmd: LoginCmd, body: Buffer, t
     }
 
     let BodySign = BUF0;
-    if (this.SignLoginCmd.includes(cmd)) {
+    if (this.signLoginCmd.includes(cmd)) {
         BodySign = await this.getSign(cmd, this.sig.seq, Buffer.from(body));
     }
 
@@ -1272,6 +1379,7 @@ function decodeLoginResponse(this: BaseClient, payload: Buffer): any {
         return register.call(this).then(() => {
             if (this[IS_ONLINE]) {
                 this.emit("internal.online", token, nickname, gender, age)
+                this.ssoPacketListHandler(null)
             }
         })
     }
