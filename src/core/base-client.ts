@@ -351,7 +351,8 @@ export class BaseClient extends Trapper {
             androidId: this.device.android_id,
             qimei36: qImei36
         };
-        const { data } = await axios.post(url.replace('/sign', '/request_token'), post_params, {
+        const { data } = await axios.get(url.replace('/sign', '/request_token'), {
+            params: post_params,
             timeout: 10000,
             headers: {
                 'User-Agent': `Dalvik/2.1.0 (Linux; U; Android ${this.device.version.release}; PCRT00 Build/N2G48H)`,
@@ -384,7 +385,8 @@ export class BaseClient extends Trapper {
             qimei36: qImei36,
             buffer: body.toString('hex')
         };
-        const { data } = await axios.post(url.replace('/sign', '/submit'), post_params, {
+        const { data } = await axios.get(url.replace('/sign', '/submit'), {
+            params: post_params,
             timeout: 10000,
             headers: {
                 'User-Agent': `Dalvik/2.1.0 (Linux; U; Android ${this.device.version.release}; PCRT00 Build/N2G48H)`,
