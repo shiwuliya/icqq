@@ -269,24 +269,10 @@ export class BaseClient extends Trapper {
             }).catch(() => ({ data: { code: -1 } }));
             this.logger.debug(`sign ${cmd} result: ${JSON.stringify(data)}`);
             if (data.code >= 0) {
-                let pbdata = {
-                    9: 1,
-                    12: qImei36,
-                    14: 0,
-                    16: this.uin,
-                    18: 0,
-                    19: 1,
-                    20: 1,
-                    21: 0,
-                    24: {
-                        1: Buffer.from(data.data.sign, 'hex'),
-                        2: Buffer.from(data.data.token, 'hex'),
-                        3: Buffer.from(data.data.extra, 'hex')
-                    },
-                    28: 3
-                };
-                params = Buffer.from(pb.encode(pbdata));
-                let list = data.data?.ssoPacketList || data.data?.requestCallback || [];
+                const Data = data.data || {};
+                params = this.generateSignPacket(Data.sign, Data.token, Data.extra);
+
+                let list = Data.ssoPacketList || Data.requestCallback || [];
                 if (list.length < 1 && cmd.includes('wtlogin')) {
                     this.requestToken();
                 } else {
@@ -299,16 +285,37 @@ export class BaseClient extends Trapper {
         return params;
     }
 
+    generateSignPacket(sign: String, token: String, extra: String) {
+        let qImei36 = this.device.qImei36 || this.device.qImei16;
+        let pbdata = {
+            9: 1,
+            12: qImei36,
+            14: 0,
+            16: this.uin,
+            18: 0,
+            19: 1,
+            20: 1,
+            21: 0,
+            24: {
+                1: Buffer.from(sign, 'hex'),
+                2: Buffer.from(token, 'hex'),
+                3: Buffer.from(extra, 'hex')
+            },
+            28: 3
+        };
+        return Buffer.from(pb.encode(pbdata));
+    }
+
     async ssoPacketListHandler(list: any) {
-        if(list === null && this.isOnline()){
-            if(this.ssoPacketList.length > 0){
+        if (list === null && this.isOnline()) {
+            if (this.ssoPacketList.length > 0) {
                 list = this.ssoPacketList;
                 this.ssoPacketList = [];
             }
         }
-        
+
         if (!list || list.length < 1) return;
-        if(!this.isOnline()){
+        if (!this.isOnline()) {
             this.ssoPacketList = this.ssoPacketList.concat(list);
             return;
         }
@@ -324,7 +331,7 @@ export class BaseClient extends Trapper {
     }
 
     async requestToken() {
-        if((Date.now() - this.requestTokenTime) >= 60){
+        if ((Date.now() - this.requestTokenTime) >= 60) {
             this.requestTokenTime = Date.now();
         }
         let list = await this.requestSignToken();
