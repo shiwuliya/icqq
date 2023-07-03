@@ -361,7 +361,7 @@ export class BaseClient extends Trapper {
         }).catch(() => ({ data: { code: -1 } }));
         this.logger.debug(`requestSignToken result: ${JSON.stringify(data)}`);
         if (data.code >= 0) {
-            let ssoPacketList = data.data?.ssoPacketList || data.data?.requestCallback;
+            let ssoPacketList = data.data?.ssoPacketList || data.data?.requestCallback || data.data;
             if (!ssoPacketList || ssoPacketList.length < 1) return [];
             return ssoPacketList;
         }
@@ -395,7 +395,7 @@ export class BaseClient extends Trapper {
         }).catch(() => ({ data: { code: -1 } }));
         this.logger.debug(`submitSsoPacket result: ${JSON.stringify(data)}`);
         if (data.code >= 0) {
-            let ssoPacketList = data.data?.ssoPacketList || data.data?.requestCallback;
+            let ssoPacketList = data.data?.ssoPacketList || data.data?.requestCallback || data.data;
             if (!ssoPacketList || ssoPacketList.length < 1) return [];
             return ssoPacketList;
         }
