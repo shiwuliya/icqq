@@ -343,7 +343,6 @@ export class BaseClient extends Trapper {
             return [];
         }
         let qImei36 = this.device.qImei36 || this.device.qImei16;
-        let url = this.sig.sign_api_addr;
         let post_params = {
             ver: this.apk.ver,
             qua: this.apk.qua,
@@ -351,7 +350,9 @@ export class BaseClient extends Trapper {
             androidId: this.device.android_id,
             qimei36: qImei36
         };
-        const { data } = await axios.get(url.replace(/\/sign$/, '/request_token'), {
+        let url = new URL(this.sig.sign_api_addr);
+        url.pathname = '/request_token';
+        const { data } = await axios.get(url.href, {
             params: post_params,
             timeout: 10000,
             headers: {
@@ -373,7 +374,6 @@ export class BaseClient extends Trapper {
             return [];
         }
         let qImei36 = this.device.qImei36 || this.device.qImei16;
-        let url = this.sig.sign_api_addr;
         let post_params = {
             ver: this.apk.ver,
             qua: this.apk.qua,
@@ -385,7 +385,9 @@ export class BaseClient extends Trapper {
             qimei36: qImei36,
             buffer: body.toString('hex')
         };
-        const { data } = await axios.get(url.replace(/\/sign$/, '/submit'), {
+        let url = new URL(this.sig.sign_api_addr);
+        url.pathname = '/submit';
+        const { data } = await axios.get(url.href, {
             params: post_params,
             timeout: 10000,
             headers: {
