@@ -311,6 +311,7 @@ export class BaseClient extends Trapper {
                 seq: seq,
                 androidId: this.device.android_id,
                 qimei36: qImei36,
+                guid: this.device.guid.toString('hex'),
                 buffer: body.toString('hex')
             };
             const { data } = await axios.post(url, post_params, {
@@ -403,7 +404,9 @@ export class BaseClient extends Trapper {
             let callbackId = ssoPacket.callbackId;
             let payload = await this.sendUni(cmd, body);
             this.logger.debug(`sendUni ${cmd} result: ${payload.toString('hex')}`);
-            this.submitSsoPacket(cmd, callbackId, payload);
+            if(callbackId > -1){
+                await this.ssoPacketListHandler(await this.submitSsoPacket(cmd, callbackId, payload));
+            }
         }
     }
 
@@ -425,7 +428,8 @@ export class BaseClient extends Trapper {
             qua: this.apk.qua,
             uin: this.uin,
             androidId: this.device.android_id,
-            qimei36: qImei36
+            qimei36: qImei36,
+            guid: this.device.guid.toString('hex'),
         };
         let url = new URL(this.sig.sign_api_addr);
         url.pathname = '/request_token';
@@ -460,7 +464,8 @@ export class BaseClient extends Trapper {
             callback_id: callbackId,
             androidId: this.device.android_id,
             qimei36: qImei36,
-            buffer: body.toString('hex')
+            buffer: body.toString('hex'),
+            guid: this.device.guid.toString('hex'),
         };
         let url = new URL(this.sig.sign_api_addr);
         url.pathname = '/submit';
