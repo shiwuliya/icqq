@@ -170,7 +170,7 @@ export class BaseClient extends Trapper {
         'trpc.o3.ecdh_access.EcdhAccess.SsoSecureA2Establish',
         'trpc.o3.ecdh_access.EcdhAccess.SsoSecureA2Access'
     ];
-    private ssoPacketList = [];
+    private ssoPacketList: any = [];
     private requestTokenTime = 0;
 
     constructor(p: Platform = Platform.Android, d?: ShortDevice) {
@@ -366,10 +366,35 @@ export class BaseClient extends Trapper {
                 this.ssoPacketList = [];
             }
         }
-
         if (!list || list.length < 1) return;
+        let handle = (list: any) => {
+            let new_list = [];
+            for (let val of list) {
+                try {
+                    let data = pb.decode(Buffer.from(val.body, 'hex'));
+                    val.type = data[1].toString();
+                } catch (err) { }
+                new_list.push(val);
+            }
+            return new_list;
+        };
+
+        list = handle(list);
         if (!this.isOnline()) {
-            this.ssoPacketList = this.ssoPacketList.concat(list);
+            if (this.ssoPacketList.length > 0) {
+                for (let val of list) {
+                    let ssoPacket: any = this.ssoPacketList.find((data: any) => {
+                        return data.cmd === val.cmd && data.type === val.type;
+                    });
+                    if (ssoPacket) {
+                        ssoPacket.body = val.body;
+                    } else {
+                        this.ssoPacketList.push(val);
+                    }
+                }
+            } else {
+                this.ssoPacketList = this.ssoPacketList.concat(list);
+            }
             return;
         }
 
