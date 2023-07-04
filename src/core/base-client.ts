@@ -331,7 +331,7 @@ export class BaseClient extends Trapper {
     }
 
     async requestToken() {
-        if ((Date.now() - this.requestTokenTime) >= 60) {
+        if ((Date.now() - this.requestTokenTime) >= (60 * 1000)) {
             this.requestTokenTime = Date.now();
         }
         let list = await this.requestSignToken();
@@ -1142,12 +1142,14 @@ async function refreshToken(this: BaseClient) {
     if (!this.isOnline() || timestamp() - this.sig.emp_time < 43000)
         return
     const t = tlv.getPacker(this)
+    let tlv_count = 18
     const writer = new Writer()
         .writeU16(11)
-        .writeU16(16)
-        .writeBytes(t(0x100))
+        .writeU16(tlv_count)
+        .writeBytes(t(0x100, 100))
         .writeBytes(t(0x10a))
         .writeBytes(t(0x116))
+        .writeBytes(t(0x108))
         .writeBytes(t(0x144))
         .writeBytes(t(0x143))
         .writeBytes(t(0x142))
@@ -1159,8 +1161,9 @@ async function refreshToken(this: BaseClient) {
         .writeBytes(t(0x177))
         .writeBytes(t(0x187))
         .writeBytes(t(0x188))
-        .writeBytes(t(0x202))
+        .writeBytes(t(0x194))
         .writeBytes(t(0x511))
+        .writeBytes(t(0x202))
     const body = writer.read()
     const pkt = await buildLoginPacket.call(this, "wtlogin.exchange_emp", body)
     try {
