@@ -143,7 +143,7 @@ export class BaseClient extends Trapper {
     readonly pskey: { [domain: string]: Buffer } = {}
     readonly pt4token: { [domain: string]: Buffer } = {}
     /** 心跳间隔(秒) */
-    protected interval = 30
+    protected interval = 60
     /** 随心跳一起触发的函数，可以随意设定 */
     protected heartbeat = NOOP
     /** 数据统计 */
