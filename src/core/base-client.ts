@@ -367,20 +367,19 @@ export class BaseClient extends Trapper {
             }
         }
         if (!list || list.length < 1) return;
-        let handle = (list: any) => {
-            let new_list = [];
-            for (let val of list) {
-                try {
-                    let data = pb.decode(Buffer.from(val.body, 'hex'));
-                    val.type = data[1].toString();
-                } catch (err) { }
-                new_list.push(val);
-            }
-            return new_list;
-        };
-
-        list = handle(list);
         if (!this.isOnline()) {
+            let handle = (list: any) => {
+                let new_list = [];
+                for (let val of list) {
+                    try {
+                        let data = pb.decode(Buffer.from(val.body, 'hex'));
+                        val.type = data[1].toString();
+                    } catch (err) { }
+                    new_list.push(val);
+                }
+                return new_list;
+            };
+            list = handle(list);
             if (this.ssoPacketList.length > 0) {
                 for (let val of list) {
                     let ssoPacket: any = this.ssoPacketList.find((data: any) => {
