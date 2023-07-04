@@ -404,7 +404,7 @@ export class BaseClient extends Trapper {
             let callbackId = ssoPacket.callbackId;
             let payload = await this.sendUni(cmd, body);
             this.logger.debug(`sendUni ${cmd} result: ${payload.toString('hex')}`);
-            if(callbackId > -1){
+            if (callbackId > -1) {
                 await this.ssoPacketListHandler(await this.submitSsoPacket(cmd, callbackId, payload));
             }
         }
@@ -485,7 +485,6 @@ export class BaseClient extends Trapper {
         }
         return [];
     }
-
 
     calcPoW(data: any) {
         if (!data || data.length === 0) return Buffer.alloc(0);
@@ -1192,7 +1191,7 @@ async function register(this: BaseClient, logout = false, reflush = false) {
                 syncTimeDiff.call(this)
                 if (typeof this.heartbeat === "function")
                     await this.heartbeat()
-                let heartbeat_cmd = this.apk.id == 'com.tencent.tim' ? 'OidbSvc.0x480_9' : 'OidbSvc.0x480_9_IMCore'
+                let heartbeat_cmd = [Platform.Tim].includes(this.config.platform as Platform) ? 'OidbSvc.0x480_9' : 'OidbSvc.0x480_9_IMCore'
                 this.sendUni(heartbeat_cmd, this.sig.hb480).catch(() => {
                     this.emit("internal.verbose", "heartbeat timeout", VerboseLevel.Warn)
                     this.sendUni(heartbeat_cmd, this.sig.hb480).catch(() => {
@@ -1200,6 +1199,11 @@ async function register(this: BaseClient, logout = false, reflush = false) {
                         this[NET].destroy()
                     })
                 }).then(refreshToken.bind(this))
+                if (this.isOnline()) {
+                    this[FN_SEND](await buildLoginPacket.call(this, "Heartbeat.Alive", BUF0, 0), 5).catch(() => {
+                        this.emit("internal.verbose", "Heartbeat.Alive timeout", VerboseLevel.Warn)
+                    })
+                }
             }, this.interval * 1000)
         }
     } catch {
@@ -1280,6 +1284,7 @@ type LoginCmd =
     | "wtlogin.trans_emp"
     | "StatSvc.register"
     | "Client.CorrectTime"
+    | "Heartbeat.Alive"
 type LoginCmdType = 0 | 1 | 2 // 0: 心跳 1: 上线 2: 登录
 
 async function buildLoginPacket(this: BaseClient, cmd: LoginCmd, body: Buffer, type: LoginCmdType = 2): Promise<Buffer> {
