@@ -242,6 +242,59 @@ export class BaseClient extends Trapper {
         return this[IS_ONLINE]
     }
 
+    async getT544(cmd: string) {
+        let sign = BUF0;
+        if (this.apk.qua) {
+            let post_params = {
+                ver: this.apk.ver,
+                uin: this.uin,
+                data: cmd,
+                guid: this.device.guid.toString('hex'),
+                version: this.apk.sdkver
+            };
+            let url = new URL(this.sig.sign_api_addr);
+            url.pathname = '/energy';
+            const { data } = await axios.get(url.href, {
+                params: post_params,
+                timeout: 10000,
+                headers: {
+                    'User-Agent': `Dalvik/2.1.0 (Linux; U; Android ${this.device.version.release}; PCRT00 Build/N2G48H)`,
+                    'Content-Type': "application/x-www-form-urlencoded"
+                }
+            }).catch(() => ({ data: { code: -1 } }));
+            this.logger.debug(`getT544 ${cmd} result: ${JSON.stringify(data)}`);
+            if (data.code >= 0) {
+                if (typeof (data.data) === 'string') {
+                    sign = Buffer.from(data.data, 'hex');
+                } else if (typeof (data.data?.sign) === 'string') {
+                    sign = Buffer.from(data.data.sign, 'hex');
+                }
+            } else {
+                this.logger.error(`签名api(energy)异常： ${cmd} result: ${JSON.stringify(data)}`);
+            }
+        }
+        return this.generateT544Packet(cmd, sign);
+    }
+
+    generateT544Packet(cmd: String, sign: Buffer) {
+        const t = tlv.getPacker(this);
+        let getLocalT544 = (cmd: String) => {
+            switch (cmd) {
+                case '810_2':
+                    return t(0x544, 0, 2);
+                case '810_7':
+                    return t(0x544, 0, 7);
+                case '810_9':
+                    return t(0x544, 2, 9);
+            }
+            return BUF0;
+        };
+        if (!sign || sign.length < 1) {
+            return getLocalT544(cmd);
+        }
+        return t(0x544, -1, -1, sign);
+    }
+
     async getSign(cmd: string, seq: number, body: Buffer) {
         let params = BUF0;
         if (!this.sig.sign_api_addr) {
@@ -589,7 +642,7 @@ export class BaseClient extends Trapper {
         if (this.device.qImei16) writer.writeBytes(t(0x545, this.device.qImei16))
 
         if (this.apk.ssover > 12) {
-            writer.writeBytes(t(0x544, 2, 9))
+            writer.writeBytes(await this.getT544('810_9'))
         }
 
         this[FN_SEND_LOGIN]("wtlogin.login", writer.read())
@@ -613,16 +666,15 @@ export class BaseClient extends Trapper {
             .writeBytes(t(0x116))
         if (this.sig.t547.length) writer.writeBytes(t(0x547))
         if (this.apk.ssover > 12) {
-            writer.writeBytes(t(0x544, 0, 2))
+            writer.writeBytes(await this.getT544('810_2'))
         }
         this[FN_SEND_LOGIN]("wtlogin.login", writer.read())
     }
 
     /** 收到设备锁验证请求后，用于发短信 */
-    sendSmsCode() {
+    async sendSmsCode() {
         const t = tlv.getPacker(this)
-        let tlv_count = 7
-        if (this.apk.ssover <= 12) tlv_count--
+        let tlv_count = 6
         const writer = new Writer()
             .writeU16(8)
             .writeU16(tlv_count)
@@ -632,7 +684,6 @@ export class BaseClient extends Trapper {
             .writeBytes(t(0x174))
             .writeBytes(t(0x17a))
             .writeBytes(t(0x197))
-        if (this.apk.ssover > 12) writer.writeBytes(t(0x544, 0, 8))
         this[FN_SEND_LOGIN]("wtlogin.login", writer.read())
     }
 
@@ -655,7 +706,7 @@ export class BaseClient extends Trapper {
             .writeBytes(t(0x401))
             .writeBytes(t(0x198))
         if (this.apk.ssover > 12) {
-            writer.writeBytes(t(0x544, 0, 7))
+            writer.writeBytes(await this.getT544('810_7'))
         }
         this[FN_SEND_LOGIN]("wtlogin.login", writer.read())
     }

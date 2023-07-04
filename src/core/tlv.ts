@@ -2,8 +2,8 @@ import * as crypto from "crypto"
 import * as tea from "./tea"
 import * as pb from "./protobuf"
 import Writer from "./writer"
-import {md5, BUF0} from "./constants"
-import {sign} from "../internal/enctyption";
+import { md5, BUF0 } from "./constants"
+import { sign } from "../internal/enctyption";
 
 type BaseClient = import("./base-client").BaseClient
 
@@ -19,7 +19,7 @@ function packTlv(this: BaseClient, tag: number, ...args: any[]) {
 }
 
 function createSalt(this: BaseClient, n: string) {
-    const subCmd=parseInt(n.split('_')[1])
+    const subCmd = parseInt(n.split('_')[1])
     if (['810_9'].includes(n)) return new Writer()
         .writeU32(0)
         .writeBytes(this.device.guid)
@@ -106,12 +106,12 @@ const map: { [tag: number]: (this: BaseClient, ...args: any[]) => Writer } = {
     0x35: function (deviceType: number) {
         return new Writer().writeU32(deviceType)
     },
-    0x100: function (sub_id:number) {
+    0x100: function (sub_id: number) {
         return new Writer()
             .writeU16(1) // db buf ver
             .writeU32(this.apk.ssover) // sso ver
             .write32(this.apk.appid)
-            .writeU32(sub_id||this.apk.subid)
+            .writeU32(sub_id || this.apk.subid)
             .writeU32(0) // app client ver
             .writeU32(this.apk.main_sig_map);
     },
@@ -229,8 +229,8 @@ const map: { [tag: number]: (this: BaseClient, ...args: any[]) => Writer } = {
     0x154: function () {
         return new Writer().writeU32(this.sig.seq + 1)
     },
-    0x16a:function (srm_token){
-        return new Writer().writeBytes(srm_token||this.sig.srm_token)
+    0x16a: function (srm_token) {
+        return new Writer().writeBytes(srm_token || this.sig.srm_token)
     },
     0x16e: function () {
         return new Writer().writeBytes(this.device.model)
@@ -333,7 +333,7 @@ const map: { [tag: number]: (this: BaseClient, ...args: any[]) => Writer } = {
         return new Writer()
             .writeU16(1) // tlv cnt
             .writeU16(0x536) // tag
-            .writeTlv(Buffer.from([0x2,0x1, 0x0])); // zero
+            .writeTlv(Buffer.from([0x2, 0x1, 0x0])); // zero
     },
     0x523: function () {
         return new Writer()
@@ -357,7 +357,10 @@ const map: { [tag: number]: (this: BaseClient, ...args: any[]) => Writer } = {
     0x542: function () {
         return new Writer().writeBytes(Buffer.from([0x4A, 0x02, 0x60, 0x01]));
     },
-    0x544: function (v: number, subCmd: number) {
+    0x544: function (v: number, subCmd: number, signData: Buffer = BUF0) {
+        if (v == -1) {
+            return new Writer().writeBytes(signData)
+        }
         const salt = new Writer()
         if (v === 2) {
             salt.writeU32(0)
@@ -374,7 +377,7 @@ const map: { [tag: number]: (this: BaseClient, ...args: any[]) => Writer } = {
         return new Writer().writeBytes(sign((new Date()).getTime(), salt.read()))
     },
     0x545: function (qImei) {
-        return new Writer().writeBytes(md5(qImei||this.device.imei));
+        return new Writer().writeBytes(md5(qImei || this.device.imei));
     },
     0x547: function () {
         return new Writer().writeBytes(this.sig.t547);
