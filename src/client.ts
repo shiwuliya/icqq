@@ -175,6 +175,11 @@ export class Client extends BaseClient {
             // device = require(file) as ShortDevice
             const rawFile = fs.readFileSync(file)
             device = JSON.parse(rawFile.toString()) as ShortDevice
+            if(!device.display){
+                device = generateShortDevice()
+                isNew = true
+                fs.writeFileSync(file, JSON.stringify(device, null, 2))
+            }
         } catch {
             device = generateShortDevice()
             isNew = true

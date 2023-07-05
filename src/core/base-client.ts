@@ -139,6 +139,7 @@ export class BaseClient extends Trapper {
         /** 上次cookie刷新时间 */
         emp_time: 0,
         time_diff: 0,
+        requestTokenTime: 0,
     }
     readonly pskey: { [domain: string]: Buffer } = {}
     readonly pt4token: { [domain: string]: Buffer } = {}
@@ -171,7 +172,6 @@ export class BaseClient extends Trapper {
         'trpc.o3.ecdh_access.EcdhAccess.SsoSecureA2Access'
     ];
     private ssoPacketList: any = [];
-    private requestTokenTime = 0;
 
     constructor(p: Platform = Platform.Android, d?: ShortDevice) {
         super()
@@ -411,8 +411,8 @@ export class BaseClient extends Trapper {
     }
 
     async requestToken() {
-        if ((Date.now() - this.requestTokenTime) >= (60 * 1000)) {
-            this.requestTokenTime = Date.now();
+        if ((Date.now() - this.sig.requestTokenTime) >= (50 * 60 * 1000)) {
+            this.sig.requestTokenTime = Date.now();
         }
         let list = await this.requestSignToken();
         await this.ssoPacketListHandler(list);
@@ -997,17 +997,6 @@ function buildUniPkt(this: BaseClient, cmd: string, body: Uint8Array, seq = 0, B
     seq = seq || this[FN_NEXT_SEQ]()
     this.emit("internal.verbose", `send:${cmd} seq:${seq}`, VerboseLevel.Debug)
     let len = cmd.length + 20
-    //const sso = Buffer.allocUnsafe(len + body.length + 4)
-    //sso.writeUInt32BE(len, 0)
-    //sso.writeUInt32BE(cmd.length + 4, 4)
-    //sso.fill(cmd, 8)
-    //let offset = cmd.length + 8
-    //sso.writeUInt32BE(8, offset)
-    //sso.fill(this.sig.session, offset + 4)
-    //sso.writeUInt32BE(4, offset + 8)
-    //sso.writeUInt32BE(body.length + 4, offset + 12)
-    ///sso.fill(body, offset + 16)
-
     let sso = new Writer()
         .writeWithLength(new Writer()
             .writeWithLength(cmd)
@@ -1198,12 +1187,13 @@ async function register(this: BaseClient, logout = false, reflush = false) {
                         this.emit("internal.verbose", "heartbeat timeout x 2", VerboseLevel.Error)
                         this[NET].destroy()
                     })
-                }).then(refreshToken.bind(this))
-                if (this.isOnline()) {
+                }).then(async () => {
+                    this.requestToken()
+                    refreshToken.bind(this)
                     this[FN_SEND](await buildLoginPacket.call(this, "Heartbeat.Alive", BUF0, 0), 5).catch(() => {
                         this.emit("internal.verbose", "Heartbeat.Alive timeout", VerboseLevel.Warn)
                     })
-                }
+                })
             }, this.interval * 1000)
         }
     } catch {
