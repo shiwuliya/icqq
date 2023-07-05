@@ -20,3 +20,4 @@ export { PrivateMessageEvent, GroupMessageEvent, DiscussMessageEvent, MessageRet
 export { ApiRejection, Device, Apk, Platform, Domain } from "./core"
 export * as core from "./core"
 export { OcrResult } from "./internal"
+Object.defineProperty(exports, "default", { enumerable: true, get: () => exports });
