@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.4.10](https://github.com/icqqjs/icqq/compare/v0.4.9...v0.4.10) (2023-07-05)
+
+
+### Bug Fixes
+
+* requestToken ([a6dca70](https://github.com/icqqjs/icqq/commit/a6dca707bfa15470f889d81670e49940440530e9))
+
 ## [0.4.9](https://github.com/icqqjs/icqq/compare/v0.4.8...v0.4.9) (2023-07-05)
 
 
