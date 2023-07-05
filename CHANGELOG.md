@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.4.9](https://github.com/icqqjs/icqq/compare/v0.4.8...v0.4.9) (2023-07-05)
+
+
+### Bug Fixes
+
+* 签名token改为每50分钟刷新一次、修改了设备信息（更新后需要重新验证设备！） ([2d92001](https://github.com/icqqjs/icqq/commit/2d920013a80a44307855a48173d4ba0ed6271699))
+
 ## [0.4.8](https://github.com/icqqjs/icqq/compare/v0.4.7...v0.4.8) (2023-07-01)
 
 
