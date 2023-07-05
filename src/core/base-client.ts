@@ -432,9 +432,9 @@ export class BaseClient extends Trapper {
     async requestToken() {
         if ((Date.now() - this.sig.requestTokenTime) >= (50 * 60 * 1000)) {
             this.sig.requestTokenTime = Date.now();
+            let list = await this.requestSignToken();
+            await this.ssoPacketListHandler(list);
         }
-        let list = await this.requestSignToken();
-        await this.ssoPacketListHandler(list);
     }
 
     async requestSignToken() {
