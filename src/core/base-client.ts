@@ -219,6 +219,17 @@ export class BaseClient extends Trapper {
         if (!/http(s)?:\/\//.test(addr)) addr = `http://${addr}`
         this.sig.sign_api_addr = addr
         lock(this, "sig")
+        let url = new URL(this.sig.sign_api_addr)
+        if (url.searchParams.get('key')) {
+            import('./qsign').then((module) => {
+                const qsign = new module.qsign();
+                this.getSign = qsign.getSign
+                this.getT544 = qsign.getT544
+            })
+        } else {
+            this.getSign = this.defaultGetSign
+            this.getT544 = this.defaultGetT544
+        }
     }
 
     on(matcher: Matcher, listener: Listener) {
@@ -243,6 +254,14 @@ export class BaseClient extends Trapper {
     }
 
     async getT544(cmd: string) {
+        return this.generateT544Packet(cmd, BUF0);
+    }
+
+    async getSign(cmd: string, seq: number, body: Buffer) {
+        return BUF0;
+    }
+
+    async defaultGetT544(cmd: string) {
         let sign = BUF0;
         if (this.apk.qua) {
             let post_params = {
@@ -295,7 +314,7 @@ export class BaseClient extends Trapper {
         return t(0x544, -1, -1, sign);
     }
 
-    async getSign(cmd: string, seq: number, body: Buffer) {
+    async defaultGetSign(cmd: string, seq: number, body: Buffer) {
         let params = BUF0;
         if (!this.sig.sign_api_addr) {
             return params

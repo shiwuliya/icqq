@@ -222,7 +222,7 @@ LQ+FLkpncClKVIrBwv6PHyUvuCb0rIarmgDnzkfQAqVufEtR64iazGDKatvJ9y6B
             "channelId": "2017",
             "cid": "",
             "imei": this.imei,
-            "imsi": this.imsi,
+            "imsi": this.imsi.toString('hex'),
             "mac": this.mac_address,
             "model": this.model,
             "networkType": "unknown",

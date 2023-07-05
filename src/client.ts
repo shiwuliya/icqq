@@ -175,7 +175,7 @@ export class Client extends BaseClient {
             // device = require(file) as ShortDevice
             const rawFile = fs.readFileSync(file)
             device = JSON.parse(rawFile.toString()) as ShortDevice
-            if(!device.display){
+            if (!device.display) {
                 device = generateShortDevice()
                 isNew = true
                 fs.writeFileSync(file, JSON.stringify(device, null, 2))
@@ -186,7 +186,7 @@ export class Client extends BaseClient {
             fs.writeFileSync(file, JSON.stringify(device, null, 2))
         }
         super(config.platform, device);
-        if(!config.sign_api_addr){
+        if (!config.sign_api_addr) {
             this.logger.warn(`未配置签名API地址，登录/消息发送可能失败`)
         }
         this.setSignServer(config.sign_api_addr);
