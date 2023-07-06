@@ -308,19 +308,19 @@ const watch: Apk = {
     ssover: 5
 }
 const hd: Apk = {
-    id: "com.tencent.minihd.qq",
+    id: "com.tencent.qq",
     app_key: '0S200MNJT807V3GE',
-    name: "A5.9.3.3468",
-    version: "5.9.3.3468",
-    ver: "5.9.3",
+    name: "A6.8.2.21241",
+    version: "6.8.2.21241",
+    ver: "6.8.2",
     sign: Buffer.from('AA 39 78 F4 1F D9 6F F9 91 4A 66 9E 18 64 74 C7'.split(' ').map(s => parseInt(s, 16))),
-    buildtime: 1637427966,
+    buildtime: 1647227495,
     appid: 16,
     subid: 537128930,
     bitmap: 150470524,
     main_sig_map: 1970400,
     sub_sig_map: 66560,
-    sdkver: "6.0.0.2433",
+    sdkver: "6.2.0.1023",
     display: "iMac",
     qua: '',
     ssover: 12

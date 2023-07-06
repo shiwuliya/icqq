@@ -77,7 +77,6 @@ async function onlineListener(this: Client, token: Buffer, nickname: string, gen
     this.setOnlineStatus(this.status).catch(NOOP)
     // 存token
     tokenUpdatedListener.call(this, token)
-    this.logger = log4js.getLogger(`[${this.apk.display}:${this.uin}]`);
     this.log_level = this.config.log_level;
     this.logger.mark(`Welcome, ${this.nickname} ! 正在加载资源...`)
     await Promise.allSettled([

@@ -1,6 +1,6 @@
-import { Trapper, ToDispose, Matcher, Listener } from 'triptrap'
-import { randomBytes, createHash } from "crypto"
-import { Readable } from "stream"
+import {Listener, Matcher, ToDispose, Trapper} from 'triptrap'
+import crypto, {createHash, randomBytes} from "crypto"
+import {Readable} from "stream"
 import Network from "./network"
 import Ecdh from "./ecdh"
 import Writer from "./writer"
@@ -8,13 +8,13 @@ import * as tlv from "./tlv"
 import * as tea from "./tea"
 import * as pb from "./protobuf"
 import * as jce from "./jce"
-import { BUF0, BUF4, BUF16, NOOP, md5, timestamp, lock, hide, unzip, int32ip2str, unlock } from "./constants"
-import { ShortDevice, Device, Platform, Apk, getApkInfo } from "./device"
+import {BUF0, BUF16, BUF4, hide, int32ip2str, lock, md5, NOOP, timestamp, unlock, unzip} from "./constants"
+import {Apk, Device, generateShortDevice, getApkInfo, Platform, ShortDevice} from "./device"
 import * as log4js from "log4js"
-import { log } from "../common"
-import crypto from "crypto"
+import {log} from "../common"
 import * as path from "path"
 import axios from "axios";
+import {Config, Logger, LogLevel, LogLevelMap} from "../client";
 
 const FN_NEXT_SEQ = Symbol("FN_NEXT_SEQ")
 const FN_SEND = Symbol("FN_SEND")
@@ -47,7 +47,6 @@ export enum QrcodeResult {
 
 export interface BaseClient {
     uin: number
-    logger: log4js.Logger
 
     /** 收到二维码 */
     on(name: "internal.qrcode", listener: (this: this, qrcode: Buffer) => void): ToDispose<this>
@@ -87,10 +86,12 @@ export interface BaseClient {
 
     on(name: string | symbol, listener: (this: this, ...args: any[]) => void): ToDispose<this>
 }
+
 export class BaseClient extends Trapper {
 
     private [IS_ONLINE] = false
     private [LOGIN_LOCK] = false
+    private _logger?: Logger | log4js.Logger
     // 心跳定时器
     // @ts-ignore
     private [HEARTBEAT]: NodeJS.Timeout
@@ -98,8 +99,6 @@ export class BaseClient extends Trapper {
     private readonly [NET] = new Network
     // 回包的回调函数
     private readonly [HANDLERS] = new Map<number, (buf: Buffer) => void>()
-    public logger: log4js.Logger = log4js.getLogger(`[icqq]`)
-    readonly config: any
     readonly apk: Apk
     readonly device: Device
     readonly sig: Record<string, any> = {
@@ -173,8 +172,49 @@ export class BaseClient extends Trapper {
     ];
     private ssoPacketList: any = [];
 
-    constructor(p: Platform = Platform.Android, d?: ShortDevice) {
+    get logger(): Logger | log4js.Logger {
+        const _this = this
+        if (this._logger) return new Proxy(this._logger, {
+            get: (target, p, receiver) => {
+                if (p === 'level') {
+                    return Reflect.get(target, 'level', receiver)
+                } else {
+                    const fn = Reflect.get(target, p, receiver)
+                    if (typeof fn !== 'function') return fn
+                    return new Proxy(fn, {
+                        apply: (target, thisArg, argArray) => {
+                            const logLevelMap: LogLevelMap = {
+                                trace: 0,
+                                debug: 1,
+                                info: 2,
+                                warn: 3,
+                                error: 4,
+                                fatal: 5,
+                                mark: 6,
+                                off: 7
+                            }
+                            const levelCode = logLevelMap[p as LogLevel]
+                            const currentLevel = _this.config?.log_level || 'info'
+                            const currentLevelCode = logLevelMap[currentLevel]
+                            if (levelCode >= currentLevelCode) {
+                                target.apply(thisArg, argArray)
+                            }
+                        }
+                    })
+                }
+            }
+        })
+        return log4js.getLogger(this.uin ? `[${this.apk.display}:${this.uin}]` : `[icqq]`)
+    }
+
+    set logger(logger: Logger | log4js.Logger) {
+        if(!logger.level) logger.level = this.config?.log_level || 'info'
+        this._logger = logger
+    }
+
+    constructor(p: Platform = Platform.Android, d: ShortDevice, public config: Required<Config>) {
         super()
+        if(config.log_config) log4js.configure(config.log_config as string)
         this.apk = getApkInfo(p)
         this.device = new Device(this.apk, d)
         this[NET].on("error", err => this.emit("internal.verbose", err.message, VerboseLevel.Error))
@@ -213,6 +253,7 @@ export class BaseClient extends Trapper {
             this[NET].auto_search = true
         }
     }
+
     setSignServer(addr?: string): void {
         if (!addr) return
         unlock(this, "sig")
@@ -222,9 +263,12 @@ export class BaseClient extends Trapper {
         let url = new URL(this.sig.sign_api_addr)
         if (url.searchParams.get('key')) {
             import('./qsign').then((module) => {
-                const qsign = new module.qsign();
-                this.getSign = qsign.getSign
-                this.getT544 = qsign.getT544
+                const {
+                    getSign= this.defaultGetSign,
+                    getT544= this.defaultGetT544
+                } = module
+                this.getSign = getSign.bind(this)
+                this.getT544 = getT544.bind(this)
             })
         } else {
             this.getSign = this.defaultGetSign
@@ -333,7 +377,7 @@ export class BaseClient extends Trapper {
                 guid: this.device.guid.toString('hex'),
                 buffer: body.toString('hex')
             };
-            const { data } = await axios.post(url, post_params, {
+            const {data} = await axios.post(url, post_params, {
                 timeout: 10000,
                 headers: {
                     'User-Agent': `Dalvik/2.1.0 (Linux; U; Android ${this.device.version.release}; PCRT00 Build/N2G48H)`,
@@ -507,7 +551,7 @@ export class BaseClient extends Trapper {
 
     calcPoW(data: any) {
         if (!data || data.length === 0) return Buffer.alloc(0);
-        const stream = Readable.from(data, { objectMode: false });
+        const stream = Readable.from(data, {objectMode: false});
         const version = stream.read(1).readUInt8();
         const typ = stream.read(1).readUInt8();
         const hashType = stream.read(1).readUInt8();
@@ -595,7 +639,7 @@ export class BaseClient extends Trapper {
         this.sig.randkey = randomBytes(16)
         this[ECDH] = new Ecdh
         try {
-            const stream = Readable.from(token, { objectMode: false });
+            const stream = Readable.from(token, {objectMode: false});
             this.sig.d2key = stream.read(stream.read(2).readUInt16BE());
             this.sig.d2 = stream.read(stream.read(2).readUInt16BE());
             this.sig.tgt = stream.read(stream.read(2).readUInt16BE());
@@ -699,7 +743,8 @@ export class BaseClient extends Trapper {
     async submitSlider(ticket: string) {
         try {
             if (this.sig.t546.length) this.sig.t547 = this.calcPoW(this.sig.t546)
-        } catch (err) { }
+        } catch (err) {
+        }
         ticket = String(ticket).trim()
         const t = tlv.getPacker(this)
         let tlv_count = this.sig.t547.length ? 6 : 5
@@ -778,7 +823,7 @@ export class BaseClient extends Trapper {
         const pkt = await buildCode2dPacket.call(this, 0x31, 0x11100, body)
         this[FN_SEND](pkt).then(payload => {
             payload = tea.decrypt(payload.slice(16, -1), this[ECDH].share_key)
-            const stream = Readable.from(payload, { objectMode: false })
+            const stream = Readable.from(payload, {objectMode: false})
             stream.read(54)
             const retcode = stream.read(1)[0]
             const qrsig = stream.read(stream.read(2).readUInt16BE())
@@ -795,7 +840,7 @@ export class BaseClient extends Trapper {
 
     /** 扫码后调用此方法登录 */
     async qrcodeLogin() {
-        const { retcode, uin, t106, t16a, t318, tgtgt } = await this.queryQrcodeResult()
+        const {retcode, uin, t106, t16a, t318, tgtgt} = await this.queryQrcodeResult()
         if (retcode < 0) {
             this.emit("internal.error.network", -2, "server is busy")
         } else if (retcode === 0 && t106 && t16a && t318 && tgtgt) {
@@ -862,7 +907,7 @@ export class BaseClient extends Trapper {
     async queryQrcodeResult() {
         let retcode = -1, uin, t106, t16a, t318, tgtgt
         if (!this.sig.qrsig.length)
-            return { retcode, uin, t106, t16a, t318, tgtgt }
+            return {retcode, uin, t106, t16a, t318, tgtgt}
         const body = new Writer()
             .writeU16(5)
             .writeU8(1)
@@ -878,7 +923,7 @@ export class BaseClient extends Trapper {
         try {
             let payload = await this[FN_SEND](pkt)
             payload = tea.decrypt(payload.slice(16, -1), this[ECDH].share_key)
-            const stream = Readable.from(payload, { objectMode: false })
+            const stream = Readable.from(payload, {objectMode: false})
             stream.read(48)
             let len = stream.read(2).readUInt16BE()
             if (len > 0) {
@@ -904,7 +949,7 @@ export class BaseClient extends Trapper {
             }
         } catch {
         }
-        return { retcode, uin, t106, t16a, t318, tgtgt }
+        return {retcode, uin, t106, t16a, t318, tgtgt}
     }
 
     private [FN_NEXT_SEQ]() {
@@ -1168,8 +1213,8 @@ async function register(this: BaseClient, logout = false, reflush = false) {
     clearInterval(this[HEARTBEAT])
     const pb_buf = pb.encode({
         1: [
-            { 1: 46, 2: timestamp() },
-            { 1: 283, 2: 0 }
+            {1: 46, 2: timestamp()},
+            {1: 283, 2: 0}
         ]
     })
     const d = this.device
@@ -1184,7 +1229,7 @@ async function register(this: BaseClient, logout = false, reflush = false) {
         d.brand, "", pb_buf, 0, null,
         0, null, 1000, 98
     ])
-    const body = jce.encodeWrapper({ SvcReqRegister }, "PushService", "SvcReqRegister")
+    const body = jce.encodeWrapper({SvcReqRegister}, "PushService", "SvcReqRegister")
     const pkt = await buildLoginPacket.call(this, "StatSvc.register", body, 1)
     try {
         const payload = await this[FN_SEND](pkt, 10)
@@ -1262,13 +1307,13 @@ async function refreshToken(this: BaseClient) {
     try {
         let payload = await this[FN_SEND](pkt)
         payload = tea.decrypt(payload.slice(16, payload.length - 1), this[ECDH].share_key)
-        const stream = Readable.from(payload, { objectMode: false })
+        const stream = Readable.from(payload, {objectMode: false})
         stream.read(2)
         const type = stream.read(1).readUInt8()
         stream.read(2)
         const t = readTlv(stream)
         if (type === 0) {
-            const { token } = decodeT119.call(this, t[0x119])
+            const {token} = decodeT119.call(this, t[0x119])
             await register.call(this, false, true)
             if (this[IS_ONLINE])
                 this.emit("internal.token", token)
@@ -1398,7 +1443,7 @@ function buildCode2dPacket(this: BaseClient, cmdid: number, head: number, body: 
 
 
 function decodeT119(this: BaseClient, t119: Buffer) {
-    const r = Readable.from(tea.decrypt(t119, this.sig.tgtgt), { objectMode: false })
+    const r = Readable.from(tea.decrypt(t119, this.sig.tgtgt), {objectMode: false})
     r.read(2)
     const t = readTlv(r)
     this.sig.tgt = t[0x10a] || this.sig.tgt
@@ -1418,7 +1463,7 @@ function decodeT119(this: BaseClient, t119: Buffer) {
     this.sig.emp_time = timestamp()
 
     if (t[0x512]) {
-        const r = Readable.from(t[0x512], { objectMode: false })
+        const r = Readable.from(t[0x512], {objectMode: false})
         let len = r.read(2).readUInt16BE()
         while (len-- > 0) {
             const domain = String(r.read(r.read(2).readUInt16BE()))
@@ -1440,12 +1485,12 @@ function decodeT119(this: BaseClient, t119: Buffer) {
     const age = t[0x11a].slice(2, 3).readUInt8()
     const gender = t[0x11a].slice(3, 4).readUInt8()
     const nickname = String(t[0x11a].slice(5))
-    return { token, nickname, gender, age }
+    return {token, nickname, gender, age}
 }
 
 function decodeLoginResponse(this: BaseClient, payload: Buffer): any {
     payload = tea.decrypt(payload.slice(16, payload.length - 1), this[ECDH].share_key)
-    const r = Readable.from(payload, { objectMode: false })
+    const r = Readable.from(payload, {objectMode: false})
     r.read(2)
     const type = r.read(1).readUInt8() as number
     r.read(2)
@@ -1483,7 +1528,7 @@ function decodeLoginResponse(this: BaseClient, payload: Buffer): any {
         if (t[0x403]) {
             this.sig.randomSeed = t[0x403]
         }
-        const { token, nickname, gender, age } = decodeT119.call(this, t[0x119])
+        const {token, nickname, gender, age} = decodeT119.call(this, t[0x119])
         return register.call(this).then(() => {
             if (this[IS_ONLINE]) {
                 this.emit("internal.online", token, nickname, gender, age)
@@ -1521,7 +1566,7 @@ function decodeLoginResponse(this: BaseClient, payload: Buffer): any {
         let dir = path.resolve(this.config.data_dir)
         let device_path = path.join(dir, `device.json`)
         //fs.unlink(device_path)
-        //this.logger.warn(`[${type}]当前设备信息被拉黑，已为您重置设备信息，请重新登录！`)
+        //this.log('warn',`[${type}]当前设备信息被拉黑，已为您重置设备信息，请重新登录！`)
         return this.emit("internal.error.login", type, `[登陆失败](${type})当前设备信息被拉黑，建议删除"${device_path}"后重新登录！`)
     }
 
@@ -1530,7 +1575,7 @@ function decodeLoginResponse(this: BaseClient, payload: Buffer): any {
     }
 
     if (t[0x149]) {
-        const stream = Readable.from(t[0x149], { objectMode: false })
+        const stream = Readable.from(t[0x149], {objectMode: false})
         stream.read(2)
         const title = stream.read(stream.read(2).readUInt16BE()).toString()
         const content = stream.read(stream.read(2).readUInt16BE()).toString()
@@ -1538,7 +1583,7 @@ function decodeLoginResponse(this: BaseClient, payload: Buffer): any {
     }
 
     if (t[0x146]) {
-        const stream = Readable.from(t[0x146], { objectMode: false });
+        const stream = Readable.from(t[0x146], {objectMode: false});
         const version = stream.read(4);
         const title = stream.read(stream.read(2).readUInt16BE()).toString();
         const content = stream.read(stream.read(2).readUInt16BE()).toString();
