@@ -1,5 +1,5 @@
-import { Trapper, ToDispose, Matcher, Listener } from 'triptrap'
-import { randomBytes, createHash } from "crypto"
+import { Listener, Matcher, ToDispose, Trapper } from 'triptrap'
+import crypto, { createHash, randomBytes } from "crypto"
 import { Readable } from "stream"
 import Network from "./network"
 import Ecdh from "./ecdh"
@@ -8,13 +8,13 @@ import * as tlv from "./tlv"
 import * as tea from "./tea"
 import * as pb from "./protobuf"
 import * as jce from "./jce"
-import { BUF0, BUF4, BUF16, NOOP, md5, timestamp, lock, hide, unzip, int32ip2str, unlock } from "./constants"
-import { ShortDevice, Device, Platform, Apk, getApkInfo } from "./device"
+import { BUF0, BUF16, BUF4, hide, int32ip2str, lock, md5, NOOP, timestamp, unlock, unzip } from "./constants"
+import { Apk, Device, generateShortDevice, getApkInfo, Platform, ShortDevice } from "./device"
 import * as log4js from "log4js"
 import { log } from "../common"
-import crypto from "crypto"
 import * as path from "path"
 import axios from "axios";
+import { Config, Logger, LogLevel, LogLevelMap } from "../client";
 
 const FN_NEXT_SEQ = Symbol("FN_NEXT_SEQ")
 const FN_SEND = Symbol("FN_SEND")
@@ -47,7 +47,6 @@ export enum QrcodeResult {
 
 export interface BaseClient {
   uin: number
-  logger: log4js.Logger
 
   /** 收到二维码 */
   on(name: "internal.qrcode", listener: (this: this, qrcode: Buffer) => void): ToDispose<this>
@@ -87,10 +86,12 @@ export interface BaseClient {
 
   on(name: string | symbol, listener: (this: this, ...args: any[]) => void): ToDispose<this>
 }
+
 export class BaseClient extends Trapper {
 
   private [IS_ONLINE] = false
   private [LOGIN_LOCK] = false
+  private _logger?: Logger | log4js.Logger
   // 心跳定时器
   // @ts-ignore
   private [HEARTBEAT]: NodeJS.Timeout
@@ -98,7 +99,6 @@ export class BaseClient extends Trapper {
   private readonly [NET] = new Network
   // 回包的回调函数
   private readonly [HANDLERS] = new Map<number, (buf: Buffer) => void>()
-  readonly config: any
   readonly apk: Apk
   readonly device: Device
   readonly sig: Record<string, any> = {
@@ -172,8 +172,9 @@ export class BaseClient extends Trapper {
   ];
   private ssoPacketList: any = [];
 
-  constructor(p: Platform = Platform.Android, d?: ShortDevice) {
+  constructor(p: Platform = Platform.Android, d: ShortDevice, public config: Required<Config>) {
     super()
+    if (config.log_config) log4js.configure(config.log_config as string)
     this.apk = getApkInfo(p)
     this.device = new Device(this.apk, d)
     this[NET].on("error", err => this.emit("internal.verbose", err.message, VerboseLevel.Error))
@@ -212,6 +213,7 @@ export class BaseClient extends Trapper {
       this[NET].auto_search = true
     }
   }
+
   setSignServer(addr?: string): void {
     if (!addr) return
     unlock(this, "sig")
@@ -221,9 +223,12 @@ export class BaseClient extends Trapper {
     let url = new URL(this.sig.sign_api_addr)
     if (url.searchParams.get('key')) {
       import('./qsign').then((module) => {
-        const qsign = new module.qsign();
-        this.getSign = qsign.getSign
-        this.getT544 = qsign.getT544
+        const {
+          getSign = this.defaultGetSign,
+          getT544 = this.defaultGetT544
+        } = module
+        this.getSign = getSign.bind(this)
+        this.getT544 = getT544.bind(this)
       })
     } else {
       this.getSign = this.defaultGetSign
@@ -280,7 +285,7 @@ export class BaseClient extends Trapper {
           'Content-Type': "application/x-www-form-urlencoded"
         }
       }).catch(() => ({ data: { code: -1 } }));
-      this.emit("internal.verbose", `getT544 ${cmd} result: ${JSON.stringify(data)}`, VerboseLevel.Debug)
+      this.emit("internal.verbose", `getT544 ${cmd} result: ${JSON.stringify(data)}`, VerboseLevel.Debug);
       if (data.code >= 0) {
         if (typeof (data.data) === 'string') {
           sign = Buffer.from(data.data, 'hex');
@@ -288,7 +293,7 @@ export class BaseClient extends Trapper {
           sign = Buffer.from(data.data.sign, 'hex');
         }
       } else {
-        this.emit("internal.verbose", `签名api(energy)异常： ${cmd} result: ${JSON.stringify(data)}`, VerboseLevel.Error)
+        this.emit(`签名api(energy)异常： ${cmd} result: ${JSON.stringify(data)}`, VerboseLevel.Error);
       }
     }
     return this.generateT544Packet(cmd, sign);
@@ -339,7 +344,7 @@ export class BaseClient extends Trapper {
           'Content-Type': "application/x-www-form-urlencoded"
         }
       }).catch(() => ({ data: { code: -1 } }));
-      this.emit("internal.verbose", `sign ${cmd} result: ${JSON.stringify(data)}`, VerboseLevel.Debug)
+      this.emit("internal.verbose", `sign ${cmd} result: ${JSON.stringify(data)}`, VerboseLevel.Debug);
       if (data.code >= 0) {
         const Data = data.data || {};
         params = this.generateSignPacket(Data.sign, Data.token, Data.extra);
@@ -351,7 +356,7 @@ export class BaseClient extends Trapper {
           this.ssoPacketListHandler(list);
         }
       } else {
-        this.emit("internal.verbose", `签名api异常： ${cmd} result: ${JSON.stringify(data)}`, VerboseLevel.Error)
+        this.emit("internal.verbose", `签名api异常： ${cmd} result: ${JSON.stringify(data)}`, VerboseLevel.Error);
       }
     }
     return params;
@@ -421,7 +426,7 @@ export class BaseClient extends Trapper {
       let body = Buffer.from(ssoPacket.body, 'hex');
       let callbackId = ssoPacket.callbackId;
       let payload = await this.sendUni(cmd, body);
-      this.emit("internal.verbose", `sendUni ${cmd} result: ${payload.toString('hex')}`, VerboseLevel.Debug)
+      this.emit("internal.verbose", `sendUni ${cmd} result: ${payload.toString('hex')}`, VerboseLevel.Debug);
       if (callbackId > -1) {
         await this.ssoPacketListHandler(await this.submitSsoPacket(cmd, callbackId, payload));
       }
@@ -459,7 +464,7 @@ export class BaseClient extends Trapper {
         'Content-Type': "application/x-www-form-urlencoded"
       }
     }).catch(() => ({ data: { code: -1 } }));
-    this.emit("internal.verbose", `requestSignToken result: ${JSON.stringify(data)}`, VerboseLevel.Debug)
+    this.emit("internal.verbose", `requestSignToken result: ${JSON.stringify(data)}`, VerboseLevel.Debug);
     if (data.code >= 0) {
       let ssoPacketList = data.data?.ssoPacketList || data.data?.requestCallback || data.data;
       if (!ssoPacketList || ssoPacketList.length < 1) return [];
@@ -495,7 +500,7 @@ export class BaseClient extends Trapper {
         'Content-Type': "application/x-www-form-urlencoded"
       }
     }).catch(() => ({ data: { code: -1 } }));
-    this.emit("internal.verbose", `submitSsoPacket result: ${JSON.stringify(data)}`, VerboseLevel.Debug)
+    this.emit("internal.verbose", `submitSsoPacket result: ${JSON.stringify(data)}`, VerboseLevel.Debug);
     if (data.code >= 0) {
       let ssoPacketList = data.data?.ssoPacketList || data.data?.requestCallback || data.data;
       if (!ssoPacketList || ssoPacketList.length < 1) return [];
@@ -517,7 +522,7 @@ export class BaseClient extends Trapper {
     const tgt = stream.read(stream.read(2).readUInt16BE());
     const cpy = stream.read(stream.read(2).readUInt16BE());
     if (hashType !== 1) {
-      this.emit("internal.verbose", `Unsupported tlv546 hash type ${hashType}`, VerboseLevel.Warn)
+      this.emit("internal.verbose", `Unsupported tlv546 hash type ${hashType}`, VerboseLevel.Warn);
       return Buffer.alloc(0);
     }
     let inputNum = BigInt("0x" + src.toString("hex"));
@@ -525,7 +530,7 @@ export class BaseClient extends Trapper {
       case 1:
         // TODO
         // See https://github.com/mamoe/mirai/blob/cc7f35519ea7cc03518a57dc2ee90d024f63be0e/mirai-core/src/commonMain/kotlin/network/protocol/packet/login/wtlogin/WtLoginExt.kt#L207
-        this.emit("internal.verbose", `Unsupported tlv546 algorithm type ${typ}`, VerboseLevel.Warn)
+        this.emit("internal.verbose", `Unsupported tlv546 algorithm type ${typ}`, VerboseLevel.Warn);
         break;
       case 2:
         // Calc SHA256
@@ -539,14 +544,14 @@ export class BaseClient extends Trapper {
             hash = createHash("sha256").update(Buffer.from(inputNum.toString(16).padStart(256, "0"), "hex")).digest();
             cnt++;
             if (cnt > 6000000) {
-              this.emit("internal.verbose", "Calculating PoW cost too much time, maybe something wrong", VerboseLevel.Error)
+              this.emit("internal.verbose", "Calculating PoW cost too much time, maybe something wrong", VerboseLevel.Error);
               throw new Error("Calculating PoW cost too much time, maybe something wrong");
             }
           }
           ok = true;
           dst = Buffer.from(inputNum.toString(16).padStart(256, "0"), "hex");
           elp = Date.now() - start;
-          this.emit("internal.verbose", `Calculating PoW of plus ${cnt} times cost ${elp} ms`, VerboseLevel.Debug)
+          this.emit("internal.verbose", `Calculating PoW of plus ${cnt} times cost ${elp} ms`, VerboseLevel.Debug);
         }
         if (!ok) return Buffer.alloc(0);
         const body = new Writer()
@@ -564,8 +569,7 @@ export class BaseClient extends Trapper {
           .writeU32(cnt);
         return body.read();
       default:
-        this.emit("internal.verbose", `Unsupported tlv546 algorithm type ${typ}`, VerboseLevel.Warn)
-        // this.logger.warn(`Unsupported tlv546 algorithm type ${typ}`);
+        this.emit("internal.verbose", `Unsupported tlv546 algorithm type ${typ}`, VerboseLevel.Warn);
         break;
     }
     return Buffer.alloc(0);
@@ -606,8 +610,8 @@ export class BaseClient extends Trapper {
       this.sig.md5Pass = stream.read(stream.read(2).readUInt16BE());
       this.sig.device_token = stream.read(stream.read(2).readUInt16BE());
     } catch {
-      this.emit("internal.verbose", "旧版Token跟现行版本不兼容，请自行删除token后重新运行", VerboseLevel.Error)
-      this.emit("若可正常登录，请勿随意升级版本", VerboseLevel.Warn);
+      this.emit("internal.verbose", '旧版token于当前版本不兼容，请手动删除token后重新运行', VerboseLevel.Error);
+      this.emit("internal.verbose", '若非无法登录，请勿随意升级版本', VerboseLevel.Warn);
       return this.emit("internal.error.login", 123456, `token不兼容`)
     }
     this.sig.tgtgt = md5(this.sig.d2key)
@@ -699,7 +703,8 @@ export class BaseClient extends Trapper {
   async submitSlider(ticket: string) {
     try {
       if (this.sig.t546.length) this.sig.t547 = this.calcPoW(this.sig.t546)
-    } catch (err) { }
+    } catch (err) {
+    }
     ticket = String(ticket).trim()
     const t = tlv.getPacker(this)
     let tlv_count = this.sig.t547.length ? 6 : 5
@@ -1521,7 +1526,7 @@ function decodeLoginResponse(this: BaseClient, payload: Buffer): any {
     let dir = path.resolve(this.config.data_dir)
     let device_path = path.join(dir, `device.json`)
     //fs.unlink(device_path)
-    //this.logger.warn(`[${type}]当前设备信息被拉黑，已为您重置设备信息，请重新登录！`)
+    //this.log('warn',`[${type}]当前设备信息被拉黑，已为您重置设备信息，请重新登录！`)
     return this.emit("internal.error.login", type, `[登陆失败](${type})当前设备信息被拉黑，建议删除"${device_path}"后重新登录！`)
   }
 
@@ -1543,7 +1548,7 @@ function decodeLoginResponse(this: BaseClient, payload: Buffer): any {
     const title = stream.read(stream.read(2).readUInt16BE()).toString();
     const content = stream.read(stream.read(2).readUInt16BE()).toString();
     const message = `[${title}]${content}`;
-    // this.logger.warn("token失效: " + message + "(错误码：" + type + ")");
+    this.emit("internal.verbose", "token失效: " + message + "(错误码：" + type + ")", VerboseLevel.Warn);
     return this.emit("internal.error.login", type, message);
   }
 

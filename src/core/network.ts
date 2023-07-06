@@ -54,7 +54,11 @@ export default class Network extends Socket {
 		if (this.connecting) return
 		if (this.connected) return cb()
 		this.removeAllListeners("connect")
-		this.connect(this.port, this.host, () => {
+		this.connect({
+			host: this.host,
+			port: this.port,
+			family: 4
+		}, () => {
 			this.connected = true
 			this.emit("connect2")
 			cb()
