@@ -7,6 +7,7 @@
   "types": "lib/index.d.ts",
   "scripts": {
     "build": "tsc && cp -r src/core/protobuf/*.min.* lib/core/protobuf",
+    "build_": "tsc && copy .\\src\\core\\protobuf\\*.min.* lib\\core\\protobuf",
     "docs": "typedoc src/index.ts",
     "dev": "ts-node src/test.ts",
     "pub": "npm publish --access public",

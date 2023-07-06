@@ -32,7 +32,7 @@ import { Forwardable, Image, ImageElem, parseDmMessageId, parseGroupMessageId, Q
 import { Listener, Matcher, ToDispose } from "triptrap";
 import { Guild } from "./guild";
 import { ErrorCode } from "./errors";
-import { Configuration } from "log4js";
+import {Configuration} from "log4js";
 
 const pkg = require("../package.json")
 
@@ -78,6 +78,7 @@ export class Client extends BaseClient {
     readonly pickGuild = Guild.as.bind(this)
 
     /** 日志记录器，初始情况下是`log4js.Logger` */
+    public logger: Logger | log4js.Logger;
     /** 账号本地数据存储目录 */
     readonly dir: string
     /** 配置 */
@@ -182,7 +183,8 @@ export class Client extends BaseClient {
             isNew = true
             fs.writeFileSync(file, JSON.stringify(device, null, 2))
         }
-        super(config.platform, device, config as Required<Config>);
+        super(config.platform, device,config as Required<Config>);
+        this.logger = log4js.getLogger('[icqq]');
         if (!config.sign_api_addr) {
             this.logger.warn(`未配置签名API地址，登录/消息发送可能失败`)
         }
@@ -794,10 +796,10 @@ export class Client extends BaseClient {
 /** 日志等级 */
 export type LogLevel = "trace" | "debug" | "info" | "warn" | "error" | "fatal" | "mark" | "off"
 export type LogLevelMap = { [key in LogLevel]: number }
-export type LoggerFn = {
+export type LoggerFn={
     [key in LogLevel]: (...args: any[]) => any
 }
-export interface Logger extends LoggerFn {
+export interface Logger extends LoggerFn{
     level?: LogLevel
 }
 /** 配置项 */
@@ -806,7 +808,7 @@ export interface Config {
     log_level?: LogLevel
     /** 1:安卓手机(默认) 2:aPad 3:安卓手表 4:MacOS 5:iPad */
     platform?: Platform
-    log_config?: Configuration | string
+    log_config?: Configuration| string
     /** 群聊和频道中过滤自己的消息(默认true) */
     ignore_self?: boolean
     /** 被风控时是否尝试用分片发送，默认true */
