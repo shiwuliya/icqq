@@ -431,11 +431,11 @@ export class BaseClient extends Trapper {
         resultList = resultList.concat(await this.submitSsoPacket(cmd, callbackId, payload));
       }
     }
-    await this.ssoPacketListHandler(resultList);
+    this.ssoPacketListHandler(resultList);
   }
 
   async requestToken() {
-    if ((Date.now() - this.sig.requestTokenTime) >= (50 * 60 * 1000)) {
+    if ((Date.now() - this.sig.requestTokenTime) >= (60 * 60 * 1000)) {
       this.sig.requestTokenTime = Date.now();
       let list = await this.requestSignToken();
       await this.ssoPacketListHandler(list);
