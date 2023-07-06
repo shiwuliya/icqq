@@ -31,20 +31,20 @@ export function generateShortDevice() {
     }
     return {
         "--begin--": "该设备为随机生成，丢失后不能得到原先配置",
-        product: `ILPP-${randstr(5).toUpperCase()}`,
+        product: `ICQQ-${randstr(5).toUpperCase()}`,
         device: `${randstr(5).toUpperCase()}`,
         board: `${randstr(5).toUpperCase()}`,
         brand: `${randstr(4).toUpperCase()}`,
         model: `ICQQ ${randstr(4).toUpperCase()}`,
         wifi_ssid: `HUAWEI-${randstr(7)}`,
         bootloader: `U-boot`,
-        android_id: `IL.${randstr(7, true)}.${randstr(4, true)}`,
+        display: `IC.${randstr(7, true)}.${randstr(4, true)}`,
         boot_id: `${randstr(8)}-${randstr(4)}-${randstr(4)}-${randstr(4)}-${randstr(12,)}`,
-        proc_version: `Linux version 5.10.101-android12-${randstr(8)}`,
-        mac_address: `2D:${randstr(2).toUpperCase()}:${randstr(2).toUpperCase()}:${randstr(2,).toUpperCase()}:${randstr(2).toUpperCase()}:${randstr(2).toUpperCase()}`,
+        proc_version: `Linux version 5.10.101-android10-${randstr(8)}`,
+        mac_address: `02:00:00:00:00:00`,
         ip_address: `192.168.${randstr(2, true)}.${randstr(2, true)}`,
-        imei: `${generateImei()}`,
-        incremental: `${randstr(10, true).toUpperCase()}`,
+        android_id: `${md5(generateImei()).toString("hex").substring(8, 24)}`,
+        incremental: `${randstr(10, true)}`,
         "--end--": "修改后可能需要重新验证设备。"
     }
 }
@@ -54,7 +54,7 @@ export function generateShortDevice() {
 export function generateFullDevice(apk: Apk, d?: ShortDevice) {
     if (!d) d = generateShortDevice()
     return {
-        display: d.android_id,
+        display: d.display,
         product: d.product,
         device: d.device,
         board: d.board,
@@ -71,8 +71,8 @@ export function generateFullDevice(apk: Apk, d?: ShortDevice) {
         ip_address: d.ip_address,
         wifi_bssid: d.mac_address,
         wifi_ssid: d.wifi_ssid,
-        imei: d.imei,
-        android_id: md5(d.android_id).toString("hex"),
+        imei: d.android_id,
+        android_id: d.android_id,
         apn: "wifi",
         version: {
             incremental: d.incremental,
@@ -81,7 +81,7 @@ export function generateFullDevice(apk: Apk, d?: ShortDevice) {
             sdk: 29,
         },
         imsi: randomBytes(16),
-        guid: md5(Buffer.concat([Buffer.from(d.imei), Buffer.from(d.mac_address)])),
+        guid: md5(Buffer.concat([Buffer.from(d.android_id), Buffer.from(d.mac_address)])),
     }
 }
 
@@ -136,7 +136,8 @@ LQ+FLkpncClKVIrBwv6PHyUvuCb0rIarmgDnzkfQAqVufEtR64iazGDKatvJ9y6B
             }
             const { q16, q36 } = JSON.parse(aesDecrypt(data.data, k))
             this.qImei16 = q16
-            this.qImei36 = q36
+            this.qImei36 = q36 || q16
+            if (this.qImei36) this.imsi = Buffer.from(this.qImei36, 'hex')
         } catch {
         }
     }
@@ -221,7 +222,7 @@ LQ+FLkpncClKVIrBwv6PHyUvuCb0rIarmgDnzkfQAqVufEtR64iazGDKatvJ9y6B
             "channelId": "2017",
             "cid": "",
             "imei": this.imei,
-            "imsi": this.imsi.toString("hex"),
+            "imsi": this.imsi.toString('hex'),
             "mac": this.mac_address,
             "model": this.model,
             "networkType": "unknown",
