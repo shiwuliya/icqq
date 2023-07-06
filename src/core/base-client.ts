@@ -420,6 +420,7 @@ export class BaseClient extends Trapper {
       return;
     }
 
+    let resultList: any = [];
     for (let ssoPacket of list) {
       let cmd = ssoPacket.cmd;
       let body = Buffer.from(ssoPacket.body, 'hex');
@@ -427,9 +428,10 @@ export class BaseClient extends Trapper {
       let payload = await this.sendUni(cmd, body);
       this.emit("internal.verbose", `sendUni ${cmd} result: ${payload.toString('hex')}`, VerboseLevel.Debug);
       if (callbackId > -1) {
-        await this.ssoPacketListHandler(await this.submitSsoPacket(cmd, callbackId, payload));
+        resultList = resultList.concat(await this.submitSsoPacket(cmd, callbackId, payload));
       }
     }
+    await this.ssoPacketListHandler(resultList);
   }
 
   async requestToken() {
