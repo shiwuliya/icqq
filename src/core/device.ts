@@ -242,16 +242,27 @@ LQ+FLkpncClKVIrBwv6PHyUvuCb0rIarmgDnzkfQAqVufEtR64iazGDKatvJ9y6B
     }
 }
 
-/** 支持的登录设备平台 */
+/**
+ * 支持的登录设备平台
+ * * `aPad`和`Watch`协议无法设置在线状态、无法接收某些群事件（包括戳一戳等）
+ * * 目前仅`Watch`支持扫码登录，可能会支持`iPad`扫码登录
+ */
 export enum Platform {
+    /** 安卓手机 */
     Android = 1,
+    /** 安卓平板 */
     aPad = 2,
+    /** 安卓手表 */
     Watch = 3,
+    /** MacOS */
     iMac = 4,
+    /** iPad */
     iPad = 5,
+    /** Tim */
     Tim = 6
 }
 
+/** 登录设备通用属性 */
 export type Apk = typeof mobile
 const mobile = {
     id: "com.tencent.mobileqq",

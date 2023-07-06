@@ -1,25 +1,37 @@
-import {Client} from "./client";
+import { Client } from "./client";
 import { pb } from "./core"
-import {hide, lock} from "./core/constants";
-import {Channel} from "./channel";
-import {Sendable} from "./message";
-import {GroupInfo} from "./entities";
-import {Group} from "./group";
+import { hide, lock } from "./core/constants";
+import { Channel } from "./channel";
+import { Sendable } from "./message";
+import { GroupInfo } from "./entities";
+import { Group } from "./group";
 
+/** 频道权限 */
 export enum GuildRole {
+    /** 成员 */
     Member = 1,
+    /** 频道管理员 */
     GuildAdmin = 2,
+    /** 频道主 */
     Owner = 4,
+    /** 子频道管理员 */
     ChannelAdmin = 5,
 }
 
+/** 频道成员 */
 export interface GuildMember {
+    /** 账号 */
     tiny_id: string
+    /** 名片 */
     card: string
+    /** 昵称 */
     nickname: string
+    /** 权限 */
     role: GuildRole
+    /** 加入时间 */
     join_time: number
 }
+
 const members4buf = pb.encode({
     1: 1,
     2: 1,
@@ -32,26 +44,37 @@ const members4buf = pb.encode({
 })
 
 const weakmap = new WeakMap<GroupInfo, Group>()
-export class Guild {
 
+/** 频道 */
+export class Guild {
+    /** 频道名 */
     guild_name = ""
+    /** 子频道字典 */
     channels = new Map<string, Channel>()
 
-    constructor(public readonly c:Client, public readonly guild_id: string) {
+    constructor(public readonly c: Client, public readonly guild_id: string) {
         lock(this, "guild_id")
     }
-    static as(this:Client,guild_id:string){
-        const guild=this.guilds.get(guild_id)
-        if(!guild) throw new Error(`尚未加入Guild(${guild_id})`)
+
+    static as(this: Client, guild_id: string) {
+        const guild = this.guilds.get(guild_id)
+        if (!guild) throw new Error(`尚未加入Guild(${guild_id})`)
         return guild
     }
-    async sendMsg(channel_id:string,message:Sendable){
+
+    /**
+     * 发送消息
+     * @param channel_id 子频道id
+     * @param message 消息内容
+     */
+    async sendMsg(channel_id: string, message: Sendable) {
         let channel = this.channels.get(channel_id)
         if (!channel)
             throw new Error(`你尚未加入频道：` + channel_id)
 
         return channel.sendMsg(message)
     }
+
     _renew(guild_name: string, proto: pb.Proto | pb.Proto[]) {
         this.guild_name = guild_name
         if (!Array.isArray(proto))
@@ -71,6 +94,7 @@ export class Guild {
                 this.channels.delete(id)
         }
     }
+
     /** 获取频道成员列表 */
     async getMemberList() {
         let index = 0 // todo member count over 500

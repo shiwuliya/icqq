@@ -1,7 +1,7 @@
 import * as qs from "querystring"
 import { pb } from "../core"
 import { lock, parseFunString, GroupRole, Gender, log } from "../common"
-import { Parser, parse} from "./parser"
+import { Parser, parse } from "./parser"
 import { Quotable, Forwardable, MessageElem, FileElem } from "./elements"
 import querystring from "querystring";
 
@@ -72,7 +72,6 @@ export function parseGroupMessageId(msgid: string) {
 
 /** 一条消息 */
 export abstract class Message implements Quotable, Forwardable {
-
 	protected readonly parsed: Parser
 
 	/**
@@ -83,7 +82,7 @@ export abstract class Message implements Quotable, Forwardable {
 	 */
 	user_id: number
 
-	/** 仅供内部转发消息时使用 */
+	/** 发送方昵称，仅供内部转发消息时使用 */
 	get nickname(): string {
 		return this.sender?.card || this.sender?.nickname || ""
 	}
@@ -102,7 +101,8 @@ export abstract class Message implements Quotable, Forwardable {
 	seq: number
 	/** 消息随机数 */
 	rand: number
-	sender?: {[k: string]: any}
+	/** 发送方 */
+	sender?: { [k: string]: any }
 
 	/** 引用回复 */
 	source?: Quotable
@@ -115,12 +115,12 @@ export abstract class Message implements Quotable, Forwardable {
 	static deserialize(serialized: Buffer, uin?: number) {
 		const proto = pb.decode(serialized)
 		switch (proto[1][3]) {
-		case 82:
-			return new GroupMessage(proto)
-		case 83:
-			return new DiscussMessage(proto)
-		default:
-			return new PrivateMessage(proto, uin)
+			case 82:
+				return new GroupMessage(proto)
+			case 83:
+				return new DiscussMessage(proto)
+			default:
+				return new PrivateMessage(proto, uin)
 		}
 	}
 
@@ -134,7 +134,7 @@ export abstract class Message implements Quotable, Forwardable {
 			if ((guest as GroupMessage).atall) host.atall = true
 			host.raw_message += guest.raw_message
 			for (const elem of guest.message) {
-				const prev = chain[chain.length-1]
+				const prev = chain[chain.length - 1]
 				if (elem.type === "text" && prev?.type === "text")
 					prev.text += elem.text
 				else
@@ -185,11 +185,11 @@ export abstract class Message implements Quotable, Forwardable {
 	toString() {
 		return this.parsed.content
 	}
-	toJSON(keys:string[]):Record<string, any>{
-		return Object.fromEntries(Object.keys(this).filter((key)=>{
-			return typeof this[key as keyof this]!=="function" && !keys.includes(key as any)
-		}).map(key=>{
-			return [key,this[key as keyof this]]
+	toJSON(keys: string[]): Record<string, any> {
+		return Object.fromEntries(Object.keys(this).filter((key) => {
+			return typeof this[key as keyof this] !== "function" && !keys.includes(key as any)
+		}).map(key => {
+			return [key, this[key as keyof this]]
 		}))
 	}
 
@@ -216,7 +216,7 @@ export abstract class Message implements Quotable, Forwardable {
 			}
 			const s = querystring.stringify(c as any, ",", "=", {
 				encodeURIComponent: (s) =>
-					s.replace(new RegExp(Object.keys(mCQInside).join("|"), "g"), ((s:'&'|','|'['|']') => mCQInside[s] || "") as any),
+					s.replace(new RegExp(Object.keys(mCQInside).join("|"), "g"), ((s: '&' | ',' | '[' | ']') => mCQInside[s] || "") as any),
 			});
 			const cq = `[CQ:${c.type}${s ? "," : ""}${s}]`;
 
@@ -228,17 +228,29 @@ export abstract class Message implements Quotable, Forwardable {
 
 /** 一条私聊消息 */
 export class PrivateMessage extends Message {
-
 	message_type = "private" as "private"
-	/** friend:好友 group:群临时会话 self:我的设备 other:其他途径的临时会话 */
-	sub_type = "friend" as "friend" | "group" | "other" | "self"
+	/**
+	 * @type {"friend"} 好友
+	 * @type {"group"} 群临时会话
+	 * @type {"other"} 其他途径的临时会话
+	 * @type {"self"} 我的设备
+	 */
+	sub_type: "friend" | "group" | "other" | "self" = "friend"
+	/** 发送方账号 */
 	from_id: number
+	/** 接收方账号 */
 	to_id: number
+	/** 是否为自动回复 */
 	auto_reply: boolean
+	/** 发送方信息 */
 	sender = {
+		/** 账号 */
 		user_id: 0,
+		/** 昵称 */
 		nickname: "",
+		/** 群号，当消息来自群聊时有效 */
 		group_id: undefined as number | undefined,
+		/** 讨论组号，当消息来自讨论组时有效 */
 		discuss_id: undefined as number | undefined,
 	}
 
@@ -254,35 +266,35 @@ export class PrivateMessage extends Message {
 		this.to_id = head[2]
 		this.auto_reply = !!(content && content[4])
 		switch (head[3]) {
-		case 529:
-			if (head[4] === 4) {
-				const trans = body[2][1]
-				if (trans[1] !== 0)
-					throw new Error("unsupported message (ignore ok)")
-				const elem = {
-					type: "file",
-					name: String(trans[5]),
-					size: trans[6],
-					md5: trans[4]?.toHex() || "",
-					duration: trans[51] || 0,
-					fid: String(trans[3]),
-				} as FileElem
-				this.message = [elem]
-				this.raw_message = "[离线文件]"
-				this.parsed.content = `{file:${elem.fid}}`
-			} else {
-				this.sub_type = this.from_id === this.to_id ? "self" : "other"
-				this.message = this.raw_message = this.parsed.content = body[2]?.[6]?.[5]?.[1]?.[2]?.toString() || ""
-			}
-			break
-		case 141:
-			this.sub_type = "group"
-			this.sender.nickname = this.parsed.extra?.[1]?.toString() || ""
-			if (head[8]?.[3])
-				this.sender.group_id = head[8]?.[4]
-			else
-				this.sender.discuss_id = head[8]?.[4]
-			break
+			case 529:
+				if (head[4] === 4) {
+					const trans = body[2][1]
+					if (trans[1] !== 0)
+						throw new Error("unsupported message (ignore ok)")
+					const elem = {
+						type: "file",
+						name: String(trans[5]),
+						size: trans[6],
+						md5: trans[4]?.toHex() || "",
+						duration: trans[51] || 0,
+						fid: String(trans[3]),
+					} as FileElem
+					this.message = [elem]
+					this.raw_message = "[离线文件]"
+					this.parsed.content = `{file:${elem.fid}}`
+				} else {
+					this.sub_type = this.from_id === this.to_id ? "self" : "other"
+					this.message = this.raw_message = this.parsed.content = body[2]?.[6]?.[5]?.[1]?.[2]?.toString() || ""
+				}
+				break
+			case 141:
+				this.sub_type = "group"
+				this.sender.nickname = this.parsed.extra?.[1]?.toString() || ""
+				if (head[8]?.[3])
+					this.sender.group_id = head[8]?.[4]
+				else
+					this.sender.discuss_id = head[8]?.[4]
+				break
 		}
 		let opposite = this.from_id, flag = 0
 		if (this.from_id === uin)
@@ -293,29 +305,45 @@ export class PrivateMessage extends Message {
 
 /** 一条群消息 */
 export class GroupMessage extends Message {
-
 	message_type = "group" as "group"
-	/** anonymous:匿名 normal:通常  */
+	/**
+	 * @type {"normal"} 普通消息
+	 * @type {"anonymous"} 匿名消息
+	 */
 	sub_type: "normal" | "anonymous"
+	/** 群号 */
 	group_id: number
+	/** 群名 */
 	group_name: string
+	/** 匿名信息，{@link sub_type} 为`"anonymous"`时该属性有效 */
 	anonymous: Anonymous | null
+	/** @todo 未知属性 */
 	block: boolean
+	/** 是否AT我 */
 	atme: boolean
+	/** 是否AT全体成员 */
 	atall: boolean
+	/** 发送方信息 */
 	sender = {
+		/** 账号 */
 		user_id: 0,
+		/** 昵称 */
 		nickname: "",
+		/** @todo 未知属性 */
 		sub_id: "",
+		/** 名片 */
 		card: "",
-		/** @deprecated */
+		/** 性别，@deprecated */
 		sex: "unknown" as Gender,
-		/** @deprecated */
+		/** 年龄，@deprecated */
 		age: 0,
-		/** @deprecated */
+		/** 地区，@deprecated */
 		area: "",
+		/** 等级 */
 		level: 0,
+		/** 权限 */
 		role: "member" as GroupRole,
+		/** 头衔 */
 		title: ""
 	}
 
@@ -366,14 +394,20 @@ export class GroupMessage extends Message {
 
 /** 一条讨论组消息 */
 export class DiscussMessage extends Message {
-
 	message_type = "discuss" as "discuss"
+	/** 讨论组号 */
 	discuss_id: number
+	/** 组名 */
 	discuss_name: string
+	/** 是否AT我 */
 	atme: boolean
+	/** 发送方信息 */
 	sender: {
+		/** 账号 */
 		user_id: number,
+		/** 昵称 */
 		nickname: string,
+		/** 名片 */
 		card: string,
 	}
 
@@ -400,13 +434,19 @@ export class DiscussMessage extends Message {
 
 /** 一条转发消息 */
 export class ForwardMessage implements Forwardable {
-
+	/** @todo 未知属性 */
 	private parsed: Parser
+	/** 账号 */
 	user_id: number
+	/** 昵称 */
 	nickname: string
+	/** 若转自群聊，则表示群号 */
 	group_id?: number
+	/** 发送时间 */
 	time: number
-	seq:number
+	/** 发送序号 */
+	seq: number
+	/** 消息内容 */
 	message: MessageElem[]
 	raw_message: string
 
@@ -419,7 +459,7 @@ export class ForwardMessage implements Forwardable {
 		this.proto = proto
 		const head = proto[1]
 		this.time = head[6] || 0
-		this.seq=head[5]
+		this.seq = head[5]
 		this.user_id = head[1] || 0
 		this.nickname = head[14]?.toString() || head[9]?.[4]?.toString() || ""
 		this.group_id = head[9]?.[1]

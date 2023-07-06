@@ -8,7 +8,7 @@ const default_host = "msfwifi.3g.qq.com"
 const default_port = 8080
 let update_time = 0
 let searching: Promise<void> | undefined
-let host_port: {[ip: string]: number} = { }
+let host_port: { [ip: string]: number } = {}
 
 /**
  * @event connect2
@@ -79,7 +79,7 @@ export default class Network extends Socket {
 				const list = Object.keys(map).slice(0, 3)
 				if (list[0] && list[1]) {
 					update_time = timestamp()
-					host_port = { }
+					host_port = {}
 					host_port[list[0]] = map[list[0]]
 					host_port[list[1]] = map[list[1]]
 				}
@@ -105,7 +105,7 @@ export async function fetchServerList() {
 	let buf = Buffer.from(data as ArrayBuffer)
 	buf = tea.decrypt(buf, key).slice(4)
 	const nested = jce.decodeWrapper(buf)
-	const map: typeof host_port = { }
+	const map: typeof host_port = {}
 	for (let v of nested[2])
 		map[v[1]] = v[2]
 	return map

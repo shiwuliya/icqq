@@ -1,4 +1,5 @@
-export const facemap: {[k: number]: string} = {
+/** 表情字典 */
+export const facemap: { [k: number]: string } = {
 	0: "惊讶",
 	1: "撇嘴",
 	2: "色",
@@ -276,7 +277,8 @@ export const facemap: {[k: number]: string} = {
 	348: "/福萝卜",
 }
 
-export const pokemap: {[k: number]: string} = {
+/** 戳一戳字典 */
+export const pokemap: { [k: number]: string } = {
 	0: "回戳",
 	1: "戳一戳",
 	2: "比心",

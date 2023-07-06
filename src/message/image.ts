@@ -4,11 +4,13 @@ import path from "path"
 import { randomBytes } from "crypto"
 import probe from "probe-image-size"
 import axios from "axios"
-import { md5, md5Stream, pipeline, uuid, NOOP,
-	TMP_DIR, IS_WIN, MAX_UPLOAD_SIZE, DownloadTransform } from "../common"
+import {
+	md5, md5Stream, pipeline, uuid, NOOP,
+	TMP_DIR, IS_WIN, MAX_UPLOAD_SIZE, DownloadTransform
+} from "../common"
 import { ImageElem, FlashElem } from "./elements"
 
-const TYPE: {[ext: string]: number} = {
+const TYPE: { [ext: string]: number } = {
 	jpg: 1000,
 	png: 1001,
 	webp: 1002,
@@ -17,7 +19,7 @@ const TYPE: {[ext: string]: number} = {
 	face: 4,
 }
 
-const EXT: {[type: number]: string} = {
+const EXT: { [type: number]: string } = {
 	3: "png",
 	4: "face",
 	1000: "jpg",
@@ -52,9 +54,8 @@ export function parseImageFileParam(file: string) {
 }
 
 export class Image {
-
 	/** 最终用于发送的对象 */
-	proto: {[tag: number]: any} = { }
+	proto: { [tag: number]: any } = {}
 	/** 用于上传的文件流 */
 	readable?: Readable
 	/** 实例化后必须等待此异步任务完成后才能上传图片 */
@@ -145,7 +146,7 @@ export class Image {
 			readable = readable.pipe(new DownloadTransform)
 			timeout = timeout! > 0 ? timeout! : 60;
 			this.tmpfile = path.join(TMP_DIR, uuid())
-			var id = setTimeout(()=>{
+			var id = setTimeout(() => {
 				readable.destroy()
 			}, timeout * 1000)
 			const [dimensions, md5] = await Promise.all([
@@ -157,7 +158,7 @@ export class Image {
 			this.setProperties(dimensions)
 			this.md5 = md5
 			this.size = (await fs.promises.stat(this.tmpfile)).size
-			this.readable = fs.createReadStream(this.tmpfile, { highWaterMark: 1024*256 })
+			this.readable = fs.createReadStream(this.tmpfile, { highWaterMark: 1024 * 256 })
 			this.setProto()
 		} catch (e) {
 			this.deleteTmpFile()
@@ -178,9 +179,9 @@ export class Image {
 			}
 		}
 		const readable = (await axios.get(url, {
-				headers,
-				responseType: "stream",
-			}
+			headers,
+			responseType: "stream",
+		}
 		)).data as Readable
 		await this.fromReadable(readable, timeout)
 		this.cachefile && fs.writeFile(
@@ -211,7 +212,7 @@ export class Image {
 			this.setProperties(dimensions)
 			this.md5 = md5
 			this.size = stat.size
-			this.readable = fs.createReadStream(file, { highWaterMark: 1024*256 })
+			this.readable = fs.createReadStream(file, { highWaterMark: 1024 * 256 })
 			this.setProto()
 		}
 	}

@@ -1,63 +1,63 @@
 import axios from "axios"
-import {Encodable} from "../core/protobuf/index";
+import { Encodable } from "../core/protobuf/index";
 
 /** 支持的音乐平台 */
-export type MusicPlatform='qq'|'163'|'migu'|'kugou'|'kuwo'
+export type MusicPlatform = 'qq' | '163' | 'migu' | 'kugou' | 'kuwo'
 
-type AppInfo={
-	appid:number
-	package_name:string
-	sign:string
-	name:string
-	icon?:string
-	getMusicInfo:typeof getQQSong
+type AppInfo = {
+	appid: number
+	package_name: string
+	sign: string
+	name: string
+	icon?: string
+	getMusicInfo: typeof getQQSong
 }
-export type MusicFullInfo={
-	title:string
-	singer:string
-	jumpUrl:string
-	musicUrl:string
-	preview:string
+export type MusicFullInfo = {
+	title: string
+	singer: string
+	jumpUrl: string
+	musicUrl: string
+	preview: string
 }
-export const musicFactory:Record<MusicPlatform, AppInfo>={
-	qq:{
-		appid : 100497308,
-		name:'QQ音乐',
+export const musicFactory: Record<MusicPlatform, AppInfo> = {
+	qq: {
+		appid: 100497308,
+		name: 'QQ音乐',
 		icon: 'https://p.qpic.cn/qqconnect/0/app_100497308_1626060999/100?max-age=2592000&t=0',
-		package_name : "com.tencent.qqmusic",
-		sign : "cbd27cd7c861227d013a25b2d10f0799",
-		getMusicInfo:getQQSong
+		package_name: "com.tencent.qqmusic",
+		sign: "cbd27cd7c861227d013a25b2d10f0799",
+		getMusicInfo: getQQSong
 	},
-	'163':{
-		appid : 100495085,
-		name:'网易云音乐',
+	'163': {
+		appid: 100495085,
+		name: '网易云音乐',
 		icon: 'https://i.gtimg.cn/open/app_icon/00/49/50/85/100495085_100_m.png',
-		package_name : "com.netease.cloudmusic",
-		sign : "da6b069da1e2982db3e386233f68d76d",
-		getMusicInfo:get163Song
+		package_name: "com.netease.cloudmusic",
+		sign: "da6b069da1e2982db3e386233f68d76d",
+		getMusicInfo: get163Song
 	},
-	migu:{
-		appid : 1101053067,
-		name:'咪咕音乐',
-		package_name : "cmccwm.mobilemusic",
-		sign : "6cdc72a439cef99a3418d2a78aa28c73",
-		getMusicInfo:getMiGuSong
+	migu: {
+		appid: 1101053067,
+		name: '咪咕音乐',
+		package_name: "cmccwm.mobilemusic",
+		sign: "6cdc72a439cef99a3418d2a78aa28c73",
+		getMusicInfo: getMiGuSong
 	},
-	kugou:{
-		appid : 205141,
-		name:'酷狗音乐',
+	kugou: {
+		appid: 205141,
+		name: '酷狗音乐',
 		icon: 'https://open.gtimg.cn/open/app_icon/00/20/51/41/205141_100_m.png?t=0',
-		package_name : "com.kugou.android",
-		sign : "fe4a24d80fcf253a00676a808f62c2c6",
-		getMusicInfo:getKuGouSong
+		package_name: "com.kugou.android",
+		sign: "fe4a24d80fcf253a00676a808f62c2c6",
+		getMusicInfo: getKuGouSong
 	},
-	kuwo:{
-		appid : 100243533,
-		name:'酷我音乐',
+	kuwo: {
+		appid: 100243533,
+		name: '酷我音乐',
 		icon: 'https://p.qpic.cn/qqconnect/0/app_100243533_1636374695/100?max-age=2592000&t=0',
-		package_name : "cn.kuwo.player",
-		sign : "bf9ff4ffb4c558a34ee3fd52c223ebf5",
-		getMusicInfo:getKuwoSong
+		package_name: "cn.kuwo.player",
+		sign: "bf9ff4ffb4c558a34ee3fd52c223ebf5",
+		getMusicInfo: getKuwoSong
 	}
 }
 async function getQQSong(id: string) {
@@ -142,7 +142,7 @@ async function getKuwoSong(id: string) {
  * @param platform 音乐平台
  * @param id 音乐id
  */
-export async function buildMusic(channel_id: string, guild_id: string, platform: MusicPlatform, id: string):Promise<Encodable>
+export async function buildMusic(channel_id: string, guild_id: string, platform: MusicPlatform, id: string): Promise<Encodable>
 /**
  * 构造b77音乐分享
  * @param target {number} 群id或者好友qq
@@ -150,13 +150,13 @@ export async function buildMusic(channel_id: string, guild_id: string, platform:
  * @param platform 音乐平台
  * @param id 音乐id
  */
-export async function buildMusic(target: number, bu: 0|1, platform: MusicPlatform, id: string):Promise<Encodable>
-export async function buildMusic(target: string|number, bu: string|0|1, platform: MusicPlatform, id: string) {
-	const {appid,package_name,sign,getMusicInfo}=musicFactory[platform];
-	let style:4|0=4
+export async function buildMusic(target: number, bu: 0 | 1, platform: MusicPlatform, id: string): Promise<Encodable>
+export async function buildMusic(target: string | number, bu: string | 0 | 1, platform: MusicPlatform, id: string) {
+	const { appid, package_name, sign, getMusicInfo } = musicFactory[platform];
+	let style: 4 | 0 = 4
 	try {
-		const {singer,title,jumpUrl,musicUrl,preview}=await getMusicInfo(id)
-		if(!musicUrl) style=0
+		const { singer, title, jumpUrl, musicUrl, preview } = await getMusicInfo(id)
+		if (!musicUrl) style = 0
 		return {
 			1: appid,
 			2: 1,
@@ -167,7 +167,7 @@ export async function buildMusic(target: string|number, bu: string|0|1, platform
 				3: package_name,
 				4: sign
 			},
-			10: typeof bu==='string'?3:bu,
+			10: typeof bu === 'string' ? 3 : bu,
 			11: target,
 			12: {
 				10: title,
@@ -177,21 +177,21 @@ export async function buildMusic(target: string|number, bu: string|0|1, platform
 				14: preview,
 				16: musicUrl,
 			},
-			19:typeof bu==='string'?Number(bu):undefined
+			19: typeof bu === 'string' ? Number(bu) : undefined
 		}
 	} catch (e) {
 		throw new Error("unknown music id: " + id + ", in platform: " + platform)
 	}
 
 }
-export function makeMusicJson(musicInfo:MusicFullInfo & {platform:MusicPlatform}){
-	const {appid,name,icon}=musicFactory[musicInfo.platform]
+export function makeMusicJson(musicInfo: MusicFullInfo & { platform: MusicPlatform }) {
+	const { appid, name, icon } = musicFactory[musicInfo.platform]
 	return {
 		app: "com.tencent.qzone.structmsg",
-		config: {type: "normal",autosize:true, forward: true},
+		config: { type: "normal", autosize: true, forward: true },
 		desc: "音乐",
 		meta: {
-			[musicInfo.musicUrl?'music':'news']: {
+			[musicInfo.musicUrl ? 'music' : 'news']: {
 				app_type: 1,
 				appid,
 				desc: musicInfo.singer,
@@ -207,6 +207,6 @@ export function makeMusicJson(musicInfo:MusicFullInfo & {platform:MusicPlatform}
 		},
 		prompt: `[分享]${musicInfo.title} ${musicInfo.singer}`,
 		ver: "0.0.0.1",
-		view: musicInfo.musicUrl?'music':'news',
+		view: musicInfo.musicUrl ? 'music' : 'news',
 	}
 }

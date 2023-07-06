@@ -1,5 +1,5 @@
 import axios from "axios";
-import {BaseClient} from "./base-client";
+import { BaseClient } from "./base-client";
 
 async function getT544(this: BaseClient, ...cmds: string[]) {
     if (this.apk.display === 'Android_8.8.88') return

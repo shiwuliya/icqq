@@ -46,7 +46,7 @@ export enum ErrorCode {
 	FFmpegPttTransError = -220,
 }
 
-const ErrorMessage: {[code: number]: string} = {
+const ErrorMessage: { [code: number]: string } = {
 	[ErrorCode.UserNotExists]: "查无此人",
 	[ErrorCode.GroupNotJoined]: "未加入的群",
 	[ErrorCode.MemberNotExists]: "幽灵群员",

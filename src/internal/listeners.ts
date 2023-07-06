@@ -1,10 +1,10 @@
 import * as fs from "fs"
 import * as path from "path"
-import {PNG} from "pngjs"
-import {jce} from "../core"
-import {NOOP, OnlineStatus} from "../common"
-import {getFrdSysMsg, getGrpSysMsg} from "./sysmsg"
-import {pbGetMsg, pushReadedListener} from "./pbgetmsg"
+import { PNG } from "pngjs"
+import { jce } from "../core"
+import { NOOP, OnlineStatus } from "../common"
+import { getFrdSysMsg, getGrpSysMsg } from "./sysmsg"
+import { pbGetMsg, pushReadedListener } from "./pbgetmsg"
 import {
     dmMsgSyncListener,
     groupMsgListener,
@@ -12,7 +12,7 @@ import {
     onlinePushListener,
     onlinePushTransListener
 } from "./onlinepush"
-import {guildMsgListener} from "./guild"
+import { guildMsgListener } from "./guild"
 import * as log4js from "log4js";
 
 type Client = import("../client").Client
@@ -103,7 +103,7 @@ function kickoffListener(this: Client, message: string) {
     this.logger.warn(message)
     this.terminate()
     fs.unlink(path.join(this.dir, this.uin + '_token'), NOOP)
-    this.em("system.offline.kickoff", {message})
+    this.em("system.offline.kickoff", { message })
 }
 
 function logQrcode(img: Buffer) {
@@ -136,20 +136,20 @@ function qrcodeListener(this: Client, image: Buffer) {
         } catch {
         }
         this.logger.mark("二维码图片已保存到：" + file)
-        this.em("system.login.qrcode", {image})
+        this.em("system.login.qrcode", { image })
     })
 }
 
 function sliderListener(this: Client, url: string) {
     this.logger.mark("收到滑动验证码，请访问以下地址完成滑动，并从网络响应中取出ticket输入：" + url)
-    this.em("system.login.slider", {url})
+    this.em("system.login.slider", { url })
 }
 
 function verifyListener(this: Client, url: string, phone: string) {
     this.logger.mark("收到登录保护，只需验证一次便长期有效，可以访问URL验证或发短信验证。访问URL完成验证后调用login()可直接登录。发短信验证需要调用sendSmsCode()和submitSmsCode()方法。")
     this.logger.mark("登录保护验证URL：" + url.replace("verify", "qrcode"))
     this.logger.mark("密保手机号：" + phone)
-    return this.em("system.login.device", {url, phone})
+    return this.em("system.login.device", { url, phone })
 }
 
 /**
@@ -176,12 +176,12 @@ function loginErrorListener(this: Client, code: number, message: string) {
             this.logger.mark(t + "秒后重新连接")
             setTimeout(this.login.bind(this, this.uin), t * 1000)
         }
-        this.em("system.offline.network", {message})
+        this.em("system.offline.network", { message })
     }
     // login error
     else if (code > 0) {
         this.logger.error(message)
-        this.em("system.login.error", {code, message})
+        this.em("system.login.error", { code, message })
     }
 }
 
