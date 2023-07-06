@@ -283,7 +283,7 @@ export class BaseClient extends Trapper {
           'User-Agent': `Dalvik/2.1.0 (Linux; U; Android ${this.device.version.release}; PCRT00 Build/N2G48H)`,
           'Content-Type': "application/x-www-form-urlencoded"
         }
-      }).catch(() => ({ data: { code: -1 } }));
+      }).catch(err => ({ data: { code: -1, msg: err?.message } }));
       this.emit("internal.verbose", `getT544 ${cmd} result: ${JSON.stringify(data)}`, VerboseLevel.Debug);
       if (data.code >= 0) {
         if (typeof (data.data) === 'string') {
@@ -342,7 +342,7 @@ export class BaseClient extends Trapper {
           'User-Agent': `Dalvik/2.1.0 (Linux; U; Android ${this.device.version.release}; PCRT00 Build/N2G48H)`,
           'Content-Type': "application/x-www-form-urlencoded"
         }
-      }).catch(() => ({ data: { code: -1 } }));
+      }).catch(err => ({ data: { code: -1, msg: err?.message } }));
       this.emit("internal.verbose", `sign ${cmd} result: ${JSON.stringify(data)}`, VerboseLevel.Debug);
       if (data.code >= 0) {
         const Data = data.data || {};
@@ -462,7 +462,7 @@ export class BaseClient extends Trapper {
         'User-Agent': `Dalvik/2.1.0 (Linux; U; Android ${this.device.version.release}; PCRT00 Build/N2G48H)`,
         'Content-Type': "application/x-www-form-urlencoded"
       }
-    }).catch(() => ({ data: { code: -1 } }));
+    }).catch(err => ({ data: { code: -1, msg: err?.message } }));
     this.emit("internal.verbose", `requestSignToken result: ${JSON.stringify(data)}`, VerboseLevel.Debug);
     if (data.code >= 0) {
       let ssoPacketList = data.data?.ssoPacketList || data.data?.requestCallback || data.data;
@@ -498,7 +498,7 @@ export class BaseClient extends Trapper {
         'User-Agent': `Dalvik/2.1.0 (Linux; U; Android ${this.device.version.release}; PCRT00 Build/N2G48H)`,
         'Content-Type': "application/x-www-form-urlencoded"
       }
-    }).catch(() => ({ data: { code: -1 } }));
+    }).catch(err => ({ data: { code: -1, msg: err?.message } }));
     this.emit("internal.verbose", `submitSsoPacket result: ${JSON.stringify(data)}`, VerboseLevel.Debug);
     if (data.code >= 0) {
       let ssoPacketList = data.data?.ssoPacketList || data.data?.requestCallback || data.data;

@@ -15,12 +15,12 @@ export async function getT544(this: BaseClient, cmd: string) {
     url.pathname = '/energy';
     const { data } = await axios.get(url.href, {
       params: post_params,
-      timeout: 10000,
+      timeout: 20000,
       headers: {
         'User-Agent': `Dalvik/2.1.0 (Linux; U; Android ${this.device.version.release}; PCRT00 Build/N2G48H)`,
         'Content-Type': "application/x-www-form-urlencoded"
       }
-    }).catch(() => ({ data: { code: -1 } }));
+    }).catch(err => ({ data: { code: -1, msg: err?.message } }));
     this.emit("internal.verbose", `getT544 ${cmd} result: ${JSON.stringify(data)}`, VerboseLevel.Debug);
     if (data.code == 0) {
       if (typeof (data.data) === 'string') {
@@ -56,12 +56,12 @@ export async function getSign(this: BaseClient, cmd: string, seq: number, body: 
       buffer: body.toString('hex')
     };
     const { data } = await axios.post(url, post_params, {
-      timeout: 10000,
+      timeout: 20000,
       headers: {
         'User-Agent': `Dalvik/2.1.0 (Linux; U; Android ${this.device.version.release}; PCRT00 Build/N2G48H)`,
         'Content-Type': "application/x-www-form-urlencoded"
       }
-    }).catch(() => ({ data: { code: -1 } }));
+    }).catch(err => ({ data: { code: -1, msg: err?.message } }));
     this.emit("internal.verbose", `getSign ${cmd} result: ${JSON.stringify(data)}`, VerboseLevel.Debug);
     if (data.code == 0) {
       const Data = data.data || {};
@@ -97,12 +97,12 @@ async function register(this: BaseClient) {
   url.pathname = '/register';
   const { data } = await axios.get(url.href, {
     params: post_params,
-    timeout: 15000,
+    timeout: 20000,
     headers: {
       'User-Agent': `Dalvik/2.1.0 (Linux; U; Android ${this.device.version.release}; PCRT00 Build/N2G48H)`,
       'Content-Type': "application/x-www-form-urlencoded"
     }
-  }).catch(() => ({ data: { code: -1 } }));
+  }).catch(err => ({ data: { code: -1, msg: err?.message } }));
   this.emit("internal.verbose", `register result: ${JSON.stringify(data)}`, VerboseLevel.Debug);
   if (data.code == 0) {
     return true;
@@ -110,4 +110,3 @@ async function register(this: BaseClient) {
   this.emit("internal.verbose", `签名api注册异常：result: ${JSON.stringify(data)}`, VerboseLevel.Error);
   return false;
 }
-
