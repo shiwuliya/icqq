@@ -256,19 +256,19 @@ export type Apk = typeof mobile
 const mobile = {
     id: "com.tencent.mobileqq",
     app_key: '0S200MNJT807V3GE',
-    name: "A8.9.63.11390",
-    version: "8.9.63.11390",
-    ver: "8.9.63",
+    name: "A8.9.68.11565",
+    version: "8.9.68.11565",
+    ver: "8.9.68",
     sign: Buffer.from('A6 B7 45 BF 24 A2 C2 77 52 77 16 F6 F3 6E B6 8D'.split(' ').map(s => parseInt(s, 16))),
-    buildtime: 1685069178,
+    buildtime: 1687254022,
     appid: 16,
-    subid: 537164840,
+    subid: 537168313,
     bitmap: 150470524,
     main_sig_map: 16724722,
     sub_sig_map: 0x10400,
-    sdkver: "6.0.0.2546",
+    sdkver: "6.0.0.2549",
     display: "Android",
-    qua: 'V1_AND_SQ_8.9.63_4194_YYB_D',
+    qua: 'V1_AND_SQ_8.9.68_4264_YYB_D',
     ssover: 20,
 }
 const tim = {
@@ -331,7 +331,7 @@ const apklist: { [platform in Platform]: Apk } = {
     [Platform.Tim]: tim,
     [Platform.aPad]: {
         ...mobile,
-        subid: 537164888,
+        subid: 537168361,
         display: 'aPad'
     },
     [Platform.Watch]: watch,
