@@ -1,5 +1,26 @@
 # Changelog
 
+## [0.4.10](https://github.com/icqqjs/icqq/compare/v0.4.9...v0.4.10) (2023-07-05)
+
+
+### Bug Fixes
+
+* requestToken ([a6dca70](https://github.com/icqqjs/icqq/commit/a6dca707bfa15470f889d81670e49940440530e9))
+
+## [0.4.9](https://github.com/icqqjs/icqq/compare/v0.4.8...v0.4.9) (2023-07-05)
+
+
+### Bug Fixes
+
+* 签名token改为每50分钟刷新一次、修改了设备信息（更新后需要重新验证设备！） ([2d92001](https://github.com/icqqjs/icqq/commit/2d920013a80a44307855a48173d4ba0ed6271699))
+
+## [0.4.8](https://github.com/icqqjs/icqq/compare/v0.4.7...v0.4.8) (2023-07-01)
+
+
+### Bug Fixes
+
+* 更新8.9.63、默认关闭auto_server ([86a345c](https://github.com/icqqjs/icqq/commit/86a345ca089e9d38b73d22c6caf25003393b2951))
+
 ## [0.4.7](https://github.com/icqqjs/icqq/compare/v0.4.6...v0.4.7) (2023-06-24)
 
 

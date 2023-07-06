@@ -139,11 +139,12 @@ export class BaseClient extends Trapper {
         /** 上次cookie刷新时间 */
         emp_time: 0,
         time_diff: 0,
+        requestTokenTime: 0,
     }
     readonly pskey: { [domain: string]: Buffer } = {}
     readonly pt4token: { [domain: string]: Buffer } = {}
     /** 心跳间隔(秒) */
-    protected interval = 30
+    protected interval = 60
     /** 随心跳一起触发的函数，可以随意设定 */
     protected heartbeat = NOOP
     /** 数据统计 */
@@ -160,12 +161,17 @@ export class BaseClient extends Trapper {
         sign_api_addr: "",
         remote_port: 0,
     }
-    protected SignLoginCmd = [
-        'wtlogin.login'
+    protected signLoginCmd = [
+        'wtlogin.login',
+        'wtlogin.exchange_emp'
     ];
-    protected SignCmd = [
-        'MessageSvc.PbSendMsg'
+    protected signCmd = [
+        'MessageSvc.PbSendMsg',
+        'trpc.o3.ecdh_access.EcdhAccess.SsoEstablishShareKey',
+        'trpc.o3.ecdh_access.EcdhAccess.SsoSecureA2Establish',
+        'trpc.o3.ecdh_access.EcdhAccess.SsoSecureA2Access'
     ];
+    private ssoPacketList: any = [];
 
     constructor(p: Platform = Platform.Android, d?: ShortDevice) {
         super()
@@ -213,6 +219,17 @@ export class BaseClient extends Trapper {
         if (!/http(s)?:\/\//.test(addr)) addr = `http://${addr}`
         this.sig.sign_api_addr = addr
         lock(this, "sig")
+        let url = new URL(this.sig.sign_api_addr)
+        if (url.searchParams.get('key')) {
+            import('./qsign').then((module) => {
+                const qsign = new module.qsign();
+                this.getSign = qsign.getSign
+                this.getT544 = qsign.getT544
+            })
+        } else {
+            this.getSign = this.defaultGetSign
+            this.getT544 = this.defaultGetT544
+        }
     }
 
     on(matcher: Matcher, listener: Listener) {
@@ -236,7 +253,68 @@ export class BaseClient extends Trapper {
         return this[IS_ONLINE]
     }
 
+    async getT544(cmd: string) {
+        return this.generateT544Packet(cmd, BUF0);
+    }
+
     async getSign(cmd: string, seq: number, body: Buffer) {
+        return BUF0;
+    }
+
+    async defaultGetT544(cmd: string) {
+        let sign = BUF0;
+        if (this.apk.qua) {
+            let post_params = {
+                ver: this.apk.ver,
+                uin: this.uin,
+                data: cmd,
+                guid: this.device.guid.toString('hex'),
+                version: this.apk.sdkver
+            };
+            let url = new URL(this.sig.sign_api_addr);
+            url.pathname = '/energy';
+            const { data } = await axios.get(url.href, {
+                params: post_params,
+                timeout: 10000,
+                headers: {
+                    'User-Agent': `Dalvik/2.1.0 (Linux; U; Android ${this.device.version.release}; PCRT00 Build/N2G48H)`,
+                    'Content-Type': "application/x-www-form-urlencoded"
+                }
+            }).catch(() => ({ data: { code: -1 } }));
+            this.logger.debug(`getT544 ${cmd} result: ${JSON.stringify(data)}`);
+            if (data.code >= 0) {
+                if (typeof (data.data) === 'string') {
+                    sign = Buffer.from(data.data, 'hex');
+                } else if (typeof (data.data?.sign) === 'string') {
+                    sign = Buffer.from(data.data.sign, 'hex');
+                }
+            } else {
+                this.logger.error(`签名api(energy)异常： ${cmd} result: ${JSON.stringify(data)}`);
+            }
+        }
+        return this.generateT544Packet(cmd, sign);
+    }
+
+    generateT544Packet(cmd: String, sign: Buffer) {
+        const t = tlv.getPacker(this);
+        let getLocalT544 = (cmd: String) => {
+            switch (cmd) {
+                case '810_2':
+                    return t(0x544, 0, 2);
+                case '810_7':
+                    return t(0x544, 0, 7);
+                case '810_9':
+                    return t(0x544, 2, 9);
+            }
+            return BUF0;
+        };
+        if (!sign || sign.length < 1) {
+            return getLocalT544(cmd);
+        }
+        return t(0x544, -1, -1, sign);
+    }
+
+    async defaultGetSign(cmd: string, seq: number, body: Buffer) {
         let params = BUF0;
         if (!this.sig.sign_api_addr) {
             return params
@@ -252,10 +330,11 @@ export class BaseClient extends Trapper {
                 seq: seq,
                 androidId: this.device.android_id,
                 qimei36: qImei36,
+                guid: this.device.guid.toString('hex'),
                 buffer: body.toString('hex')
             };
             const { data } = await axios.post(url, post_params, {
-                timeout: 5000,
+                timeout: 10000,
                 headers: {
                     'User-Agent': `Dalvik/2.1.0 (Linux; U; Android ${this.device.version.release}; PCRT00 Build/N2G48H)`,
                     'Content-Type': "application/x-www-form-urlencoded"
@@ -263,26 +342,167 @@ export class BaseClient extends Trapper {
             }).catch(() => ({ data: { code: -1 } }));
             this.logger.debug(`sign ${cmd} result: ${JSON.stringify(data)}`);
             if (data.code >= 0) {
-                let pbdata = {
-                    9: 1,
-                    12: qImei36,
-                    14: 0,
-                    16: this.uin,
-                    18: 0,
-                    19: 1,
-                    20: 1,
-                    21: 0,
-                    24: {
-                        1: Buffer.from(data.data.sign, 'hex'),
-                        2: Buffer.from(data.data.token, 'hex'),
-                        3: Buffer.from(data.data.extra, 'hex')
-                    },
-                    28: 3
-                };
-                params = Buffer.from(pb.encode(pbdata));
+                const Data = data.data || {};
+                params = this.generateSignPacket(Data.sign, Data.token, Data.extra);
+
+                let list = Data.ssoPacketList || Data.requestCallback || [];
+                if (list.length < 1 && cmd.includes('wtlogin')) {
+                    this.requestToken();
+                } else {
+                    this.ssoPacketListHandler(list);
+                }
+            } else {
+                this.logger.error(`签名api异常： ${cmd} result: ${JSON.stringify(data)}`);
             }
         }
         return params;
+    }
+
+    generateSignPacket(sign: String, token: String, extra: String) {
+        let qImei36 = this.device.qImei36 || this.device.qImei16;
+        let pbdata = {
+            9: 1,
+            12: qImei36,
+            14: 0,
+            16: this.uin,
+            18: 0,
+            19: 1,
+            20: 1,
+            21: 0,
+            24: {
+                1: Buffer.from(sign, 'hex'),
+                2: Buffer.from(token, 'hex'),
+                3: Buffer.from(extra, 'hex')
+            },
+            28: 3
+        };
+        return Buffer.from(pb.encode(pbdata));
+    }
+
+    async ssoPacketListHandler(list: any) {
+        if (list === null && this.isOnline()) {
+            if (this.ssoPacketList.length > 0) {
+                list = this.ssoPacketList;
+                this.ssoPacketList = [];
+            }
+        }
+        if (!list || list.length < 1) return;
+        if (!this.isOnline()) {
+            let handle = (list: any) => {
+                let new_list = [];
+                for (let val of list) {
+                    try {
+                        let data = pb.decode(Buffer.from(val.body, 'hex'));
+                        val.type = data[1].toString();
+                    } catch (err) { }
+                    new_list.push(val);
+                }
+                return new_list;
+            };
+            list = handle(list);
+            if (this.ssoPacketList.length > 0) {
+                for (let val of list) {
+                    let ssoPacket: any = this.ssoPacketList.find((data: any) => {
+                        return data.cmd === val.cmd && data.type === val.type;
+                    });
+                    if (ssoPacket) {
+                        ssoPacket.body = val.body;
+                    } else {
+                        this.ssoPacketList.push(val);
+                    }
+                }
+            } else {
+                this.ssoPacketList = this.ssoPacketList.concat(list);
+            }
+            return;
+        }
+
+        for (let ssoPacket of list) {
+            let cmd = ssoPacket.cmd;
+            let body = Buffer.from(ssoPacket.body, 'hex');
+            let callbackId = ssoPacket.callbackId;
+            let payload = await this.sendUni(cmd, body);
+            this.logger.debug(`sendUni ${cmd} result: ${payload.toString('hex')}`);
+            if (callbackId > -1) {
+                await this.ssoPacketListHandler(await this.submitSsoPacket(cmd, callbackId, payload));
+            }
+        }
+    }
+
+    async requestToken() {
+        if ((Date.now() - this.sig.requestTokenTime) >= (50 * 60 * 1000)) {
+            this.sig.requestTokenTime = Date.now();
+            let list = await this.requestSignToken();
+            await this.ssoPacketListHandler(list);
+        }
+    }
+
+    async requestSignToken() {
+        if (!this.sig.sign_api_addr) {
+            return [];
+        }
+        let qImei36 = this.device.qImei36 || this.device.qImei16;
+        let post_params = {
+            ver: this.apk.ver,
+            qua: this.apk.qua,
+            uin: this.uin,
+            androidId: this.device.android_id,
+            qimei36: qImei36,
+            guid: this.device.guid.toString('hex'),
+        };
+        let url = new URL(this.sig.sign_api_addr);
+        url.pathname = '/request_token';
+        const { data } = await axios.get(url.href, {
+            params: post_params,
+            timeout: 10000,
+            headers: {
+                'User-Agent': `Dalvik/2.1.0 (Linux; U; Android ${this.device.version.release}; PCRT00 Build/N2G48H)`,
+                'Content-Type': "application/x-www-form-urlencoded"
+            }
+        }).catch(() => ({ data: { code: -1 } }));
+        this.logger.debug(`requestSignToken result: ${JSON.stringify(data)}`);
+        if (data.code >= 0) {
+            let ssoPacketList = data.data?.ssoPacketList || data.data?.requestCallback || data.data;
+            if (!ssoPacketList || ssoPacketList.length < 1) return [];
+            return ssoPacketList;
+        }
+        return [];
+    }
+
+    async submitSsoPacket(cmd: string, callbackId: number, body: Buffer) {
+        if (!this.sig.sign_api_addr) {
+            return [];
+        }
+        let qImei36 = this.device.qImei36 || this.device.qImei16;
+        let post_params = {
+            ver: this.apk.ver,
+            qua: this.apk.qua,
+            uin: this.uin,
+            cmd: cmd,
+            callbackId: callbackId,
+            callback_id: callbackId,
+            androidId: this.device.android_id,
+            qimei36: qImei36,
+            buffer: body.toString('hex'),
+            guid: this.device.guid.toString('hex'),
+        };
+        let url = new URL(this.sig.sign_api_addr);
+        url.pathname = '/submit';
+        const { data } = await axios.get(url.href, {
+            params: post_params,
+            timeout: 10000,
+            headers: {
+                'User-Agent': `Dalvik/2.1.0 (Linux; U; Android ${this.device.version.release}; PCRT00 Build/N2G48H)`,
+                'Content-Type': "application/x-www-form-urlencoded"
+            }
+        }).catch(() => ({ data: { code: -1 } }));
+        this.logger.debug(`submitSsoPacket result: ${JSON.stringify(data)}`);
+        if (data.code >= 0) {
+            let ssoPacketList = data.data?.ssoPacketList || data.data?.requestCallback || data.data;
+            if (!ssoPacketList || ssoPacketList.length < 1) return [];
+            return ssoPacketList;
+        }
+        return [];
     }
 
     calcPoW(data: any) {
@@ -469,7 +689,7 @@ export class BaseClient extends Trapper {
         if (this.device.qImei16) writer.writeBytes(t(0x545, this.device.qImei16))
 
         if (this.apk.ssover > 12) {
-            writer.writeBytes(t(0x544, 2, 9))
+            writer.writeBytes(await this.getT544('810_9'))
         }
 
         this[FN_SEND_LOGIN]("wtlogin.login", writer.read())
@@ -493,16 +713,15 @@ export class BaseClient extends Trapper {
             .writeBytes(t(0x116))
         if (this.sig.t547.length) writer.writeBytes(t(0x547))
         if (this.apk.ssover > 12) {
-            writer.writeBytes(t(0x544, 0, 2))
+            writer.writeBytes(await this.getT544('810_2'))
         }
         this[FN_SEND_LOGIN]("wtlogin.login", writer.read())
     }
 
     /** 收到设备锁验证请求后，用于发短信 */
-    sendSmsCode() {
+    async sendSmsCode() {
         const t = tlv.getPacker(this)
-        let tlv_count = 7
-        if (this.apk.ssover <= 12) tlv_count--
+        let tlv_count = 6
         const writer = new Writer()
             .writeU16(8)
             .writeU16(tlv_count)
@@ -512,7 +731,6 @@ export class BaseClient extends Trapper {
             .writeBytes(t(0x174))
             .writeBytes(t(0x17a))
             .writeBytes(t(0x197))
-        if (this.apk.ssover > 12) writer.writeBytes(t(0x544, 0, 8))
         this[FN_SEND_LOGIN]("wtlogin.login", writer.read())
     }
 
@@ -535,7 +753,7 @@ export class BaseClient extends Trapper {
             .writeBytes(t(0x401))
             .writeBytes(t(0x198))
         if (this.apk.ssover > 12) {
-            writer.writeBytes(t(0x544, 0, 7))
+            writer.writeBytes(await this.getT544('810_7'))
         }
         this[FN_SEND_LOGIN]("wtlogin.login", writer.read())
     }
@@ -734,7 +952,7 @@ export class BaseClient extends Trapper {
     /** 发送一个业务包不等待返回 */
     async writeUni(cmd: string, body: Uint8Array, seq = 0) {
         this.statistics.sent_pkt_cnt++
-        if (this.SignCmd.includes(cmd)) {
+        if (this.signCmd.includes(cmd)) {
             this[NET].write(await buildUniPktSign.call(this, cmd, body, seq))
             return;
         }
@@ -766,7 +984,7 @@ export class BaseClient extends Trapper {
     /** 发送一个业务包并等待返回 */
     async sendUni(cmd: string, body: Uint8Array, timeout = 5) {
         if (!this[IS_ONLINE]) throw new ApiRejection(-1, `client not online`)
-        if (this.SignCmd.includes(cmd)) return this[FN_SEND](await buildUniPktSign.call(this, cmd, body), timeout)
+        if (this.signCmd.includes(cmd)) return this[FN_SEND](await buildUniPktSign.call(this, cmd, body), timeout)
         return this[FN_SEND](buildUniPkt.call(this, cmd, body), timeout)
     }
 
@@ -798,17 +1016,6 @@ function buildUniPkt(this: BaseClient, cmd: string, body: Uint8Array, seq = 0, B
     seq = seq || this[FN_NEXT_SEQ]()
     this.emit("internal.verbose", `send:${cmd} seq:${seq}`, VerboseLevel.Debug)
     let len = cmd.length + 20
-    //const sso = Buffer.allocUnsafe(len + body.length + 4)
-    //sso.writeUInt32BE(len, 0)
-    //sso.writeUInt32BE(cmd.length + 4, 4)
-    //sso.fill(cmd, 8)
-    //let offset = cmd.length + 8
-    //sso.writeUInt32BE(8, offset)
-    //sso.fill(this.sig.session, offset + 4)
-    //sso.writeUInt32BE(4, offset + 8)
-    //sso.writeUInt32BE(body.length + 4, offset + 12)
-    ///sso.fill(body, offset + 16)
-
     let sso = new Writer()
         .writeWithLength(new Writer()
             .writeWithLength(cmd)
@@ -992,14 +1199,20 @@ async function register(this: BaseClient, logout = false, reflush = false) {
                 syncTimeDiff.call(this)
                 if (typeof this.heartbeat === "function")
                     await this.heartbeat()
-                let heartbeat_cmd = this.apk.id == 'com.tencent.tim' ? 'OidbSvc.0x480_9' : 'OidbSvc.0x480_9_IMCore'
+                let heartbeat_cmd = [Platform.Tim].includes(this.config.platform as Platform) ? 'OidbSvc.0x480_9' : 'OidbSvc.0x480_9_IMCore'
                 this.sendUni(heartbeat_cmd, this.sig.hb480).catch(() => {
                     this.emit("internal.verbose", "heartbeat timeout", VerboseLevel.Warn)
                     this.sendUni(heartbeat_cmd, this.sig.hb480).catch(() => {
                         this.emit("internal.verbose", "heartbeat timeout x 2", VerboseLevel.Error)
                         this[NET].destroy()
                     })
-                }).then(refreshToken.bind(this))
+                }).then(async () => {
+                    this.requestToken()
+                    refreshToken.bind(this)
+                    this[FN_SEND](await buildLoginPacket.call(this, "Heartbeat.Alive", BUF0, 0), 5).catch(() => {
+                        this.emit("internal.verbose", "Heartbeat.Alive timeout", VerboseLevel.Warn)
+                    })
+                })
             }, this.interval * 1000)
         }
     } catch {
@@ -1022,12 +1235,14 @@ async function refreshToken(this: BaseClient) {
     if (!this.isOnline() || timestamp() - this.sig.emp_time < 43000)
         return
     const t = tlv.getPacker(this)
+    let tlv_count = 18
     const writer = new Writer()
         .writeU16(11)
-        .writeU16(16)
-        .writeBytes(t(0x100))
+        .writeU16(tlv_count)
+        .writeBytes(t(0x100, 100))
         .writeBytes(t(0x10a))
         .writeBytes(t(0x116))
+        .writeBytes(t(0x108))
         .writeBytes(t(0x144))
         .writeBytes(t(0x143))
         .writeBytes(t(0x142))
@@ -1039,8 +1254,9 @@ async function refreshToken(this: BaseClient) {
         .writeBytes(t(0x177))
         .writeBytes(t(0x187))
         .writeBytes(t(0x188))
-        .writeBytes(t(0x202))
+        .writeBytes(t(0x194))
         .writeBytes(t(0x511))
+        .writeBytes(t(0x202))
     const body = writer.read()
     const pkt = await buildLoginPacket.call(this, "wtlogin.exchange_emp", body)
     try {
@@ -1077,6 +1293,7 @@ type LoginCmd =
     | "wtlogin.trans_emp"
     | "StatSvc.register"
     | "Client.CorrectTime"
+    | "Heartbeat.Alive"
 type LoginCmdType = 0 | 1 | 2 // 0: 心跳 1: 上线 2: 登录
 
 async function buildLoginPacket(this: BaseClient, cmd: LoginCmd, body: Buffer, type: LoginCmdType = 2): Promise<Buffer> {
@@ -1117,7 +1334,7 @@ async function buildLoginPacket(this: BaseClient, cmd: LoginCmd, body: Buffer, t
     }
 
     let BodySign = BUF0;
-    if (this.SignLoginCmd.includes(cmd)) {
+    if (this.signLoginCmd.includes(cmd)) {
         BodySign = await this.getSign(cmd, this.sig.seq, Buffer.from(body));
     }
 
@@ -1270,6 +1487,7 @@ function decodeLoginResponse(this: BaseClient, payload: Buffer): any {
         return register.call(this).then(() => {
             if (this[IS_ONLINE]) {
                 this.emit("internal.online", token, nickname, gender, age)
+                this.ssoPacketListHandler(null)
             }
         })
     }
