@@ -9,12 +9,12 @@ import * as tea from "./tea"
 import * as pb from "./protobuf"
 import * as jce from "./jce"
 import { BUF0, BUF16, BUF4, hide, int32ip2str, lock, md5, NOOP, timestamp, unlock, unzip } from "./constants"
-import { Apk, Device, generateShortDevice, getApkInfo, Platform, ShortDevice } from "./device"
+import { Apk, Device, getApkInfo, Platform, ShortDevice } from "./device"
 import * as log4js from "log4js"
 import { log } from "../common"
 import * as path from "path"
 import axios from "axios";
-import { Config, Logger, LogLevel, LogLevelMap } from "../client";
+import { Config, Logger } from "../client";
 
 const FN_NEXT_SEQ = Symbol("FN_NEXT_SEQ")
 const FN_SEND = Symbol("FN_SEND")
@@ -91,7 +91,6 @@ export class BaseClient extends Trapper {
 
   private [IS_ONLINE] = false
   private [LOGIN_LOCK] = false
-  private _logger?: Logger | log4js.Logger
   // 心跳定时器
   // @ts-ignore
   private [HEARTBEAT]: NodeJS.Timeout
@@ -1195,7 +1194,7 @@ async function register(this: BaseClient, logout = false, reflush = false) {
     const payload = await this[FN_SEND](pkt, 10)
     if (logout) return
     const rsp = jce.decodeWrapper(payload)
-    const result = rsp[9] ? true : false
+    const result = !!rsp[9]
     if (!result && !reflush) {
       this.emit("internal.error.token")
     } else {
