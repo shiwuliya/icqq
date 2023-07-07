@@ -314,6 +314,14 @@ export function onlinePushListener(this: Client, payload: Buffer, seq: number) {
 		const nested = jce.decode(v[6])
 		const type = nested[0], buf = nested[10]
 		emitFriendNoticeEvent(this, uid, push528[type]?.call(this, buf))
+		if (pb.decode(buf)[1][2] == 214) {
+			/** 214上报 */
+			const req = jce.encodeStruct([this.uin, this.device.android_id, 0])
+			const servant = 'VIP.CustomOnlineStatusServer.CustomOnlineStatusObj'
+			const func = 'GetCustomOnlineStatus'
+			const body = jce.encodeWrapper({ req }, servant, func)
+			this.writeUni(`VipCustom.${func}`, body)
+		}
 	} else if (v[2] === 732) {
 		const gid = v[6].readUInt32BE()
 		const type = v[6][4]
