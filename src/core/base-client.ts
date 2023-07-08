@@ -362,6 +362,9 @@ export class BaseClient extends Trapper {
   }
 
   generateSignPacket(sign: String, token: String, extra: String) {
+    if (!sign) {
+      return BUF0;
+    }
     let qImei36 = this.device.qImei36 || this.device.qImei16;
     let pbdata = {
       9: 1,
