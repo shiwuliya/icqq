@@ -285,7 +285,7 @@ export class BaseClient extends Trapper {
         }
       }).catch(err => ({ data: { code: -1, msg: err?.message } }));
       this.emit("internal.verbose", `getT544 ${cmd} result: ${JSON.stringify(data)}`, VerboseLevel.Debug);
-      if (data.code >= 0) {
+      if (data.code === 0) {
         if (typeof (data.data) === 'string') {
           sign = Buffer.from(data.data, 'hex');
         } else if (typeof (data.data?.sign) === 'string') {
@@ -344,7 +344,7 @@ export class BaseClient extends Trapper {
         }
       }).catch(err => ({ data: { code: -1, msg: err?.message } }));
       this.emit("internal.verbose", `sign ${cmd} result: ${JSON.stringify(data)}`, VerboseLevel.Debug);
-      if (data.code >= 0) {
+      if (data.code === 0) {
         const Data = data.data || {};
         params = this.generateSignPacket(Data.sign, Data.token, Data.extra);
 
@@ -469,7 +469,7 @@ export class BaseClient extends Trapper {
       }
     }).catch(err => ({ data: { code: -1, msg: err?.message } }));
     this.emit("internal.verbose", `requestSignToken result: ${JSON.stringify(data)}`, VerboseLevel.Debug);
-    if (data.code >= 0) {
+    if (data.code === 0) {
       let ssoPacketList = data.data?.ssoPacketList || data.data?.requestCallback || data.data;
       if (!ssoPacketList || ssoPacketList.length < 1) return [];
       return ssoPacketList;
@@ -505,7 +505,7 @@ export class BaseClient extends Trapper {
       }
     }).catch(err => ({ data: { code: -1, msg: err?.message } }));
     this.emit("internal.verbose", `submitSsoPacket result: ${JSON.stringify(data)}`, VerboseLevel.Debug);
-    if (data.code >= 0) {
+    if (data.code === 0) {
       let ssoPacketList = data.data?.ssoPacketList || data.data?.requestCallback || data.data;
       if (!ssoPacketList || ssoPacketList.length < 1) return [];
       return ssoPacketList;
