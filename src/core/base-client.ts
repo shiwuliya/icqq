@@ -223,14 +223,14 @@ export class BaseClient extends Trapper {
     if (url.searchParams.get('key')) {
       import('./qsign').then((module) => {
         this.getT544 = module.getT544.bind(this);
-        this.getSign = module.getT544.bind(this);
+        this.getSign = module.getSign.bind(this);
         this.requestSignToken = module.requestSignToken.bind(this);
         this.submitSsoPacket = module.submitSsoPacket.bind(this);
       })
     } else {
       import('./sign').then((module) => {
         this.getT544 = module.getT544.bind(this);
-        this.getSign = module.getT544.bind(this);
+        this.getSign = module.getSign.bind(this);
         this.requestSignToken = module.requestSignToken.bind(this);
         this.submitSsoPacket = module.submitSsoPacket.bind(this);
       })
