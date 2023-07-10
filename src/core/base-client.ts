@@ -1080,11 +1080,11 @@ async function register(this: BaseClient, logout = false, reflush = false) {
             this[NET].destroy()
           })
         }).then(async () => {
-          this.requestToken()
-          refreshToken.bind(this)
-          this[FN_SEND](await buildLoginPacket.call(this, "Heartbeat.Alive", BUF0, 0), 5).catch(() => {
+          await this[FN_SEND](await buildLoginPacket.call(this, "Heartbeat.Alive", BUF0, 0), 5).catch(() => {
             this.emit("internal.verbose", "Heartbeat.Alive timeout", VerboseLevel.Warn)
           })
+          await refreshToken.bind(this)()
+          this.requestToken()
         })
       }, this.interval * 1000)
     }
