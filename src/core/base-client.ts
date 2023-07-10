@@ -310,6 +310,17 @@ export class BaseClient extends Trapper {
   }
 
   async ssoPacketListHandler(list: any) {
+    let handle = (list: any) => {
+      let new_list = [];
+      for (let val of list) {
+        try {
+          let data = pb.decode(Buffer.from(val.body, 'hex'));
+          val.type = data[1].toString();
+        } catch (err) { }
+        new_list.push(val);
+      }
+      return new_list;
+    };
     if (list === null && this.isOnline()) {
       if (this.ssoPacketList.length > 0) {
         list = this.ssoPacketList;
@@ -318,17 +329,6 @@ export class BaseClient extends Trapper {
     }
     if (!list || list.length < 1) return;
     if (!this.isOnline()) {
-      let handle = (list: any) => {
-        let new_list = [];
-        for (let val of list) {
-          try {
-            let data = pb.decode(Buffer.from(val.body, 'hex'));
-            val.type = data[1].toString();
-          } catch (err) { }
-          new_list.push(val);
-        }
-        return new_list;
-      };
       list = handle(list);
       if (this.ssoPacketList.length > 0) {
         for (let val of list) {
@@ -355,7 +355,7 @@ export class BaseClient extends Trapper {
       let payload = await this.sendUni(cmd, body);
       this.emit("internal.verbose", `sendUni ${cmd} result: ${payload.toString('hex')}`, VerboseLevel.Debug);
       if (callbackId > -1) {
-        resultList = resultList.concat(await this.submitSsoPacket(cmd, callbackId, payload));
+        await this.submitSsoPacket(cmd, callbackId, payload);
       }
     }
     this.ssoPacketListHandler(resultList);
