@@ -15,8 +15,7 @@ export async function getT544(this: BaseClient, cmd: string) {
         let url = new URL(this.sig.sign_api_addr);
 
         url.pathname = url.pathname.replace(/\/sign$/, '/energy');
-        const { data } = await axios.get(url.href, {
-            params: post_params,
+        const { data } = await axios.post(url.href, post_params, {
             timeout: 10000,
             headers: {
                 'User-Agent': `Dalvik/2.1.0 (Linux; U; Android ${this.device.version.release}; PCRT00 Build/N2G48H)`,
@@ -96,8 +95,7 @@ export async function requestSignToken(this: BaseClient) {
     };
     let url = new URL(this.sig.sign_api_addr);
     url.pathname = url.pathname.replace(/\/sign$/, '/request_token');
-    const { data } = await axios.get(url.href, {
-        params: post_params,
+    const { data } = await axios.post(url.href, post_params, {
         timeout: 10000,
         headers: {
             'User-Agent': `Dalvik/2.1.0 (Linux; U; Android ${this.device.version.release}; PCRT00 Build/N2G48H)`,
@@ -132,8 +130,7 @@ export async function submitSsoPacket(this: BaseClient, cmd: string, callbackId:
     };
     let url = new URL(this.sig.sign_api_addr);
     url.pathname = url.pathname.replace(/\/sign$/, '/submit');
-    const { data } = await axios.get(url.href, {
-        params: post_params,
+    const { data } = await axios.post(url.href, post_params, {
         timeout: 10000,
         headers: {
             'User-Agent': `Dalvik/2.1.0 (Linux; U; Android ${this.device.version.release}; PCRT00 Build/N2G48H)`,
