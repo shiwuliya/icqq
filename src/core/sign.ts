@@ -13,7 +13,8 @@ export async function getT544(this: BaseClient, cmd: string) {
             version: this.apk.sdkver
         };
         let url = new URL(this.sig.sign_api_addr);
-        url.pathname = '/energy';
+
+        url.pathname = url.pathname.replace(/\/sign$/, '/energy');
         const { data } = await axios.get(url.href, {
             params: post_params,
             timeout: 10000,
@@ -94,7 +95,7 @@ export async function requestSignToken(this: BaseClient) {
         guid: this.device.guid.toString('hex'),
     };
     let url = new URL(this.sig.sign_api_addr);
-    url.pathname = '/request_token';
+    url.pathname = url.pathname.replace(/\/sign$/, '/request_token');
     const { data } = await axios.get(url.href, {
         params: post_params,
         timeout: 10000,
@@ -130,7 +131,7 @@ export async function submitSsoPacket(this: BaseClient, cmd: string, callbackId:
         guid: this.device.guid.toString('hex'),
     };
     let url = new URL(this.sig.sign_api_addr);
-    url.pathname = '/submit';
+    url.pathname = url.pathname.replace(/\/sign$/, '/submit');
     const { data } = await axios.get(url.href, {
         params: post_params,
         timeout: 10000,
