@@ -331,14 +331,16 @@ export class BaseClient extends Trapper {
     if (!this.isOnline()) {
       list = handle(list);
       if (this.ssoPacketList.length > 0) {
+        let list1 = this.ssoPacketList;
+        this.ssoPacketList = [];
         for (let val of list) {
-          let ssoPacket: any = this.ssoPacketList.find((data: any) => {
+          let ssoPacket: any = list1.find((data: any) => {
             return data.cmd === val.cmd && data.type === val.type;
           });
           if (ssoPacket) {
             ssoPacket.body = val.body;
           } else {
-            this.ssoPacketList.push(val);
+            list1.push(val);
           }
         }
       } else {
