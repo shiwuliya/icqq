@@ -1,5 +1,17 @@
 # Changelog
 
+## [0.4.11](https://github.com/icqqjs/icqq/compare/v0.4.10...v0.4.11) (2023-07-15)
+
+
+### Bug Fixes
+
+* deviceInfo ([a075c86](https://github.com/icqqjs/icqq/commit/a075c865b04f9f09fb63d2eb5c3fc6df1ed553fe))
+* pretty code;allow custom logger ([0e57711](https://github.com/icqqjs/icqq/commit/0e5771128f886b227acf911746a75f73845b535c))
+* refreshToken ([c19b26f](https://github.com/icqqjs/icqq/commit/c19b26f4ffaad465266c85f3b3a1f7f6043a2ed5))
+* 刷新签名token间隔改为1小时，更新QQ版本信息到8.9.68.11565。 ([32dcfdf](https://github.com/icqqjs/icqq/commit/32dcfdf117d1160bbdfc65f19c7066ee81650e63))
+* 签名api请求异常时显示错误信息、qsign请求超时时间改为20秒。 ([c0f26be](https://github.com/icqqjs/icqq/commit/c0f26be62574f692cffee2e223c116eea1b7e0d3))
+* 适配qsign自动注册。 ([73b1d4c](https://github.com/icqqjs/icqq/commit/73b1d4c1ad7563153a7cb2ca96170c59a97a12f9))
+
 ## [0.4.10](https://github.com/icqqjs/icqq/compare/v0.4.9...v0.4.10) (2023-07-05)
 
 
