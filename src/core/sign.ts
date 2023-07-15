@@ -30,7 +30,7 @@ export async function getT544(this: BaseClient, cmd: string) {
                 sign = Buffer.from(data.data.sign, 'hex');
             }
         } else {
-            this.emit(`签名api(energy)异常： ${cmd} result: ${JSON.stringify(data)}`, VerboseLevel.Error);
+            this.emit("internal.verbose", `签名api(energy)异常： ${cmd} result: ${JSON.stringify(data)}`, VerboseLevel.Error);
         }
     }
     return this.generateT544Packet(cmd, sign);
@@ -122,7 +122,6 @@ export async function submitSsoPacket(this: BaseClient, cmd: string, callbackId:
         uin: this.uin,
         cmd: cmd,
         callbackId: callbackId,
-        callback_id: callbackId,
         androidId: this.device.android_id,
         qimei36: qImei36,
         buffer: body.toString('hex'),
