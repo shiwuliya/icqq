@@ -7,7 +7,7 @@ import {
     addClass,
     bindInternalListeners,
     delClass,
-    delStamp,
+    delStamp, getPersonalSign,
     getStamp,
     getSysMsg,
     imageOcr,
@@ -20,7 +20,7 @@ import {
     parseGroupRequestFlag,
     renameClass,
     setAvatar,
-    setSign,
+    setPersonalSign,
     setStatus
 } from "./internal"
 import { FriendInfo, GroupInfo, MemberInfo, StrangerInfo } from "./entities"
@@ -380,7 +380,12 @@ export class Client extends BaseClient {
 
     /** 设置个性签名 */
     async setSignature(signature = "") {
-        return setSign.call(this, signature)
+        return setPersonalSign.call(this, signature)
+    }
+
+    /** 获取个性签名 */
+    async getSignature() {
+        return getPersonalSign.call(this)
     }
 
     /** 设置头像 */
