@@ -61,7 +61,7 @@ export function generateFullDevice(apk: Apk, d?: ShortDevice) {
         brand: d.brand,
         model: d.model,
         bootloader: d.bootloader,
-        fingerprint: `${d.brand}/${d.product}/${d.device}:10/${d.android_id}/${d.incremental}:user/release-keys`,
+        fingerprint: `${d.brand}/${d.product}/${d.device}:10/${d.display}/${d.incremental}:user/release-keys`,
         boot_id: d.boot_id,
         proc_version: d.proc_version,
         baseband: "",
