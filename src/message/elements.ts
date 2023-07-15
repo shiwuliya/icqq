@@ -1,8 +1,9 @@
-import {makeMusicJson, musicFactory, MusicFullInfo, MusicPlatform} from "./music";
+import { makeMusicJson, musicFactory, MusicFullInfo, MusicPlatform } from "./music";
 
 /** TEXT (此元素可使用字符串代替) */
 export interface TextElem {
 	type: "text"
+	/** 文字内容 */
 	text: string
 }
 
@@ -11,10 +12,11 @@ export interface AtElem {
 	type: "at"
 	/** 在频道消息中该值为0 */
 	qq: number | "all"
-	/** 频道中的tiny_id */
+	/** 频道中的`tiny_id` */
 	id?: string | "all"
+	/** AT后跟的字符串，接收消息时有效 */
 	text?: string
-	/** 假at */
+	/** 假AT */
 	dummy?: boolean
 }
 
@@ -23,7 +25,9 @@ export interface FaceElem {
 	type: "face" | "sface"
 	/** face为0~348，sface不明 */
 	id: number
+	/** 表情说明，接收消息时有效 */
 	text?: string
+	/** @todo 未知属性 */
 	qlottie?: string
 }
 
@@ -32,12 +36,15 @@ export interface BfaceElem {
 	type: "bface"
 	/** 暂时只能发收到的file */
 	file: string
+	/** 表情说明 */
 	text: string
 }
 
 /** 魔法表情 */
 export interface MfaceElem {
+	/** `rps`表示石头剪刀布，`dice`表示骰子 */
 	type: "rps" | "dice"
+	/** @todo 待添加属性说明 */
 	id?: number
 }
 
@@ -45,9 +52,9 @@ export interface MfaceElem {
 export interface ImageElem {
 	type: "image"
 	/**
-	 * @type {string} filepath such as "/tmp/1.jpg"
-	 * @type {Buffer} image buffer
-	 * @type {Readable} a readable stream of image
+	 * @type {string} 本地图片文件路径，例如`"/tmp/1.jpg"`
+	 * @type {Buffer} 图片`Buffer`
+	 * @type {Readable} 可读的图片数据流
 	 */
 	file: string | Buffer | import("stream").Readable
 	/** 网络图片是否使用缓存 */
@@ -55,7 +62,7 @@ export interface ImageElem {
 	/** 流的超时时间，默认60(秒) */
 	timeout?: number
 	headers?: import("http").OutgoingHttpHeaders
-	/** 这个参数只有在接收时有用 */
+	/** 图片url地址，接收时有效 */
 	url?: string
 	/** 是否作为表情发送 */
 	asface?: boolean
@@ -72,14 +79,17 @@ export interface FlashElem extends Omit<ImageElem, "type"> {
 export interface PttElem {
 	type: "record"
 	/**
-	 * support for raw silk and amr file
-	 * @type {string} filepath such as "/tmp/1.slk"
+	 * 支持`raw silk`和`amr`文件
+	 * @type {string} 本地语音文件路径，例如`"/tmp/1.slk"`
 	 * @type {Buffer} ptt buffer (silk or amr)
 	 */
 	file: string | Buffer
+	/** 语言url地址，接收时有效 */
 	url?: string
 	md5?: string
+	/** 文件大小，接收时有效 */
 	size?: number
+	/** 语音时长（秒），接收时有效 */
 	seconds?: number
 }
 
@@ -87,33 +97,46 @@ export interface PttElem {
 export interface VideoElem {
 	type: "video"
 	/**
-	 * need ffmpeg and ffprobe
-	 * @type {string} filepath such as "/tmp/1.mp4"
+	 * 需要`ffmpeg`和`ffprobe`
+	 * @type {string} 本地视频文件路径，例如`"/tmp/1.mp4"`
 	 */
 	file: string
+	/** 视频名，接收时有效 */
 	name?: string
+	/** 作为文件的文件id，接收时有效 */
 	fid?: string
 	md5?: string
+	/** 文件大小，接收时有效 */
 	size?: number
+	/** 视频时长（秒），接收时有效 */
 	seconds?: number
 }
 
 /** 地点分享 */
 export interface LocationElem {
 	type: "location"
+	/** 地址描述 */
 	address: string
+	/** 纬度 */
 	lat: number
+	/** 经度 */
 	lng: number
+	/** @todo 未知属性 */
 	name?: string
+	/** @todo 未知属性 */
 	id?: string
 }
 
 /** 链接分享 */
 export interface ShareElem {
 	type: "share"
+	/** 链接地址 */
 	url: string
+	/** 链接标题 */
 	title: string
+	/** 链接内容，接收时有效 */
 	content?: string
+	/** 链接配图，接收时有效 */
 	image?: string
 }
 
@@ -134,6 +157,7 @@ export interface PokeElem {
 	type: "poke"
 	/** 0~6 */
 	id: number
+	/** 动作描述 */
 	text?: string
 }
 
@@ -143,51 +167,68 @@ export interface MiraiElem {
 	data: string
 }
 
-/** 文件 (暂时只支持接收，发送请使用文件专用API) */
+/** 文件，只支持接收，发送请使用文件专用API */
 export interface FileElem {
 	type: "file"
+	/** 文件名 */
 	name: string
+	/** 文件id */
 	fid: string
 	md5: string
+	/** 文件大小 */
 	size: number
+	/** 存在时间 */
 	duration: number
 }
 
-/** @deprecated @cqhttp 旧版引用回复(已弃用)，仅做一定程度的兼容 */
+/** @deprecated @cqhttp 旧版引用回复，仅做一定程度的兼容 */
 export interface ReplyElem {
 	type: "reply"
-	text?:string
+	text?: string
 	id: string
 }
-export interface MusicElem extends Partial<MusicFullInfo>{
+
+/** 分享音乐 */
+export interface MusicElem extends Partial<MusicFullInfo> {
 	type: 'music'
+	/** 音乐id */
 	id: string
+	/** 音乐平台 */
 	platform: MusicPlatform
 }
+
 /** 可引用回复的消息 */
 export interface Quotable {
+	/** 消息发送方账号 */
 	user_id: number
 	time: number
 	seq: number
-	/** 私聊回复必须 */
+	/** 私聊回复必须包含此属性 */
 	rand: number
 	/** 收到的引用回复永远是字符串 */
 	message: Sendable
 }
 
-export interface QuoteElem extends Quotable{
+/** 引用回复消息 */
+export interface QuoteElem extends Quotable {
 	type: 'quote'
 }
+
 /** 可转发的消息 */
 export interface Forwardable {
-	user_id: number,
-	message: Sendable,
-	nickname?: string,
-	time?: number,
+	/** 消息发送方账号 */
+	user_id: number
+	/** 发送的消息 */
+	message: Sendable
+	/** 发送方昵称，接收时有效 */
+	nickname?: string
+	/** 发送时间，接收时有效 */
+	time?: number
 }
+
 /** 可转发节点 */
-export interface ForwardNode extends Forwardable{
-	type:'node'
+export interface ForwardNode extends Forwardable {
+	type: 'node'
 }
 
 /** 可组合发送的元素 */
@@ -198,7 +239,7 @@ export type MessageElem = TextElem | FaceElem | BfaceElem | MfaceElem | ImageEle
 	FlashElem | PttElem | VideoElem | JsonElem | XmlElem | PokeElem | LocationElem |
 	ShareElem | MusicElem | FileElem | ForwardNode | QuoteElem
 
-/** 可通过sendMsg发送的类型集合 (字符串、元素对象，或它们的数组) */
+/** 可通过`sendMsg`发送的类型集合 (字符串、元素对象，或它们的数组) */
 export type Sendable = string | MessageElem | (string | MessageElem)[]
 
 /** 用于构造消息元素 */
@@ -253,25 +294,25 @@ export const segment = {
 			type: "at", qq: 0, id: String(qq), text, dummy
 		}
 	},
-	/** 图片(支持http://,base64://) */
+	/** 图片，支持http://,base64:// */
 	image(file: ImageElem["file"], cache?: boolean, timeout?: number, headers?: import("http").OutgoingHttpHeaders): ImageElem {
 		return {
 			type: "image", file, cache, timeout, headers
 		}
 	},
-	/** 闪照(支持http://,base64://) */
+	/** 闪照，支持http://,base64:// */
 	flash(file: ImageElem["file"], cache?: boolean, timeout?: number, headers?: import("http").OutgoingHttpHeaders): FlashElem {
 		return {
 			type: "flash", file, cache, timeout, headers
 		}
 	},
-	/** 语音(支持http://,base64://) */
+	/** 语音，支持http://,base64:// */
 	record(file: string | Buffer): PttElem {
 		return {
 			type: "record", file
 		}
 	},
-	/** 视频(仅支持本地文件) */
+	/** 视频，仅支持本地文件 */
 	video(file: string): VideoElem {
 		return {
 			type: "video",
@@ -294,13 +335,14 @@ export const segment = {
 			type: "mirai", data
 		}
 	},
-	async music(id:string,platform:MusicPlatform='qq'):Promise<JsonElem>{
-		const musiInfo=await musicFactory[platform].getMusicInfo(id)
-		musiInfo.jumpUrl=`https://ptlogin2.qq.com@${musiInfo.jumpUrl.replace(/https?:\/\//,'')}`
-		return this.json(makeMusicJson({...musiInfo,platform}))
+	/** 音乐 */
+	async music(id: string, platform: MusicPlatform = 'qq'): Promise<JsonElem> {
+		const musiInfo = await musicFactory[platform].getMusicInfo(id)
+		musiInfo.jumpUrl = `https://ptlogin2.qq.com@${musiInfo.jumpUrl.replace(/https?:\/\//, '')}`
+		return this.json(makeMusicJson({ ...musiInfo, platform }))
 	},
-	fake(user_id:number,message:Sendable,nickname?:string,time?:number):ForwardNode{
-		return {type:'node',user_id,nickname,message,time}
+	fake(user_id: number, message: Sendable, nickname?: string, time?: number): ForwardNode {
+		return { type: 'node', user_id, nickname, message, time }
 	},
 	/** 链接分享 */
 	share(url: string, title: string, image?: string, content?: string): ShareElem {
@@ -358,7 +400,7 @@ function unescapeCQInside(s: string) {
 	return ""
 }
 function qs(s: string, sep = ",", equal = "=") {
-	const ret: any = { }
+	const ret: any = {}
 	const split = s.split(sep)
 	for (let v of split) {
 		const i = v.indexOf(equal)

@@ -1,7 +1,7 @@
 import { pb, jce } from "../core"
 import { NOOP, timestamp, OnlineStatus, log } from "../common"
 import { PrivateMessage, GroupMessage, DiscussMessage, genDmMessageId, genGroupMessageId } from "../message"
-import {GroupMessageEvent, DiscussMessageEvent, FriendNoticeEvent, GroupNoticeEvent} from "../events"
+import { GroupMessageEvent, DiscussMessageEvent, FriendNoticeEvent, GroupNoticeEvent } from "../events"
 
 type Client = import("../client").Client
 
@@ -30,7 +30,7 @@ type OnlinePushEvent = {
 	[k: string]: any
 }
 
-const sub0x27: {[k: number]: (this: Client, data: pb.Proto) => OnlinePushEvent | void} = {
+const sub0x27: { [k: number]: (this: Client, data: pb.Proto) => OnlinePushEvent | void } = {
 	0: function (data) { //add
 		this.classes.set(data[3][1], String(data[3][3]))
 	},
@@ -49,7 +49,7 @@ const sub0x27: {[k: number]: (this: Client, data: pb.Proto) => OnlinePushEvent |
 		const o = data[12]
 		const gid = o[3]
 		if (!o[4]) return
-			this.gl.get(gid)!.group_name = String(o[2][2])
+		this.gl.get(gid)!.group_name = String(o[2][2])
 	},
 	5: function (data) {
 		const user_id = data[14][1]
@@ -96,7 +96,7 @@ const sub0x27: {[k: number]: (this: Client, data: pb.Proto) => OnlinePushEvent |
 }
 
 // 好友事件解析
-const push528: {[k: number]: (this: Client, buf: Buffer) => OnlinePushEvent | void} = {
+const push528: { [k: number]: (this: Client, buf: Buffer) => OnlinePushEvent | void } = {
 	0x8A: function (buf) {
 		let data = pb.decode(buf)[1]
 		if (Array.isArray(data))
@@ -168,24 +168,24 @@ function parsePoke(data: any) {
 	for (let o of data[7]) {
 		const name = String(o[1]), val = String(o[2])
 		switch (name) {
-		case "action_str":
-		case "alt_str1":
-			action = action || val
-			break
-		case "uin_str1":
-			operator_id = parseInt(val)
-			break
-		case "uin_str2":
-			target_id = parseInt(val)
-			break
-		case "suffix_str":
-			suffix = val
-			break
+			case "action_str":
+			case "alt_str1":
+				action = action || val
+				break
+			case "uin_str1":
+				operator_id = parseInt(val)
+				break
+			case "uin_str2":
+				target_id = parseInt(val)
+				break
+			case "suffix_str":
+				suffix = val
+				break
 		}
 	}
 	return { target_id, operator_id, action, suffix }
 }
-function parseSign(this:Client,data:any) {
+function parseSign(this: Client, data: any) {
 	let user_id = this.uin, nickname = "", sign_text = "";
 	for (let o of data[7]) {
 		const name = String(o[1]), val = String(o[2]);
@@ -204,7 +204,7 @@ function parseSign(this:Client,data:any) {
 	return { user_id, nickname, sign_text };
 }
 // 群事件解析
-const push732: {[k: number]: (this: Client, gid: number, buf: Buffer) => OnlinePushEvent | void} = {
+const push732: { [k: number]: (this: Client, gid: number, buf: Buffer) => OnlinePushEvent | void } = {
 	0x0C: function (gid, buf) {
 		const operator_id = buf.readUInt32BE(6)
 		const user_id = buf.readUInt32BE(16)
@@ -254,7 +254,7 @@ const push732: {[k: number]: (this: Client, gid: number, buf: Buffer) => OnlineP
 		if (sign.sign_text)
 			return {
 				sub_type: 'sign',
-					...sign
+				...sign
 			}
 	},
 	0x0E: function (gid, buf) {
@@ -277,8 +277,8 @@ const push732: {[k: number]: (this: Client, gid: number, buf: Buffer) => OnlineP
 function emitFriendNoticeEvent(c: Client, uid: number, e: OnlinePushEvent | void) {
 	if (!e) return
 	const name = "notice.friend." + e.sub_type
-	const f= c.pickFriend(uid)
-	const event=Object.assign({
+	const f = c.pickFriend(uid)
+	const event = Object.assign({
 		post_type: "notice",
 		notice_type: "friend",
 		user_id: uid,
@@ -290,8 +290,8 @@ function emitFriendNoticeEvent(c: Client, uid: number, e: OnlinePushEvent | void
 export function emitGroupNoticeEvent(c: Client, gid: number, e: OnlinePushEvent | void) {
 	if (!e) return
 	const name = "notice.group." + e.sub_type
-	const group=c.pickGroup(gid)
-	const event=Object.assign({
+	const group = c.pickGroup(gid)
+	const event = Object.assign({
 		post_type: "notice",
 		notice_type: "group",
 		group_id: gid,
@@ -314,6 +314,14 @@ export function onlinePushListener(this: Client, payload: Buffer, seq: number) {
 		const nested = jce.decode(v[6])
 		const type = nested[0], buf = nested[10]
 		emitFriendNoticeEvent(this, uid, push528[type]?.call(this, buf))
+		if (pb.decode(buf)[1][2] == 214) {
+			/** 214上报 */
+			const req = jce.encodeStruct([this.uin, this.device.android_id, 0])
+			const servant = 'VIP.CustomOnlineStatusServer.CustomOnlineStatusObj'
+			const func = 'GetCustomOnlineStatus'
+			const body = jce.encodeWrapper({ req }, servant, func)
+			this.writeUni(`VipCustom.${func}`, body)
+		}
 	} else if (v[2] === 732) {
 		const gid = v[6].readUInt32BE()
 		const type = v[6][4]
@@ -406,15 +414,15 @@ export function groupMsgListener(this: Client, payload: Buffer) {
 			fragmap.set(k, [])
 		const arr = fragmap.get(k)!
 		arr.push(msg)
-		setTimeout(()=>fragmap.delete(k), 5000)
+		setTimeout(() => fragmap.delete(k), 5000)
 		if (arr.length !== msg.pktnum)
 			return
 		msg = GroupMessage.combine(arr) as GroupMessageEvent
 	}
 
 	if (msg.raw_message) {
-		const group=this.pickGroup(msg.group_id)
-		const member=group.pickMember(msg.sender.user_id)
+		const group = this.pickGroup(msg.group_id)
+		const member = group.pickMember(msg.sender.user_id)
 		msg.group = group
 		msg.member = member
 		msg.reply = function (content, quote = false) {

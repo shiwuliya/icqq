@@ -1,8 +1,8 @@
-import {unzipSync} from "zlib"
-import {pb} from "../core"
+import { unzipSync } from "zlib"
+import { pb } from "../core"
 import * as T from "./elements"
-import {facemap, pokemap} from "./face"
-import {buildImageFileParam} from "./image"
+import { facemap, pokemap } from "./face"
+import { buildImageFileParam } from "./image"
 
 /** 解析消息 */
 export function parse(rich: pb.Proto | pb.Proto[], uin?: number) {
@@ -31,7 +31,7 @@ export class Parser {
         if (Array.isArray(rich)) {
             this.parseElems(rich)
         } else {
-            if (rich[4] &&rich[4].length)
+            if (rich[4] && rich[4].length)
                 this.parseExclusiveElem(0, rich[4])
             this.parseElems(Array.isArray(rich[2]) ? rich[2] : [rich[2]])
         }
@@ -111,17 +111,17 @@ export class Parser {
                 this.content = `{file:${elem.fid}}`
                 break
             case 37: //qlottie
-                elem={
-                    type:"face",
-                    id:proto[2][3],
-                    text:facemap[proto[2][3]]
+                elem = {
+                    type: "face",
+                    id: proto[2][3],
+                    text: facemap[proto[2][3]]
                 }
                 if (!elem.text)
                     elem.text = proto[2][7] ? String(proto[2][7]) : '超级表情';
-                if(proto[2][2])
-                    elem.qlottie=String(proto[2][2])
+                if (proto[2][2])
+                    elem.qlottie = String(proto[2][2])
                 brief = elem.text as string;
-                this.content=`{face:${elem.id},text:${elem.text},qlottie:${elem.qlottie}}`
+                this.content = `{face:${elem.id},text:${elem.text},qlottie:${elem.qlottie}}`
                 break;
             case 126: //poke
                 if (!proto[3])

@@ -61,7 +61,7 @@ export function generateFullDevice(apk: Apk, d?: ShortDevice) {
         brand: d.brand,
         model: d.model,
         bootloader: d.bootloader,
-        fingerprint: `${d.brand}/${d.product}/${d.device}:10/${d.android_id}/${d.incremental}:user/release-keys`,
+        fingerprint: `${d.brand}/${d.product}/${d.device}:10/${d.display}/${d.incremental}:user/release-keys`,
         boot_id: d.boot_id,
         proc_version: d.proc_version,
         baseband: "",
@@ -242,33 +242,44 @@ LQ+FLkpncClKVIrBwv6PHyUvuCb0rIarmgDnzkfQAqVufEtR64iazGDKatvJ9y6B
     }
 }
 
-/** 支持的登录设备平台 */
+/**
+ * 支持的登录设备平台
+ * * `aPad`和`Watch`协议无法设置在线状态、无法接收某些群事件（包括戳一戳等）
+ * * 目前仅`Watch`支持扫码登录，可能会支持`iPad`扫码登录
+ */
 export enum Platform {
+    /** 安卓手机 */
     Android = 1,
+    /** 安卓平板 */
     aPad = 2,
+    /** 安卓手表 */
     Watch = 3,
+    /** MacOS */
     iMac = 4,
+    /** iPad */
     iPad = 5,
+    /** Tim */
     Tim = 6
 }
 
+/** 登录设备通用属性 */
 export type Apk = typeof mobile
 const mobile = {
     id: "com.tencent.mobileqq",
     app_key: '0S200MNJT807V3GE',
-    name: "A8.9.63.11390",
-    version: "8.9.63.11390",
-    ver: "8.9.63",
+    name: "A8.9.68.11565",
+    version: "8.9.68.11565",
+    ver: "8.9.68",
     sign: Buffer.from('A6 B7 45 BF 24 A2 C2 77 52 77 16 F6 F3 6E B6 8D'.split(' ').map(s => parseInt(s, 16))),
-    buildtime: 1685069178,
+    buildtime: 1687254022,
     appid: 16,
-    subid: 537164840,
+    subid: 537168313,
     bitmap: 150470524,
     main_sig_map: 16724722,
     sub_sig_map: 0x10400,
-    sdkver: "6.0.0.2546",
+    sdkver: "6.0.0.2549",
     display: "Android",
-    qua: 'V1_AND_SQ_8.9.63_4194_YYB_D',
+    qua: 'V1_AND_SQ_8.9.68_4264_YYB_D',
     ssover: 20,
 }
 const tim = {
@@ -308,19 +319,19 @@ const watch: Apk = {
     ssover: 5
 }
 const hd: Apk = {
-    id: "com.tencent.minihd.qq",
+    id: "com.tencent.qq",
     app_key: '0S200MNJT807V3GE',
-    name: "A5.9.3.3468",
-    version: "5.9.3.3468",
-    ver: "5.9.3",
+    name: "A6.8.2.21241",
+    version: "6.8.2.21241",
+    ver: "6.8.2",
     sign: Buffer.from('AA 39 78 F4 1F D9 6F F9 91 4A 66 9E 18 64 74 C7'.split(' ').map(s => parseInt(s, 16))),
-    buildtime: 1637427966,
+    buildtime: 1647227495,
     appid: 16,
     subid: 537128930,
     bitmap: 150470524,
     main_sig_map: 1970400,
     sub_sig_map: 66560,
-    sdkver: "6.0.0.2433",
+    sdkver: "6.2.0.1023",
     display: "iMac",
     qua: '',
     ssover: 12
@@ -331,7 +342,7 @@ const apklist: { [platform in Platform]: Apk } = {
     [Platform.Tim]: tim,
     [Platform.aPad]: {
         ...mobile,
-        subid: 537164888,
+        subid: 537168361,
         display: 'aPad'
     },
     [Platform.Watch]: watch,

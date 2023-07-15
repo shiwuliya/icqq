@@ -1,20 +1,20 @@
-import {pb, jce} from "./core"
-import {ErrorCode, drop} from "./errors"
-import {timestamp, parseFunString, NOOP, lock, hide} from "./common"
-import {MemberInfo} from "./entities"
-import {User} from "./friend"
-import {GroupEventMap} from "./group";
+import { pb, jce } from "./core"
+import { ErrorCode, drop } from "./errors"
+import { timestamp, parseFunString, NOOP, lock, hide } from "./common"
+import { MemberInfo } from "./entities"
+import { User } from "./friend"
+import { GroupEventMap } from "./group";
 
 type Client = import("./client").Client
 
 const weakmap = new WeakMap<MemberInfo, Member>()
 
+/** 群员事件(= {@link GroupEventMap}) */
 export interface MemberEventMap extends GroupEventMap {
 }
 
-/** @ts-ignore ts(2417) 群员(继承User) */
+/** @ts-ignore ts(2417) 群员 */
 export class Member extends User {
-
     static as(this: Client, gid: number, uid: number, strict = false) {
         const info = this.gml.get(gid)?.get(uid)
         if (strict && !info)
@@ -35,27 +35,32 @@ export class Member extends User {
         return this._info
     }
 
-    /** `this.gid`的别名 */
+    /** {@link gid} 的别名 */
     get group_id() {
         return this.gid
     }
 
+    /** 名片 */
     get card() {
         return this.info?.card || this.info?.nickname
     }
 
+    /** 头衔 */
     get title() {
         return this.info?.title
     }
 
+    /** 是否是我的好友 */
     get is_friend() {
         return this.c.fl.has(this.uid)
     }
 
+    /** 是否是群主 */
     get is_owner() {
         return this.info?.role === "owner"
     }
 
+    /** 是否是管理员 */
     get is_admin() {
         return this.info?.role === "admin" || this.is_owner
     }
@@ -77,7 +82,7 @@ export class Member extends User {
         hide(this, "_info")
     }
 
-    /** 强制刷新资料 */
+    /** 强制刷新群员资料 */
     async renew(): Promise<MemberInfo> {
         if (!this.c.gml.has(this.gid) && this.c.config.cache_group_member)
             this.group.getMemberMap()
@@ -122,7 +127,10 @@ export class Member extends User {
         return info
     }
 
-    /** 设置/取消管理员 */
+    /**
+     * 设置/取消管理员
+     * @param yes 是否设为管理员
+     */
     async setAdmin(yes = true) {
         const buf = Buffer.allocUnsafe(9)
         buf.writeUInt32BE(this.gid)
@@ -135,7 +143,11 @@ export class Member extends User {
         return ret
     }
 
-    /** 设置头衔 */
+    /**
+     * 设置头衔
+     * @param title 头衔名
+     * @param duration 持续时间，默认`-1`，表示永久
+     */
     async setTitle(title = "", duration = -1) {
         const body = pb.encode({
             1: this.gid,
@@ -150,7 +162,10 @@ export class Member extends User {
         return pb.decode(payload)[3] === 0
     }
 
-    /** 修改名片 */
+    /**
+     * 修改名片
+     * @param card 名片
+     */
     async setCard(card = "") {
         const MGCREQ = jce.encodeStruct([
             0, this.gid, 0, [
@@ -159,14 +174,18 @@ export class Member extends User {
                 ])
             ]
         ])
-        const body = jce.encodeWrapper({MGCREQ}, "mqq.IMService.FriendListServiceServantObj", "ModifyGroupCardReq")
+        const body = jce.encodeWrapper({ MGCREQ }, "mqq.IMService.FriendListServiceServantObj", "ModifyGroupCardReq")
         const payload = await this.c.sendUni("friendlist.ModifyGroupCardReq", body)
         const ret = jce.decodeWrapper(payload)[3].length > 0
         ret && this.info && (this.info.card = String(card))
         return ret
     }
 
-    /** 踢 */
+    /**
+     * 踢出群
+     * @param msg @todo 未知参数
+     * @param block 是否屏蔽群员
+     */
     async kick(msg?: string, block = false) {
         const body = pb.encode({
             "1": this.gid,
@@ -183,7 +202,10 @@ export class Member extends User {
         return ret
     }
 
-    /** 禁言，默认1800秒 */
+    /**
+     * 禁言
+     * @param duration 禁言时长（秒），默认`1800`
+     */
     async mute(duration = 1800) {
         if (duration > 2592000 || duration < 0)
             duration = 2592000
@@ -206,7 +228,10 @@ export class Member extends User {
         return pb.decode(payload)[3] === 0
     }
 
-    /** 加为好友 */
+    /**
+     * 加为好友
+     * @param comment 申请消息
+     */
     async addFriend(comment = "") {
         const type = await this.getAddFriendSetting()
         if (![0, 1, 4].includes(type))
@@ -215,9 +240,9 @@ export class Member extends User {
         const AF = jce.encodeStruct([
             this.c.uin,
             this.uid, type ? 1 : 0, 1, 0, Buffer.byteLength(comment), comment, 0, 1, null, 3004,
-            11, null, null, this.gid ? pb.encode({1: this.gid}) : null, 0, null, null, 0
+            11, null, null, this.gid ? pb.encode({ 1: this.gid }) : null, 0, null, null, 0
         ])
-        const body = jce.encodeWrapper({AF}, "mqq.IMService.FriendListServiceServantObj", "AddFriendReq")
+        const body = jce.encodeWrapper({ AF }, "mqq.IMService.FriendListServiceServantObj", "AddFriendReq")
         const payload = await this.c.sendUni("friendlist.addFriend", body)
         return jce.decodeWrapper(payload)[6] === 0
     }

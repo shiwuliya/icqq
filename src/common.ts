@@ -7,7 +7,7 @@ import * as pb from "./core/protobuf"
 
 export function uuid() {
 	let hex = crypto.randomBytes(16).toString("hex")
-	return hex.substr(0, 8) + "-" + hex.substr(8, 4) + "-" + hex.substr(12, 4) + "-" + hex.substr(16, 4) + "-" + hex.substr(20)
+	return hex.substring(0, 8) + "-" + hex.substring(8, 4) + "-" + hex.substr(12, 4) + "-" + hex.substring(16, 4) + "-" + hex.substring(20)
 }
 
 /** 计算流的md5 */
@@ -149,12 +149,19 @@ export type GroupRole = "owner" | "admin" | "member"
 
 /** 可设置的在线状态 */
 export enum OnlineStatus {
+	/** 离线 */
 	Offline,
+	/** 在线 */
 	Online = 11,
+	/** 离开 */
 	Absent = 31,
+	/** 隐身 */
 	Invisible = 41,
+	/** 忙碌 */
 	Busy = 50,
+	/** Q我吧 */
 	Qme = 60,
+	/** 请勿打扰 */
 	DontDisturb = 70,
 }
 

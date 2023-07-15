@@ -1,12 +1,13 @@
 {
   "name": "icqq",
   "version": "0.4.10",
-  "upday": "2023/7/5",
+  "upday": "2023/7/12",
   "description": "QQ protocol for NodeJS!",
   "main": "lib/index.js",
   "types": "lib/index.d.ts",
   "scripts": {
     "build": "tsc && cp -r src/core/protobuf/*.min.* lib/core/protobuf",
+    "build_": "tsc && copy .\\src\\core\\protobuf\\*.min.* lib\\core\\protobuf",
     "docs": "typedoc src/index.ts",
     "dev": "ts-node src/test.ts",
     "pub": "npm publish --access public",

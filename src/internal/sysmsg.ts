@@ -1,5 +1,5 @@
-import {pb} from "../core"
-import {FriendRequestEvent, GroupRequestEvent, GroupInviteEvent} from "../events"
+import { pb } from "../core"
+import { FriendRequestEvent, GroupRequestEvent, GroupInviteEvent } from "../events"
 
 type Client = import("../client").Client
 
@@ -19,7 +19,7 @@ export function parseFriendRequestFlag(flag: string) {
     }
     const user_id = parseInt(flag.slice(0, 8), 16)
     const seq = Number("0x" + flag.slice(8))
-    return {user_id, seq, single}
+    return { user_id, seq, single }
 }
 
 /** @cqhttp */
@@ -35,7 +35,7 @@ export function parseGroupRequestFlag(flag: string) {
     const group_id = parseInt(flag.slice(8, 16), 16)
     const invite = parseInt(flag.slice(16, 17))
     const seq = Number("0x" + flag.slice(17))
-    return {user_id, group_id, seq, invite}
+    return { user_id, group_id, seq, invite }
 }
 
 function parseFrdSysMsg(proto: pb.Proto): Omit<FriendRequestEvent, "approve"> {

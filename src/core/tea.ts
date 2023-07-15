@@ -87,7 +87,7 @@ export function decrypt(encrypted: Buffer, key: Buffer) {
 		const a2 = encrypted.readUInt32BE(i + 4)
 		const b1 = a1 ^ x
 		const b2 = a2 ^ y
-		;[x, y] = _decrypt(b1 >>> 0, b2 >>> 0, k0, k1, k2, k3)
+			;[x, y] = _decrypt(b1 >>> 0, b2 >>> 0, k0, k1, k2, k3)
 		r1 = x ^ t1
 		r2 = y ^ t2
 		t1 = a1
