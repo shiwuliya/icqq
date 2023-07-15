@@ -887,6 +887,8 @@ export interface Config {
     log_level?: LogLevel
     /** 登录设备，默认为安卓手机 */
     platform?: Platform
+    /** 使用版本，仅在对应platform中有多个版本是有效，不填则使用最新版本 */
+    ver?: string
     /** log4js配置 */
     log_config?: Configuration| string
     /** 群聊和频道中过滤自己的消息，默认`true` */

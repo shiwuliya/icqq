@@ -1,7 +1,7 @@
-import { randomBytes } from "crypto"
-import { formatTime, md5, randomString } from "./constants"
+import {randomBytes} from "crypto"
+import {formatTime, md5, randomString} from "./constants"
 import axios from "axios";
-import { aesDecrypt, aesEncrypt, encryptPKCS1 } from "./algo";
+import {aesDecrypt, aesEncrypt, encryptPKCS1} from "./algo";
 
 
 function generateImei() {
@@ -263,26 +263,61 @@ export enum Platform {
 }
 
 /** 登录设备通用属性 */
-export type Apk = typeof mobile
-const mobile = {
-    id: "com.tencent.mobileqq",
-    app_key: '0S200MNJT807V3GE',
-    name: "A8.9.68.11565",
-    version: "8.9.68.11565",
-    ver: "8.9.68",
-    sign: Buffer.from('A6 B7 45 BF 24 A2 C2 77 52 77 16 F6 F3 6E B6 8D'.split(' ').map(s => parseInt(s, 16))),
-    buildtime: 1687254022,
-    appid: 16,
-    subid: 537168313,
-    bitmap: 150470524,
-    main_sig_map: 16724722,
-    sub_sig_map: 0x10400,
-    sdkver: "6.0.0.2549",
-    display: "Android",
-    qua: 'V1_AND_SQ_8.9.68_4264_YYB_D',
-    ssover: 20,
+export type Apk = {
+    id: string
+    app_key: string
+    name: string
+    version: string
+    ver: string
+    sign: Buffer
+    buildtime: number
+    appid: number
+    subid: number
+    bitmap: number
+    main_sig_map: number
+    sub_sig_map: number
+    sdkver: string
+    display: string
+    qua: string
+    ssover: number
 }
-const tim = {
+const mobile: Apk[] = [
+    // 每个版本不同的信息
+    {
+        name: "A8.9.68.11565",
+        version: "8.9.68.11565",
+        ver: "8.9.68",
+        buildtime: 1687254022,
+        subid: 537168313,
+        bitmap: 150470524,
+        sdkver: "6.0.0.2549",
+        qua: 'V1_AND_SQ_8.9.68_4264_YYB_D',
+    },
+    {
+        name: "A8.9.63.11390",
+        version: "8.9.63.11390",
+        ver: "8.9.63",
+        buildtime: 1685069178,
+        subid: 537164840,
+        bitmap: 150470524,
+        sdkver: "6.0.0.2546",
+        qua: 'V1_AND_SQ_8.9.63_4194_YYB_D',
+    }
+].map((shortInfo) => {
+    // 固定信息
+    return {
+        id: "com.tencent.mobileqq",
+        appid: 16,
+        app_key: '0S200MNJT807V3GE',
+        sign: Buffer.from('A6 B7 45 BF 24 A2 C2 77 52 77 16 F6 F3 6E B6 8D'.split(' ').map(s => parseInt(s, 16))),
+        main_sig_map: 16724722,
+        sub_sig_map: 0x10400,
+        display: "Android",
+        ssover: 20,
+        ...shortInfo
+    }
+})
+const tim: Apk = {
     id: "com.tencent.tim",
     app_key: '0S200MNJT807V3GE',
     name: "A3.5.1.3168",
@@ -336,17 +371,28 @@ const hd: Apk = {
     qua: '',
     ssover: 12
 }
-
-const apklist: { [platform in Platform]: Apk } = {
+const aPadSubids=[
+    {
+        ver: '8.9.68',
+        subid: 537168361,
+    },
+    {
+        ver: '8.9.63',
+        subid: 537164888,
+    }
+]
+const apklist: { [platform in Platform]: Apk | Apk[] } = {
     [Platform.Android]: mobile,
     [Platform.Tim]: tim,
-    [Platform.aPad]: {
-        ...mobile,
-        subid: 537168361,
-        display: 'aPad'
-    },
+    [Platform.aPad]: mobile.map(apk=>{
+        return {
+            ...apk,
+            subid: aPadSubids.find(s=>s.ver===apk.ver)!.subid,
+            display: 'aPad'
+        }
+    }),
     [Platform.Watch]: watch,
-    [Platform.iMac]: { ...hd },
+    [Platform.iMac]: {...hd},
     [Platform.iPad]: {
         ...mobile,
         subid: 537155074,
@@ -359,6 +405,8 @@ const apklist: { [platform in Platform]: Apk } = {
     },
 }
 
-export function getApkInfo(p: Platform): Apk {
-    return apklist[p] || apklist[Platform.Android]
+export function getApkInfo(p: Platform, ver?: string): Apk {
+    const apis = apklist[p]
+    if (Array.isArray(apis) && ver) return apis.find(a => a.ver === ver) || apis[0]
+    return apis as Apk
 }

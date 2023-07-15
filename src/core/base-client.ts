@@ -13,8 +13,7 @@ import { Apk, Device, getApkInfo, Platform, ShortDevice } from "./device"
 import * as log4js from "log4js"
 import { log } from "../common"
 import * as path from "path"
-import axios from "axios";
-import { Config, Logger } from "../client";
+import { Config } from "../client";
 
 const FN_NEXT_SEQ = Symbol("FN_NEXT_SEQ")
 const FN_SEND = Symbol("FN_SEND")
@@ -174,7 +173,7 @@ export class BaseClient extends Trapper {
   constructor(p: Platform = Platform.Android, d: ShortDevice, public config: Required<Config>) {
     super()
     if (config.log_config) log4js.configure(config.log_config as string)
-    this.apk = getApkInfo(p)
+    this.apk = getApkInfo(p,config.ver)
     this.device = new Device(this.apk, d)
     this[NET].on("error", err => this.emit("internal.verbose", err.message, VerboseLevel.Error))
     this[NET].on("close", () => {
