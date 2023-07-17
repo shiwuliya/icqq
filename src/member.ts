@@ -237,7 +237,9 @@ export class Member extends User {
             1:{
                 1:{
                     1:this.gid,
-                    [isScreen?5:6]:this.uid
+                    [isScreen?5:6]:isScreen?{
+                        1:this.uid,
+                    }:this.uid
                 }
             }
         })
