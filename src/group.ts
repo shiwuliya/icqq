@@ -461,6 +461,14 @@ export class Group extends Discuss {
 	}
 
 	/**
+	 * 设置当前群成员消息屏蔽状态
+	 * @param member_id
+	 * @param isScreen
+	 */
+	setScreenMemberMsg(member_id:number,isScreen?:boolean){
+		return this.pickMember(member_id).setScreenMsg(isScreen)
+	}
+	/**
 	 * 撤回消息，cqhttp方法用
 	 */
 	async recallMsg(param: number, rand: number, pktnum: number): Promise<boolean>;

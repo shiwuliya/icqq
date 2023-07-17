@@ -676,6 +676,16 @@ export class Client extends BaseClient {
         return this.pickGroup(group_id).muteAll(enable)
     }
 
+    /**
+     * 设置当前群成员消息屏蔽状态
+     * @param group_id {number} 群号
+     * @param member_id {number} 成员QQ号
+     * @param isScreen {boolean} 是否屏蔽 默认true
+     */
+    async setGroupMemberScreenMsg(group_id:number,member_id:number,isScreen?:boolean){
+        return this.pickGroup(group_id).setScreenMemberMsg(member_id,isScreen)
+    }
+
     /** @cqhttp use {@link Group.setName} */
     async setGroupName(group_id: number, name: string) {
         return this.pickGroup(group_id).setName(name)

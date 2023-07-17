@@ -229,6 +229,23 @@ export class Member extends User {
     }
 
     /**
+     * 是否屏蔽该群成员消息
+     * @param isScreen
+     */
+    async setScreenMsg(isScreen:boolean=true){
+        const body=pb.encode({
+            1:{
+                1:{
+                    1:this.gid,
+                    [isScreen?5:6]:this.uid
+                }
+            }
+        })
+        const payload=await this.c.sendOidb(isScreen?'OidbSvc.0x8bb_7':'OidbSvc.0x8bb_9',body)
+        return pb.decode(payload)[3]===0
+    }
+
+    /**
      * 加为好友
      * @param comment 申请消息
      */
