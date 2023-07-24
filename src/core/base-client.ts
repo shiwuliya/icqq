@@ -481,7 +481,7 @@ export class BaseClient extends Trapper {
       try{
         this.sig.t543=stream.read(stream.read(2).readUInt16BE());
       }catch {
-        this.emit("internal.verbose", '读取 t543 失败，登录可能会失败。请确认使用最新icqq登录', VerboseLevel.Warn);
+        this.emit("internal.verbose", '读取 t543 失败，部分功能使用将受限。请确认使用最新icqq登录', VerboseLevel.Warn);
       }
     } catch {
       this.emit("internal.verbose", '旧版token于当前版本不兼容，请手动删除token后重新运行', VerboseLevel.Error);
