@@ -1,7 +1,7 @@
-import {randomBytes} from "crypto"
-import {formatTime, md5, randomString} from "./constants"
+import { randomBytes } from "crypto"
+import { formatTime, md5, randomString } from "./constants"
 import axios from "axios";
-import {aesDecrypt, aesEncrypt, encryptPKCS1} from "./algo";
+import { aesDecrypt, aesEncrypt, encryptPKCS1 } from "./algo";
 
 
 function generateImei() {
@@ -284,6 +284,17 @@ export type Apk = {
 const mobile: Apk[] = [
     // 每个版本不同的信息
     {
+        name: "A8.9.70.11730",
+        version: "8.9.70.11730",
+        ver: "8.9.70",
+        buildtime: 1688720082,
+        subid: 537169928,
+        bitmap: 150470524,
+        sdkver: "6.0.0.2551",
+        qua: 'V1_AND_SQ_8.9.70_4330_YYB_D',
+        ssover: 20,
+    },
+    {
         name: "A8.9.68.11565",
         version: "8.9.68.11565",
         ver: "8.9.68",
@@ -292,6 +303,7 @@ const mobile: Apk[] = [
         bitmap: 150470524,
         sdkver: "6.0.0.2549",
         qua: 'V1_AND_SQ_8.9.68_4264_YYB_D',
+        ssover: 20,
     },
     {
         name: "A8.9.63.11390",
@@ -302,6 +314,7 @@ const mobile: Apk[] = [
         bitmap: 150470524,
         sdkver: "6.0.0.2546",
         qua: 'V1_AND_SQ_8.9.63_4194_YYB_D',
+        ssover: 20,
     }
 ].map((shortInfo) => {
     // 固定信息
@@ -313,10 +326,23 @@ const mobile: Apk[] = [
         main_sig_map: 16724722,
         sub_sig_map: 0x10400,
         display: "Android",
-        ssover: 20,
         ...shortInfo
     }
 })
+const aPadSubids = [
+    {
+        ver: '8.9.70',
+        subid: 537169976,
+    },
+    {
+        ver: '8.9.68',
+        subid: 537168361,
+    },
+    {
+        ver: '8.9.63',
+        subid: 537164888,
+    }
+]
 const tim: Apk = {
     id: "com.tencent.tim",
     app_key: '0S200MNJT807V3GE',
@@ -371,28 +397,18 @@ const hd: Apk = {
     qua: '',
     ssover: 12
 }
-const aPadSubids=[
-    {
-        ver: '8.9.68',
-        subid: 537168361,
-    },
-    {
-        ver: '8.9.63',
-        subid: 537164888,
-    }
-]
 const apklist: { [platform in Platform]: Apk | Apk[] } = {
     [Platform.Android]: mobile,
     [Platform.Tim]: tim,
-    [Platform.aPad]: mobile.map(apk=>{
+    [Platform.aPad]: mobile.map(apk => {
         return {
             ...apk,
-            subid: aPadSubids.find(s=>s.ver===apk.ver)!.subid,
+            subid: aPadSubids.find(s => s.ver === apk.ver)!.subid,
             display: 'aPad'
         }
     }),
     [Platform.Watch]: watch,
-    [Platform.iMac]: {...hd},
+    [Platform.iMac]: { ...hd },
     [Platform.iPad]: {
         ...mobile,
         subid: 537155074,
@@ -407,6 +423,6 @@ const apklist: { [platform in Platform]: Apk | Apk[] } = {
 
 export function getApkInfo(p: Platform, ver?: string): Apk {
     const apis = apklist[p]
-    if (Array.isArray(apis) && ver) return apis.find(a => a.ver === ver) || apis[0]
+    if (Array.isArray(apis)) return apis.find(a => a.ver === ver) || apis[0]
     return apis as Apk
 }

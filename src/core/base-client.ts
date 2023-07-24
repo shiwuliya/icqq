@@ -113,6 +113,7 @@ export class BaseClient extends Trapper {
     t106: BUF0,
     t174: BUF0,
     qrsig: BUF0,
+    t543: BUF0,
     t546: BUF0,
     t547: BUF0,
     /** 大数据上传通道 */
@@ -1273,6 +1274,7 @@ function decodeT119(this: BaseClient, t119: Buffer) {
   const r = Readable.from(tea.decrypt(t119, this.sig.tgtgt), { objectMode: false })
   r.read(2)
   const t = readTlv(r)
+  this.sig.t543 = t[0x543] || this.sig.t543
   this.sig.tgt = t[0x10a] || this.sig.tgt
   this.sig.tgt_key = t[0x10d] || this.sig.tgt_key
   this.sig.st_key = t[0x10e] || this.sig.st_key
