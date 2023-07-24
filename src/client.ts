@@ -7,7 +7,7 @@ import {
     addClass,
     bindInternalListeners,
     delClass,
-    delStamp,
+    delStamp, getPersonalSign,
     getStamp,
     getSysMsg,
     imageOcr,
@@ -20,7 +20,7 @@ import {
     parseGroupRequestFlag,
     renameClass,
     setAvatar,
-    setSign,
+    setPersonalSign,
     setStatus
 } from "./internal"
 import { FriendInfo, GroupInfo, MemberInfo, StrangerInfo } from "./entities"
@@ -380,7 +380,12 @@ export class Client extends BaseClient {
 
     /** 设置个性签名 */
     async setSignature(signature = "") {
-        return setSign.call(this, signature)
+        return setPersonalSign.call(this, signature)
+    }
+
+    /** 获取个性签名 */
+    async getSignature() {
+        return getPersonalSign.call(this)
     }
 
     /** 设置头像 */
@@ -671,6 +676,16 @@ export class Client extends BaseClient {
         return this.pickGroup(group_id).muteAll(enable)
     }
 
+    /**
+     * 设置当前群成员消息屏蔽状态
+     * @param group_id {number} 群号
+     * @param member_id {number} 成员QQ号
+     * @param isScreen {boolean} 是否屏蔽 默认true
+     */
+    async setGroupMemberScreenMsg(group_id:number,member_id:number,isScreen?:boolean){
+        return this.pickGroup(group_id).setScreenMemberMsg(member_id,isScreen)
+    }
+
     /** @cqhttp use {@link Group.setName} */
     async setGroupName(group_id: number, name: string) {
         return this.pickGroup(group_id).setName(name)
@@ -887,6 +902,8 @@ export interface Config {
     log_level?: LogLevel
     /** 登录设备，默认为安卓手机 */
     platform?: Platform
+    /** 使用版本，仅在对应platform中有多个版本是有效，不填则使用最新版本 */
+    ver?: string
     /** log4js配置 */
     log_config?: Configuration| string
     /** 群聊和频道中过滤自己的消息，默认`true` */

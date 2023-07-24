@@ -37,7 +37,7 @@ import {
     PttElem,
     Converter,
     XmlElem,
-    rand2uuid, ForwardNode, MusicPlatform, buildMusic, TextElem, Parser, musicFactory,
+    rand2uuid, ForwardNode, MusicPlatform, buildMusic, TextElem, Parser, musicFactory, JsonElem,
 } from "../message"
 import { CmdID, highwayUpload } from "./highway"
 import { buildShare, ShareConfig, ShareContent } from "../message/share";
@@ -493,13 +493,13 @@ export abstract class Contactable {
      * 需要注意的是，好友图片和群图片的内部格式不一样，对着群制作的转发消息中的图片，发给好友可能会裂图，反过来也一样
      * 支持4层套娃转发（PC仅显示3层）
      */
-    async makeForwardMsg(msglist: Forwardable[] | Forwardable): Promise<XmlElem> {
+    async makeForwardMsg(msglist: Forwardable[] | Forwardable): Promise<JsonElem> {
         if (!Array.isArray(msglist))
             msglist = [msglist]
         const nodes = []
         const makers: Converter[] = []
         let imgs: Image[] = []
-        let preview = ""
+        let preview = []
         let cnt = 0
         let MultiMsg = []
         let brief
@@ -526,7 +526,7 @@ export abstract class Contactable {
                     brief = '[JSON]'
                     let json
                     try {
-                        json = JSON.parse(elem.data)
+                        json = typeof (elem.data) === 'object' ? elem.data : JSON.parse(elem.data)
                     } catch (err) {
                     }
                     if (json) {
@@ -572,8 +572,10 @@ export abstract class Contactable {
             if (!nickname && fake instanceof PrivateMessage)
                 nickname = this.c.fl.get(fake.user_id)?.nickname || this.c.sl.get(fake.user_id)?.nickname || nickname
             if (cnt < 4) {
+                preview.push({
+                    text: `${escapeXml(nickname)}: ${escapeXml(maker.brief.slice(0, 50))}`
+                })
                 cnt++
-                preview += `<title color="#777777" size="26">${escapeXml(nickname)}: ${escapeXml(maker.brief.slice(0, 50))}</title>`
             }
             nodes.push({
                 1: {
@@ -615,14 +617,31 @@ export abstract class Contactable {
             1: nodes,
             2: MultiMsg
         }))
+
         const resid = await this._uploadMultiMsg(compressed)
-        const xml = `<?xml version="1.0" encoding="utf-8"?>
-<msg brief="[聊天记录]" m_fileName="${uuid().toUpperCase()}" action="viewMultiMsg" tSum="${nodes.length}" flag="3" m_resid="${resid}" serviceID="35" m_fileSize="${compressed.length}"><item layout="1"><title color="#000000" size="34">转发的聊天记录</title>${preview}<hr></hr><summary color="#808080" size="26">查看${nodes.length}条转发消息</summary></item><source name="聊天记录"></source></msg>`
+        const json = {
+            "app": "com.tencent.multimsg",
+            "config": { "autosize": 1, "forward": 1, "round": 1, "type": "normal", "width": 300 },
+            "desc": "[聊天记录]",
+            "extra": "",
+            "meta": {
+                "detail": {
+                    "news": preview,
+                    "resid": resid,
+                    "source": "群聊的聊天记录",
+                    "summary": `查看${nodes.length}条转发消息`,
+                    "uniseq": uuid().toUpperCase()
+                }
+            },
+            "prompt": "[聊天记录]",
+            "ver": "0.0.0.5",
+            "view": "contact"
+        };
+
         return {
-            type: "xml",
-            data: xml,
-            id: 35,
-        }
+            type: "json",
+            data: json
+        };
     }
 
     /** 下载并解析合并转发 */

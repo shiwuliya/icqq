@@ -13,8 +13,7 @@ import { Apk, Device, getApkInfo, Platform, ShortDevice } from "./device"
 import * as log4js from "log4js"
 import { log } from "../common"
 import * as path from "path"
-import axios from "axios";
-import { Config, Logger } from "../client";
+import { Config } from "../client";
 
 const FN_NEXT_SEQ = Symbol("FN_NEXT_SEQ")
 const FN_SEND = Symbol("FN_SEND")
@@ -47,6 +46,7 @@ export enum QrcodeResult {
 
 export interface BaseClient {
   uin: number
+  uid: string
 
   /** 收到二维码 */
   on(name: "internal.qrcode", listener: (this: this, qrcode: Buffer) => void): ToDispose<this>
@@ -114,6 +114,7 @@ export class BaseClient extends Trapper {
     t106: BUF0,
     t174: BUF0,
     qrsig: BUF0,
+    t543: BUF0,
     t546: BUF0,
     t547: BUF0,
     /** 大数据上传通道 */
@@ -174,7 +175,7 @@ export class BaseClient extends Trapper {
   constructor(p: Platform = Platform.Android, d: ShortDevice, public config: Required<Config>) {
     super()
     if (config.log_config) log4js.configure(config.log_config as string)
-    this.apk = getApkInfo(p)
+    this.apk = getApkInfo(p, config.ver)
     this.device = new Device(this.apk, d)
     this[NET].on("error", err => this.emit("internal.verbose", err.message, VerboseLevel.Error))
     this[NET].on("close", () => {
@@ -477,6 +478,9 @@ export class BaseClient extends Trapper {
       this.sig.tgt = stream.read(stream.read(2).readUInt16BE());
       this.sig.md5Pass = stream.read(stream.read(2).readUInt16BE());
       this.sig.device_token = stream.read(stream.read(2).readUInt16BE());
+      try {
+        this.sig.t543 = stream.read(stream.read(2).readUInt16BE()) || BUF0;
+      } catch { }
     } catch {
       this.emit("internal.verbose", '旧版token于当前版本不兼容，请手动删除token后重新运行', VerboseLevel.Error);
       this.emit("internal.verbose", '若非无法登录，请勿随意升级版本', VerboseLevel.Warn);
@@ -1274,6 +1278,7 @@ function decodeT119(this: BaseClient, t119: Buffer) {
   const r = Readable.from(tea.decrypt(t119, this.sig.tgtgt), { objectMode: false })
   r.read(2)
   const t = readTlv(r)
+  this.sig.t543 = t[0x543] || this.sig.t543
   this.sig.tgt = t[0x10a] || this.sig.tgt
   this.sig.tgt_key = t[0x10d] || this.sig.tgt_key
   this.sig.st_key = t[0x10e] || this.sig.st_key
@@ -1289,6 +1294,7 @@ function decodeT119(this: BaseClient, t119: Buffer) {
   this.sig.ticket_key = t[0x134] || this.sig.ticket_key
   this.sig.device_token = t[0x322] || this.sig.device_token
   this.sig.emp_time = timestamp()
+  this.uid = this.sig.t543.length > 6 ? this.sig.t543.slice(6).toString() : ''
 
   if (t[0x512]) {
     const r = Readable.from(t[0x512], { objectMode: false })
@@ -1309,6 +1315,7 @@ function decodeT119(this: BaseClient, t119: Buffer) {
     .writeTlv(this.sig.tgt)
     .writeTlv(this.sig.md5Pass || BUF0)
     .writeTlv(this.sig.device_token || BUF0)
+    .writeTlv(this.sig.t543 || BUF0)
     .read()
   const age = t[0x11a].slice(2, 3).readUInt8()
   const gender = t[0x11a].slice(3, 4).readUInt8()

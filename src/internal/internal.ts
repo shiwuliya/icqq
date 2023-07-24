@@ -37,7 +37,20 @@ export async function setStatus(this: Client, status: OnlineStatus) {
 	return ret
 }
 
+/**
+ * 设置个性签名
+ * @deprecated 请使用 setPersonalSign
+ * @param sign {string} 签名
+ */
 export async function setSign(this: Client, sign: string) {
+	return await setPersonalSign.call(this,sign)
+}
+
+/**
+ * 设置个性签名
+ * @param sign {string} 签名
+ */
+export async function setPersonalSign(this: Client, sign: string) {
 	const buf = Buffer.from(String(sign)).slice(0, 254)
 	const body = pb.encode({
 		1: 2,
@@ -62,7 +75,16 @@ export async function setSign(this: Client, sign: string) {
 	const payload = await this.sendUni("Signature.auth", body)
 	return pb.decode(payload)[1] === 0
 }
-
+export async function getPersonalSign(this: Client):Promise<string> {
+	let body = {
+		1: this.uin,
+		3: {
+			1: [102]
+		}
+	};
+	let result = await this.sendOidbSvcTrpcTcp('OidbSvcTrpcTcp.0xfe1_2',pb.encode(body))
+	return result[1][2][2][2].toString()
+}
 export async function setAvatar(this: Client, img: Image) {
 	await img.task
 	const body = pb.encode({
