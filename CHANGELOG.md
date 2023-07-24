@@ -1,5 +1,21 @@
 # Changelog
 
+## [0.4.12](https://github.com/icqqjs/icqq/compare/v0.4.11...v0.4.12) (2023-07-24)
+
+
+### Bug Fixes
+
+* internal中，获取个性签名方法getSign弃用，后续开发中请使用更具语义化的getPersonalSign替换;client增加获取个性签名方法(getSignature) ([39be3f5](https://github.com/icqqjs/icqq/commit/39be3f5ad3129478f5a56b1bad5582a69bac6c4d))
+* t543读取失败时增加警告 ([3374857](https://github.com/icqqjs/icqq/commit/33748579a15e2209ed591be75529354f20c2032b))
+* tlv543读取失败不用提示。 ([bf0f555](https://github.com/icqqjs/icqq/commit/bf0f555e9b37e35761eaf99796c377980c4c92f8))
+* 修复未指定ver时报错问题，增加安卓8.9.70.11730版本信息，导出tlv543。 ([20605c6](https://github.com/icqqjs/icqq/commit/20605c69941e7bf19519672f5020f785bb20ddfa))
+* 增加Tim3.5.2.3178版本信息。 ([c0934c6](https://github.com/icqqjs/icqq/commit/c0934c65e56a5d6a4df86c1e735525a00ae06ce4))
+* 屏蔽传参错误 ([ecbc72e](https://github.com/icqqjs/icqq/commit/ecbc72ebc9af5011f7fb9f5191b57a242d1fa1f9))
+* 新增设置屏蔽群成员消息屏蔽状态函数(setGroupMemberScreenMsg)，设置为true后，登录账号将在该群不再接受对应群成员消息 ([771311f](https://github.com/icqqjs/icqq/commit/771311f5397f1d98da907947cedcd22641e25c3b))
+* 更改t543缺失警告文案 ([bb2efaf](https://github.com/icqqjs/icqq/commit/bb2efaf30a8bdf46b551df0fee7141c159d2ba3c))
+* 添加uid参数、tlv543保存到token。 ([a324089](https://github.com/icqqjs/icqq/commit/a32408968784a197a14361fe4e6460c646ecaa7f))
+* 转发消息改为json。 ([671ca31](https://github.com/icqqjs/icqq/commit/671ca3155a99244166e15bcf213661334b15e584))
+
 ## [0.4.11](https://github.com/icqqjs/icqq/compare/v0.4.10...v0.4.11) (2023-07-15)
 
 
