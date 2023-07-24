@@ -343,24 +343,43 @@ const aPadSubids = [
         subid: 537164888,
     }
 ]
-const tim: Apk = {
-    id: "com.tencent.tim",
-    app_key: '0S200MNJT807V3GE',
-    name: "A3.5.1.3168",
-    version: "3.5.1.3168",
-    ver: "3.5.1",
-    sign: Buffer.from('775e696d09856872fdd8ab4f3f06b1e0', 'hex'),
-    buildtime: 1630062176,
-    appid: 16,
-    subid: 537150355,
-    bitmap: 150470524,
-    main_sig_map: 16724722,
-    sub_sig_map: 0x10400,
-    sdkver: "6.0.0.2484",
-    display: "Tim",
-    qua: "V1_AND_SQ_8.3.9_351_TIM_D",
-    ssover: 18,
-}
+const tim: Apk[] = [
+    // 每个版本不同的信息
+    {
+        name: "A3.5.2.3178",
+        version: "3.5.2.3178",
+        ver: "3.5.2",
+        buildtime: 1630062176,
+        subid: 537162286,
+        bitmap: 150470524,
+        sdkver: "6.0.0.2484",
+        qua: "V1_AND_SQ_8.3.9_352_TIM_D",
+        ssover: 18,
+    },
+    {
+        name: "A3.5.1.3168",
+        version: "3.5.1.3168",
+        ver: "3.5.1",
+        buildtime: 1630062176,
+        subid: 537150355,
+        bitmap: 150470524,
+        sdkver: "6.0.0.2484",
+        qua: "V1_AND_SQ_8.3.9_351_TIM_D",
+        ssover: 18,
+    }
+].map((shortInfo) => {
+    // 固定信息
+    return {
+        id: "com.tencent.tim",
+        app_key: '0S200MNJT807V3GE',
+        sign: Buffer.from('775e696d09856872fdd8ab4f3f06b1e0', 'hex'),
+        appid: 16,
+        main_sig_map: 16724722,
+        sub_sig_map: 0x10400,
+        display: "Tim",
+        ...shortInfo
+    }
+})
 const watch: Apk = {
     id: "com.tencent.qqlite",
     app_key: '0S200MNJT807V3GE',
