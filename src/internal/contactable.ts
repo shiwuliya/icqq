@@ -526,7 +526,7 @@ export abstract class Contactable {
                     brief = '[JSON]'
                     let json
                     try {
-                        json = typeof(elem.data) === 'object' ? elem.data : JSON.parse(elem.data)
+                        json = typeof (elem.data) === 'object' ? elem.data : JSON.parse(elem.data)
                     } catch (err) {
                     }
                     if (json) {
