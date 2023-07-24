@@ -46,6 +46,7 @@ export enum QrcodeResult {
 
 export interface BaseClient {
   uin: number
+  uid: string
 
   /** 收到二维码 */
   on(name: "internal.qrcode", listener: (this: this, qrcode: Buffer) => void): ToDispose<this>
@@ -174,7 +175,7 @@ export class BaseClient extends Trapper {
   constructor(p: Platform = Platform.Android, d: ShortDevice, public config: Required<Config>) {
     super()
     if (config.log_config) log4js.configure(config.log_config as string)
-    this.apk = getApkInfo(p,config.ver)
+    this.apk = getApkInfo(p, config.ver)
     this.device = new Device(this.apk, d)
     this[NET].on("error", err => this.emit("internal.verbose", err.message, VerboseLevel.Error))
     this[NET].on("close", () => {
@@ -477,6 +478,9 @@ export class BaseClient extends Trapper {
       this.sig.tgt = stream.read(stream.read(2).readUInt16BE());
       this.sig.md5Pass = stream.read(stream.read(2).readUInt16BE());
       this.sig.device_token = stream.read(stream.read(2).readUInt16BE());
+      try {
+        this.sig.t543 = stream.read(stream.read(2).readUInt16BE()) || BUF0;
+      } catch { }
     } catch {
       this.emit("internal.verbose", '旧版token于当前版本不兼容，请手动删除token后重新运行', VerboseLevel.Error);
       this.emit("internal.verbose", '若非无法登录，请勿随意升级版本', VerboseLevel.Warn);
@@ -1290,6 +1294,7 @@ function decodeT119(this: BaseClient, t119: Buffer) {
   this.sig.ticket_key = t[0x134] || this.sig.ticket_key
   this.sig.device_token = t[0x322] || this.sig.device_token
   this.sig.emp_time = timestamp()
+  this.uid = this.sig.t543.length > 6 ? this.sig.t543.slice(6).toString() : ''
 
   if (t[0x512]) {
     const r = Readable.from(t[0x512], { objectMode: false })
@@ -1310,6 +1315,7 @@ function decodeT119(this: BaseClient, t119: Buffer) {
     .writeTlv(this.sig.tgt)
     .writeTlv(this.sig.md5Pass || BUF0)
     .writeTlv(this.sig.device_token || BUF0)
+    .writeTlv(this.sig.t543 || BUF0)
     .read()
   const age = t[0x11a].slice(2, 3).readUInt8()
   const gender = t[0x11a].slice(3, 4).readUInt8()
