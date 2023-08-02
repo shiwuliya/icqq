@@ -829,11 +829,13 @@ export class BaseClient extends Trapper {
   /** 发送一个业务包不等待返回 */
   async writeUni(cmd: string, body: Uint8Array, seq = 0) {
     this.statistics.sent_pkt_cnt++
+    let pkt
     if (this.signCmd.includes(cmd)) {
-      this[NET].write(await buildUniPktSign.call(this, cmd, body, seq))
-      return;
+      pkt = await buildUniPktSign.call(this, cmd, body, seq)
+    } else {
+      pkt = buildUniPkt.call(this, cmd, body, seq)
     }
-    this[NET].write(buildUniPkt.call(this, cmd, body, seq))
+    if (pkt.length > 0) this[NET].write(pkt)
   }
 
   /** dont use it if not clear the usage */
@@ -861,8 +863,14 @@ export class BaseClient extends Trapper {
   /** 发送一个业务包并等待返回 */
   async sendUni(cmd: string, body: Uint8Array, timeout = 5) {
     if (!this[IS_ONLINE]) throw new ApiRejection(-1, `client not online`)
-    if (this.signCmd.includes(cmd)) return this[FN_SEND](await buildUniPktSign.call(this, cmd, body), timeout)
-    return this[FN_SEND](buildUniPkt.call(this, cmd, body), timeout)
+    let pkt
+    if (this.signCmd.includes(cmd)) {
+      pkt = await buildUniPktSign.call(this, cmd, body)
+    } else {
+      pkt = buildUniPkt.call(this, cmd, body)
+    }
+    if (pkt.length < 1) return BUF0
+    return this[FN_SEND](pkt, timeout)
   }
 
   async sendOidbSvcTrpcTcp(cmd: string, body: Uint8Array) {
@@ -886,6 +894,7 @@ export class BaseClient extends Trapper {
 
 async function buildUniPktSign(this: BaseClient, cmd: string, body: Uint8Array, seq = 0) {
   let BodySign = await this.getSign(cmd, this.sig.seq, Buffer.from(body));
+  if (BodySign == BUF0 && this.sig.sign_api_addr != '' && this.apk.qua != '') return BUF0
   return buildUniPkt.call(this, cmd, body, seq, BodySign);
 }
 
