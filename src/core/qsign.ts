@@ -19,7 +19,7 @@ export async function getT544(this: BaseClient, cmd: string) {
     url.pathname = url.pathname.replace(/\/sign$/, '/energy');
     const { data } = await axios.get(url.href, {
       params: post_params,
-      timeout: 20000,
+      timeout: 30000,
       headers: {
         'User-Agent': `Dalvik/2.1.0 (Linux; U; Android ${this.device.version.release}; PCRT00 Build/N2G48H)`,
         'Content-Type': "application/x-www-form-urlencoded"
@@ -64,7 +64,7 @@ export async function getSign(this: BaseClient, cmd: string, seq: number, body: 
       guid: this.device.guid.toString('hex'),
     };
     const { data } = await axios.post(url, post_params, {
-      timeout: 20000,
+      timeout: 30000,
       headers: {
         'User-Agent': `Dalvik/2.1.0 (Linux; U; Android ${this.device.version.release}; PCRT00 Build/N2G48H)`,
         'Content-Type': "application/x-www-form-urlencoded"
@@ -109,7 +109,7 @@ export async function requestSignToken(this: BaseClient) {
   url.pathname = url.pathname.replace(/\/sign$/, '/request_token');
   const { data } = await axios.get(url.href, {
     params: post_params,
-    timeout: 10000,
+    timeout: 30000,
     headers: {
       'User-Agent': `Dalvik/2.1.0 (Linux; U; Android ${this.device.version.release}; PCRT00 Build/N2G48H)`,
       'Content-Type': "application/x-www-form-urlencoded"
@@ -150,7 +150,7 @@ export async function submitSsoPacket(this: BaseClient, cmd: string, callbackId:
   url.pathname = url.pathname.replace(/\/sign$/, '/submit');
   const { data } = await axios.get(url.href, {
     params: post_params,
-    timeout: 10000,
+    timeout: 30000,
     headers: {
       'User-Agent': `Dalvik/2.1.0 (Linux; U; Android ${this.device.version.release}; PCRT00 Build/N2G48H)`,
       'Content-Type': "application/x-www-form-urlencoded"
@@ -177,7 +177,7 @@ async function register(this: BaseClient) {
   url.pathname = url.pathname.replace(/\/sign$/, '/register');
   const { data } = await axios.get(url.href, {
     params: post_params,
-    timeout: 20000,
+    timeout: 30000,
     headers: {
       'User-Agent': `Dalvik/2.1.0 (Linux; U; Android ${this.device.version.release}; PCRT00 Build/N2G48H)`,
       'Content-Type': "application/x-www-form-urlencoded"
