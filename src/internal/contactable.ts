@@ -687,10 +687,11 @@ export abstract class Contactable {
         const rsp = pb.decode(payload)[3]
         const ip = int32ip2str(rsp[4]?.[0] || rsp[4])
         const port = rsp[5]?.[0] || rsp[5]
-        let url = port == 443 ? "https://ssl.htdata.qq.com" : `http://${ip}:${port}`
+        let url = port == 443 ? `https://${ip}` : `http://${ip}:${port}`
         url += rsp[2]
         let { data, headers } = await axios.get(url, {
             headers: {
+                "Host": `${port == 443 ? 'ssl.' : ''}htdata.qq.com`,
                 "User-Agent": `QQ/${this.c.apk.version} CFNetwork/1126`,
                 "Net-Type": "Wifi"
             }, responseType: "arraybuffer"
