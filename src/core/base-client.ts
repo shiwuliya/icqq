@@ -898,7 +898,7 @@ export class BaseClient extends Trapper {
 
 async function buildUniPktSign(this: BaseClient, cmd: string, body: Uint8Array, seq = 0) {
   let BodySign = await this.getSign(cmd, this.sig.seq, Buffer.from(body));
-  if (BodySign == BUF0 && this.sig.sign_api_addr != '' && this.apk.qua != '') return BUF0
+  if (BodySign == BUF0 && this.sig.sign_api_addr && this.apk.qua) return BUF0
   return buildUniPkt.call(this, cmd, body, seq, BodySign);
 }
 
