@@ -16,7 +16,13 @@ export async function getT544(this: BaseClient, cmd: string) {
       version: this.apk.sdkver
     };
     let url = new URL(this.sig.sign_api_addr);
-    url.pathname = url.pathname.replace(/\/sign$/, '/energy');
+    let path = url.pathname;
+    if (path.substring(path.length - 1) === '/') {
+      path += 'energy';
+    } else {
+      path = path.replace(/\/sign$/, '/energy');
+    }
+    url.pathname = path;
     const { data } = await axios.get(url.href, {
       params: post_params,
       timeout: 30000,
@@ -52,7 +58,6 @@ export async function getSign(this: BaseClient, cmd: string, seq: number, body: 
   }
   let qImei36 = this.device.qImei36 || this.device.qImei16;
   if (qImei36 && this.apk.qua) {
-    let url = this.sig.sign_api_addr;
     let post_params = {
       qua: this.apk.qua,
       uin: this.uin,
@@ -63,7 +68,13 @@ export async function getSign(this: BaseClient, cmd: string, seq: number, body: 
       buffer: body.toString('hex'),
       guid: this.device.guid.toString('hex'),
     };
-    const { data } = await axios.post(url, post_params, {
+    let url = new URL(this.sig.sign_api_addr);
+    let path = url.pathname;
+    if (path.substring(path.length - 1) === '/') {
+      path += 'sign';
+    }
+    url.pathname = path;
+    const { data } = await axios.post(url.href, post_params, {
       timeout: 30000,
       headers: {
         'User-Agent': `Dalvik/2.1.0 (Linux; U; Android ${this.device.version.release}; PCRT00 Build/N2G48H)`,
@@ -99,31 +110,39 @@ export async function requestSignToken(this: BaseClient) {
     return [];
   }
   let qImei36 = this.device.qImei36 || this.device.qImei16;
-  let post_params = {
-    uin: this.uin,
-    android_id: this.device.android_id,
-    qimei36: qImei36,
-    guid: this.device.guid.toString('hex'),
-  };
-  let url = new URL(this.sig.sign_api_addr);
-  url.pathname = url.pathname.replace(/\/sign$/, '/request_token');
-  const { data } = await axios.get(url.href, {
-    params: post_params,
-    timeout: 30000,
-    headers: {
-      'User-Agent': `Dalvik/2.1.0 (Linux; U; Android ${this.device.version.release}; PCRT00 Build/N2G48H)`,
-      'Content-Type': "application/x-www-form-urlencoded"
+  if (qImei36 && this.apk.qua) {
+    let post_params = {
+      uin: this.uin,
+      android_id: this.device.android_id,
+      qimei36: qImei36,
+      guid: this.device.guid.toString('hex'),
+    };
+    let url = new URL(this.sig.sign_api_addr);
+    let path = url.pathname;
+    if (path.substring(path.length - 1) === '/') {
+      path += 'request_token';
+    } else {
+      path = path.replace(/\/sign$/, '/request_token');
     }
-  }).catch(err => ({ data: { code: -1, msg: err?.message } }));
-  this.emit("internal.verbose", `[qsign]requestSignToken result: ${JSON.stringify(data)}`, VerboseLevel.Debug);
-  if (data.code === 0) {
-    let ssoPacketList = data.data?.ssoPacketList || data.data?.requestCallback || data.data;
-    if (!ssoPacketList || ssoPacketList.length < 1) return [];
-    return ssoPacketList;
-  } else if (data.code === 1) {
-    if (data.msg.includes('Uin is not registered.')) {
-      if (await register.call(this)) {
-        return await this.requestSignToken();
+    url.pathname = path;
+    const { data } = await axios.get(url.href, {
+      params: post_params,
+      timeout: 30000,
+      headers: {
+        'User-Agent': `Dalvik/2.1.0 (Linux; U; Android ${this.device.version.release}; PCRT00 Build/N2G48H)`,
+        'Content-Type': "application/x-www-form-urlencoded"
+      }
+    }).catch(err => ({ data: { code: -1, msg: err?.message } }));
+    this.emit("internal.verbose", `[qsign]requestSignToken result: ${JSON.stringify(data)}`, VerboseLevel.Debug);
+    if (data.code === 0) {
+      let ssoPacketList = data.data?.ssoPacketList || data.data?.requestCallback || data.data;
+      if (!ssoPacketList || ssoPacketList.length < 1) return [];
+      return ssoPacketList;
+    } else if (data.code === 1) {
+      if (data.msg.includes('Uin is not registered.')) {
+        if (await register.call(this)) {
+          return await this.requestSignToken();
+        }
       }
     }
   }
@@ -135,32 +154,40 @@ export async function submitSsoPacket(this: BaseClient, cmd: string, callbackId:
     return [];
   }
   let qImei36 = this.device.qImei36 || this.device.qImei16;
-  let post_params = {
-    ver: this.apk.ver,
-    qua: this.apk.qua,
-    uin: this.uin,
-    cmd: cmd,
-    callback_id: callbackId,
-    android_id: this.device.android_id,
-    qimei36: qImei36,
-    buffer: body.toString('hex'),
-    guid: this.device.guid.toString('hex'),
-  };
-  let url = new URL(this.sig.sign_api_addr);
-  url.pathname = url.pathname.replace(/\/sign$/, '/submit');
-  const { data } = await axios.get(url.href, {
-    params: post_params,
-    timeout: 30000,
-    headers: {
-      'User-Agent': `Dalvik/2.1.0 (Linux; U; Android ${this.device.version.release}; PCRT00 Build/N2G48H)`,
-      'Content-Type': "application/x-www-form-urlencoded"
+  if (qImei36 && this.apk.qua) {
+    let post_params = {
+      ver: this.apk.ver,
+      qua: this.apk.qua,
+      uin: this.uin,
+      cmd: cmd,
+      callback_id: callbackId,
+      android_id: this.device.android_id,
+      qimei36: qImei36,
+      buffer: body.toString('hex'),
+      guid: this.device.guid.toString('hex'),
+    };
+    let url = new URL(this.sig.sign_api_addr);
+    let path = url.pathname;
+    if (path.substring(path.length - 1) === '/') {
+      path += 'submit';
+    } else {
+      path = path.replace(/\/sign$/, '/submit');
     }
-  }).catch(err => ({ data: { code: -1, msg: err?.message } }));
-  this.emit("internal.verbose", `[qsign]submitSsoPacket result: ${JSON.stringify(data)}`, VerboseLevel.Debug);
-  if (data.code === 0) {
-    let ssoPacketList = data.data?.ssoPacketList || data.data?.requestCallback || data.data;
-    if (!ssoPacketList || ssoPacketList.length < 1) return [];
-    return ssoPacketList;
+    url.pathname = path;
+    const { data } = await axios.get(url.href, {
+      params: post_params,
+      timeout: 30000,
+      headers: {
+        'User-Agent': `Dalvik/2.1.0 (Linux; U; Android ${this.device.version.release}; PCRT00 Build/N2G48H)`,
+        'Content-Type': "application/x-www-form-urlencoded"
+      }
+    }).catch(err => ({ data: { code: -1, msg: err?.message } }));
+    this.emit("internal.verbose", `[qsign]submitSsoPacket result: ${JSON.stringify(data)}`, VerboseLevel.Debug);
+    if (data.code === 0) {
+      let ssoPacketList = data.data?.ssoPacketList || data.data?.requestCallback || data.data;
+      if (!ssoPacketList || ssoPacketList.length < 1) return [];
+      return ssoPacketList;
+    }
   }
   return [];
 }
@@ -174,7 +201,13 @@ async function register(this: BaseClient) {
     guid: this.device.guid.toString('hex')
   };
   let url = new URL(this.sig.sign_api_addr);
-  url.pathname = url.pathname.replace(/\/sign$/, '/register');
+  let path = url.pathname;
+  if (path.substring(path.length - 1) === '/') {
+    path += 'register';
+  } else {
+    path = path.replace(/\/sign$/, '/register');
+  }
+  url.pathname = path;
   const { data } = await axios.get(url.href, {
     params: post_params,
     timeout: 30000,
