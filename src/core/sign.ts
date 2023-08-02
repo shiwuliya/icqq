@@ -8,6 +8,7 @@ export async function getT544(this: BaseClient, cmd: string) {
         return sign
     }
     if (this.apk.qua) {
+        const time = Date.now();
         let post_params = {
             ver: this.apk.ver,
             uin: this.uin,
@@ -30,7 +31,7 @@ export async function getT544(this: BaseClient, cmd: string) {
                 'Content-Type': "application/x-www-form-urlencoded"
             }
         }).catch(err => ({ data: { code: -1, msg: err?.message } }));
-        this.emit("internal.verbose", `getT544 ${cmd} result: ${JSON.stringify(data)}`, VerboseLevel.Debug);
+        this.emit("internal.verbose", `getT544 ${cmd} result(${Date.now() - time}ms): ${JSON.stringify(data)}`, VerboseLevel.Debug);
         if (data.code === 0) {
             if (typeof (data.data) === 'string') {
                 sign = Buffer.from(data.data, 'hex');
@@ -38,7 +39,7 @@ export async function getT544(this: BaseClient, cmd: string) {
                 sign = Buffer.from(data.data.sign, 'hex');
             }
         } else {
-            this.emit("internal.verbose", `签名api(energy)异常： ${cmd} result: ${JSON.stringify(data)}`, VerboseLevel.Error);
+            this.emit("internal.verbose", `签名api(energy)异常： ${cmd} result(${Date.now() - time}ms): ${JSON.stringify(data)}`, VerboseLevel.Error);
         }
     }
     return this.generateT544Packet(cmd, sign);
@@ -51,6 +52,7 @@ export async function getSign(this: BaseClient, cmd: string, seq: number, body: 
     }
     let qImei36 = this.device.qImei36 || this.device.qImei16;
     if (qImei36 && this.apk.qua) {
+        const time = Date.now();
         let post_params = {
             ver: this.apk.ver,
             qua: this.apk.qua,
@@ -75,7 +77,7 @@ export async function getSign(this: BaseClient, cmd: string, seq: number, body: 
                 'Content-Type': "application/x-www-form-urlencoded"
             }
         }).catch(err => ({ data: { code: -1, msg: err?.message } }));
-        this.emit("internal.verbose", `sign ${cmd} result: ${JSON.stringify(data)}`, VerboseLevel.Debug);
+        this.emit("internal.verbose", `sign ${cmd} result(${Date.now() - time}ms): ${JSON.stringify(data)}`, VerboseLevel.Debug);
         if (data.code === 0) {
             const Data = data.data || {};
             params = this.generateSignPacket(Data.sign, Data.token, Data.extra);
@@ -87,7 +89,7 @@ export async function getSign(this: BaseClient, cmd: string, seq: number, body: 
                 this.ssoPacketListHandler(list);
             }
         } else {
-            this.emit("internal.verbose", `签名api异常： ${cmd} result: ${JSON.stringify(data)}`, VerboseLevel.Error);
+            this.emit("internal.verbose", `签名api异常： ${cmd} result(${Date.now() - time}ms): ${JSON.stringify(data)}`, VerboseLevel.Error);
         }
     }
     return params;
@@ -99,6 +101,7 @@ export async function requestSignToken(this: BaseClient) {
     }
     let qImei36 = this.device.qImei36 || this.device.qImei16;
     if (qImei36 && this.apk.qua) {
+        const time = Date.now();
         let post_params = {
             ver: this.apk.ver,
             qua: this.apk.qua,
@@ -122,7 +125,7 @@ export async function requestSignToken(this: BaseClient) {
                 'Content-Type': "application/x-www-form-urlencoded"
             }
         }).catch(err => ({ data: { code: -1, msg: err?.message } }));
-        this.emit("internal.verbose", `requestSignToken result: ${JSON.stringify(data)}`, VerboseLevel.Debug);
+        this.emit("internal.verbose", `requestSignToken result(${Date.now() - time}ms): ${JSON.stringify(data)}`, VerboseLevel.Debug);
         if (data.code === 0) {
             let ssoPacketList = data.data?.ssoPacketList || data.data?.requestCallback || data.data;
             if (!ssoPacketList || ssoPacketList.length < 1) return [];
@@ -138,6 +141,7 @@ export async function submitSsoPacket(this: BaseClient, cmd: string, callbackId:
     }
     let qImei36 = this.device.qImei36 || this.device.qImei16;
     if (qImei36 && this.apk.qua) {
+        const time = Date.now();
         let post_params = {
             ver: this.apk.ver,
             qua: this.apk.qua,
@@ -164,7 +168,7 @@ export async function submitSsoPacket(this: BaseClient, cmd: string, callbackId:
                 'Content-Type': "application/x-www-form-urlencoded"
             }
         }).catch(err => ({ data: { code: -1, msg: err?.message } }));
-        this.emit("internal.verbose", `submitSsoPacket result: ${JSON.stringify(data)}`, VerboseLevel.Debug);
+        this.emit("internal.verbose", `submitSsoPacket result(${Date.now() - time}ms): ${JSON.stringify(data)}`, VerboseLevel.Debug);
         if (data.code === 0) {
             let ssoPacketList = data.data?.ssoPacketList || data.data?.requestCallback || data.data;
             if (!ssoPacketList || ssoPacketList.length < 1) return [];
