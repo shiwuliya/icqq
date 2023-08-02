@@ -869,7 +869,11 @@ export class BaseClient extends Trapper {
     } else {
       pkt = buildUniPkt.call(this, cmd, body)
     }
-    if (pkt.length < 1) return BUF0
+    if (pkt.length < 1) return Buffer.from(pb.encode({
+      1: -1,
+      2: '签名api异常',
+      3: {}
+    }))
     return this[FN_SEND](pkt, timeout)
   }
 
