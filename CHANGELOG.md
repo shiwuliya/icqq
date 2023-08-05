@@ -1,5 +1,18 @@
 # Changelog
 
+## [0.4.13](https://github.com/icqqjs/icqq/compare/v0.4.12...v0.4.13) (2023-08-05)
+
+
+### Bug Fixes
+
+* signApi请求超时时间改为15秒、qsignApi请求超时时间改为30秒。 ([13e88fd](https://github.com/icqqjs/icqq/commit/13e88fd7008b82dc88d483d68d59b13b97c23109))
+* 增加8.9.73.11945。 ([b03ff02](https://github.com/icqqjs/icqq/commit/b03ff028207094daaea47c84a69193d646c0a177))
+* 已设置签名api的情况下，签名api请求异常时不发送消息。 ([5150274](https://github.com/icqqjs/icqq/commit/5150274663c5d2133330920fcda6e36757936dde))
+* 签名api可以不带path。 ([1c1b09e](https://github.com/icqqjs/icqq/commit/1c1b09e1b8a21dbf8734b35ae2db4f37dafb63d4))
+* 群聊图片ios端显示为表情问题。 ([737f02e](https://github.com/icqqjs/icqq/commit/737f02ef5c157c3dc483e8318712c8b3ff142d68))
+* 部分环境下出现下载转发消息出错问题。 ([e82a784](https://github.com/icqqjs/icqq/commit/e82a7845e24b43920281494c83a0be57555e1995))
+* 默认安卓协议默认版本改为8.9.70。 ([db0e4c5](https://github.com/icqqjs/icqq/commit/db0e4c55a48985e5db771064a7914835a8462686))
+
 ## [0.4.12](https://github.com/icqqjs/icqq/compare/v0.4.11...v0.4.12) (2023-07-24)
 
 
