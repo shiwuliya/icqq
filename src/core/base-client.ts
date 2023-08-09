@@ -531,7 +531,7 @@ export class BaseClient extends Trapper {
     this[ECDH] = new Ecdh
     const t = tlv.getPacker(this)
     let tlv_count = this.device.qImei16 ? 25 : 26
-    if (this.apk.ssover <= 12) tlv_count--
+    if (this.apk.ssover < 12) tlv_count--
     let writer = new Writer()
       .writeU16(9)
       .writeU16(tlv_count)
@@ -564,7 +564,7 @@ export class BaseClient extends Trapper {
     if (!this.device.qImei16) writer.writeBytes(t(0x202))
     if (this.device.qImei16) writer.writeBytes(t(0x545, this.device.qImei16))
 
-    if (this.apk.ssover > 12) {
+    if (this.apk.ssover >= 12) {
       writer.writeBytes(await this.getT544('810_9'))
     }
 
@@ -580,7 +580,7 @@ export class BaseClient extends Trapper {
     ticket = String(ticket).trim()
     const t = tlv.getPacker(this)
     let tlv_count = this.sig.t547.length ? 6 : 5
-    if (this.apk.ssover <= 12) tlv_count--
+    if (this.apk.ssover < 12) tlv_count--
     const writer = new Writer()
       .writeU16(2)
       .writeU16(tlv_count)
@@ -589,7 +589,7 @@ export class BaseClient extends Trapper {
       .writeBytes(t(0x104))
       .writeBytes(t(0x116))
     if (this.sig.t547.length) writer.writeBytes(t(0x547))
-    if (this.apk.ssover > 12) {
+    if (this.apk.ssover >= 12) {
       writer.writeBytes(await this.getT544('810_2'))
     }
     this[FN_SEND_LOGIN]("wtlogin.login", writer.read())
@@ -618,7 +618,7 @@ export class BaseClient extends Trapper {
       code = "123456"
     const t = tlv.getPacker(this)
     let tlv_count = 8
-    if (this.apk.ssover <= 12) tlv_count--
+    if (this.apk.ssover < 12) tlv_count--
     const writer = new Writer()
       .writeU16(7)
       .writeU16(tlv_count)
@@ -629,7 +629,7 @@ export class BaseClient extends Trapper {
       .writeBytes(t(0x17c, code))
       .writeBytes(t(0x401))
       .writeBytes(t(0x198))
-    if (this.apk.ssover > 12) {
+    if (this.apk.ssover >= 12) {
       writer.writeBytes(await this.getT544('810_7'))
     }
     this[FN_SEND_LOGIN]("wtlogin.login", writer.read())
@@ -676,14 +676,14 @@ export class BaseClient extends Trapper {
     if (retcode < 0) {
       this.emit("internal.error.network", -2, "server is busy")
     } else if (retcode === 0 && t106 && t16a && t318 && tgtgt) {
-      if (this.apk.ssover > 12 && (!this.device.qImei36 || !this.device.qImei16)) {
+      if (this.apk.ssover >= 12 && (!this.device.qImei36 || !this.device.qImei16)) {
         await this.device.getQIMEI()
       }
       this.uin = uin as number
       this.sig.qrsig = BUF0
       this.sig.tgtgt = tgtgt
       let tlv_count = this.device.qImei16 ? 24 : 25;
-      if (this.apk.ssover <= 12) tlv_count--
+      if (this.apk.ssover < 12) tlv_count--
       const t = tlv.getPacker(this)
       const writer = new Writer()
         .writeU16(9)
@@ -715,7 +715,7 @@ export class BaseClient extends Trapper {
       if (!this.device.qImei16) writer.writeBytes(t(0x194))
       if (!this.device.qImei16) writer.writeBytes(t(0x202))
       if (this.device.qImei16) writer.writeBytes(t(0x545, this.device.qImei16))
-      if (this.apk.ssover > 12) {
+      if (this.apk.ssover >= 12) {
         writer.writeBytes(await this.getT544('810_9'))
       }
       this[FN_SEND_LOGIN]("wtlogin.login", writer.read())
