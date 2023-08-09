@@ -402,6 +402,17 @@ const tim: Apk[] = [
 
 const watch: Apk[] = [
     {
+        name: "A2.0.8",
+        version: "2.0.8",
+        ver: "2.0.8",
+        buildtime: 1559564731,
+        subid: 537065138,
+        bitmap: 150470524,
+        sdkver: "6.0.0.2365",
+        qua: '',
+        ssover: 5
+    },
+    {
         name: "A2.1.7",
         version: "2.1.7",
         ver: "2.1.7",
@@ -409,17 +420,7 @@ const watch: Apk[] = [
         subid: 537140974,
         bitmap: 16252796,
         sdkver: "6.0.0.2366",
-        qua: '',
-        ssover: 5
-    }, {
-        name: "A2.0.8",
-        version: "2.0.8",
-        ver: "2.0.8",
-        buildtime: 1559564731,
-        subid: 537065138,
-        bitmap: 16252796,
-        sdkver: "6.0.0.2365",
-        qua: '',
+        qua: 'V1_WAT_SQ_2.1.7_002_IDC_B',
         ssover: 5
     }
 ].map((shortInfo) => {
