@@ -407,7 +407,7 @@ const watch: Apk[] = [
         ver: "2.0.8",
         buildtime: 1559564731,
         subid: 537065138,
-        bitmap: 150470524,
+        bitmap: 16252796,
         sdkver: "6.0.0.2365",
         qua: '',
         ssover: 5
