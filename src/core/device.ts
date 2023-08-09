@@ -395,7 +395,7 @@ const tim: Apk[] = [
         main_sig_map: 16724722,
         sub_sig_map: 0x10400,
         display: "Tim",
-        device_type: 3,
+        device_type: -1,
         ...shortInfo
     }
 })
