@@ -278,6 +278,7 @@ export type Apk = {
     sub_sig_map: number
     sdkver: string
     display: string
+    device_type: number /** 用于扫码登录 */
     qua: string
     ssover: number
 }
@@ -337,6 +338,7 @@ const mobile: Apk[] = [
         main_sig_map: 16724722,
         sub_sig_map: 0x10400,
         display: "Android",
+        device_type: 3,
         ...shortInfo
     }
 })
@@ -392,6 +394,7 @@ const tim: Apk[] = [
         main_sig_map: 16724722,
         sub_sig_map: 0x10400,
         display: "Tim",
+        device_type: 3,
         ...shortInfo
     }
 })
@@ -428,6 +431,7 @@ const watch: Apk[] = [
         main_sig_map: 16724722,
         sub_sig_map: 0x10400,
         display: "Watch",
+        device_type: 8,
         ...shortInfo
     }
 })
@@ -447,6 +451,7 @@ const hd: Apk = {
     sub_sig_map: 66560,
     sdkver: "6.2.0.1023",
     display: "iMac",
+    device_type: 5,
     qua: '',
     ssover: 12
 }

@@ -650,7 +650,7 @@ export class BaseClient extends Trapper {
       .writeBytes(t(0x1D))
       .writeBytes(t(0x1F))
       .writeBytes(t(0x33))
-      .writeBytes(t(0x35, [Platform.Watch].includes(this.config.platform as Platform) ? 8 : 3))
+      .writeBytes(t(0x35, this.apk.device_type))
       .read()
     const pkt = await buildCode2dPacket.call(this, 0x31, 0x11100, body)
     this[FN_SEND](pkt).then(payload => {
@@ -709,7 +709,7 @@ export class BaseClient extends Trapper {
         .writeBytes(t(0x191))
         .writeBytes(t(0x177))
         .writeBytes(t(0x516))
-        .writeBytes(t(0x521, [Platform.Watch].includes(this.config.platform as Platform) ? 8 : 3))
+        .writeBytes(t(0x521, this.apk.device_type))
         .writeU16(0x318)
         .writeTlv(t318)
       if (!this.device.qImei16) writer.writeBytes(t(0x194))
