@@ -278,7 +278,8 @@ export type Apk = {
     sub_sig_map: number
     sdkver: string
     display: string
-    device_type: number /** 用于扫码登录 */
+    /** 用于扫码登录 */
+    device_type: number
     qua: string
     ssover: number
 }
