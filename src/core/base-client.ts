@@ -1064,59 +1064,64 @@ async function packetListener(this: BaseClient, pkt: Buffer) {
 async function register(this: BaseClient, logout = false, reflush = false) {
   this[IS_ONLINE] = false
   clearInterval(this[HEARTBEAT])
-  const pb_buf = pb.encode({
-    1: [
-      { 1: 46, 2: timestamp() },
-      { 1: 283, 2: 0 }
-    ]
-  })
-  const d = this.device
-  const SvcReqRegister = jce.encodeStruct([
-    this.uin,
-    (logout ? 0 : 7), 0, "", (logout ? 21 : 11), 0,
-    0, 0, 0, 0, (logout ? 44 : 0),
-    d.version.sdk, 1, "", 0, null,
-    d.guid, 2052, 0, d.model, d.model,
-    d.version.release, 1, 0, 0, null,
-    0, 0, "", 0, d.brand,
-    d.brand, "", pb_buf, 0, null,
-    0, null, 1000, 98
-  ])
-  const body = jce.encodeWrapper({ SvcReqRegister }, "PushService", "SvcReqRegister")
-  const pkt = await buildLoginPacket.call(this, "StatSvc.register", body, 1)
-  try {
-    const payload = await this[FN_SEND](pkt, 10)
-    if (logout) return
-    const rsp = jce.decodeWrapper(payload)
-    const result = !!rsp[9]
-    if (!result && !reflush) {
-      this.emit("internal.error.token")
-    } else {
-      this[IS_ONLINE] = true
-      this[HEARTBEAT] = setInterval(async () => {
-        syncTimeDiff.call(this)
-        if (typeof this.heartbeat === "function")
-          await this.heartbeat()
-        let heartbeat_cmd = [Platform.Tim].includes(this.config.platform as Platform) ? 'OidbSvc.0x480_9' : 'OidbSvc.0x480_9_IMCore'
-        this.sendUni(heartbeat_cmd, this.sig.hb480).catch(() => {
-          this.emit("internal.verbose", "heartbeat timeout", VerboseLevel.Warn)
+  let err
+  for (let count = 0; count < 3; count++) {
+    err = false
+    const pb_buf = pb.encode({
+      1: [
+        { 1: 46, 2: timestamp() },
+        { 1: 283, 2: 0 }
+      ]
+    })
+    const d = this.device
+    const SvcReqRegister = jce.encodeStruct([
+      this.uin,
+      (logout ? 0 : 7), 0, "", (logout ? 21 : 11), 0,
+      0, 0, 0, 0, (logout ? 44 : 0),
+      d.version.sdk, 1, "", 0, null,
+      d.guid, 2052, 0, d.model, d.model,
+      d.version.release, 1, 0, 0, null,
+      0, 0, "", 0, d.brand,
+      d.brand, "", pb_buf, 0, null,
+      0, null, 1000, 98
+    ])
+    const body = jce.encodeWrapper({ SvcReqRegister }, "PushService", "SvcReqRegister")
+    const pkt = await buildLoginPacket.call(this, "StatSvc.register", body, 1)
+    try {
+      const payload = await this[FN_SEND](pkt, 10)
+      if (logout) return
+      const rsp = jce.decodeWrapper(payload)
+      const result = !!rsp[9]
+      if (!result && !reflush) {
+        this.emit("internal.error.token")
+      } else {
+        this[IS_ONLINE] = true
+        this[HEARTBEAT] = setInterval(async () => {
+          syncTimeDiff.call(this)
+          if (typeof this.heartbeat === "function")
+            await this.heartbeat()
+          let heartbeat_cmd = [Platform.Tim].includes(this.config.platform as Platform) ? 'OidbSvc.0x480_9' : 'OidbSvc.0x480_9_IMCore'
           this.sendUni(heartbeat_cmd, this.sig.hb480).catch(() => {
-            this.emit("internal.verbose", "heartbeat timeout x 2", VerboseLevel.Error)
-            this[NET].destroy()
+            this.emit("internal.verbose", "heartbeat timeout", VerboseLevel.Warn)
+            this.sendUni(heartbeat_cmd, this.sig.hb480).catch(() => {
+              this.emit("internal.verbose", "heartbeat timeout x 2", VerboseLevel.Error)
+              this[NET].destroy()
+            })
+          }).then(async () => {
+            await this[FN_SEND](await buildLoginPacket.call(this, "Heartbeat.Alive", BUF0, 0), 5).catch(() => {
+              this.emit("internal.verbose", "Heartbeat.Alive timeout", VerboseLevel.Warn)
+            })
+            await refreshToken.bind(this)()
+            this.requestToken()
           })
-        }).then(async () => {
-          await this[FN_SEND](await buildLoginPacket.call(this, "Heartbeat.Alive", BUF0, 0), 5).catch(() => {
-            this.emit("internal.verbose", "Heartbeat.Alive timeout", VerboseLevel.Warn)
-          })
-          await refreshToken.bind(this)()
-          this.requestToken()
-        })
-      }, this.interval * 1000)
+        }, this.interval * 1000)
+      }
+      break;
+    } catch {
+      err = true
     }
-  } catch {
-    if (!logout)
-      this.emit("internal.error.network", -3, "server is busy(register)")
   }
+  if (!logout && err) this.emit("internal.error.network", -3, "server is busy(register)")
 }
 
 async function syncTimeDiff(this: BaseClient) {
