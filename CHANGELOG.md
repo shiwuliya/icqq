@@ -1,5 +1,17 @@
 # Changelog
 
+## [0.4.14](https://github.com/icqqjs/icqq/compare/v0.4.13...v0.4.14) (2023-08-09)
+
+
+### Bug Fixes
+
+* apk增加device_type参数（用于扫码登录）。 ([b245101](https://github.com/icqqjs/icqq/commit/b2451019f41e611fded48ac8b15dc1d3fe18cc9c))
+* ipad协议登录报错问题（不是解决禁止登录）。 ([1c718ad](https://github.com/icqqjs/icqq/commit/1c718ad43bb31dadac899af076c7a74744312c03))
+* 增加register失败时自动重试。 ([671307d](https://github.com/icqqjs/icqq/commit/671307db65d7c5f343e9710884adc3e52119e825))
+* 安卓手表增加2.1.7版本，安卓手机、apad等可扫码登录。 ([2157196](https://github.com/icqqjs/icqq/commit/2157196997b23339571b0ca4596b1a3658675c17))
+* 安卓手表默认版本改为2.0.8。 ([6c33947](https://github.com/icqqjs/icqq/commit/6c33947322913907831944666e544e9077fdd7e5))
+* 屏蔽tim扫码登录（不支持）。 ([c28b102](https://github.com/icqqjs/icqq/commit/c28b102291d1513d449487603991698a77b8f8fb))
+
 ## [0.4.13](https://github.com/icqqjs/icqq/compare/v0.4.12...v0.4.13) (2023-08-05)
 
 
