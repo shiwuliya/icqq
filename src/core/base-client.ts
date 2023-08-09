@@ -650,7 +650,7 @@ export class BaseClient extends Trapper {
       .writeBytes(t(0x1D))
       .writeBytes(t(0x1F))
       .writeBytes(t(0x33))
-      .writeBytes(t(0x35, 8))
+      .writeBytes(t(0x35, [Platform.Watch].includes(this.config.platform as Platform) ? 8 : 3))
       .read()
     const pkt = await buildCode2dPacket.call(this, 0x31, 0x11100, body)
     this[FN_SEND](pkt).then(payload => {
@@ -676,13 +676,18 @@ export class BaseClient extends Trapper {
     if (retcode < 0) {
       this.emit("internal.error.network", -2, "server is busy")
     } else if (retcode === 0 && t106 && t16a && t318 && tgtgt) {
+      if (this.apk.ssover > 12 && (!this.device.qImei36 || !this.device.qImei16)) {
+        await this.device.getQIMEI()
+      }
       this.uin = uin as number
       this.sig.qrsig = BUF0
       this.sig.tgtgt = tgtgt
+      let tlv_count = this.device.qImei16 ? 24 : 25;
+      if (this.apk.ssover <= 12) tlv_count--
       const t = tlv.getPacker(this)
-      const body = new Writer()
+      const writer = new Writer()
         .writeU16(9)
-        .writeU16(24)
+        .writeU16(tlv_count)
         .writeBytes(t(0x18))
         .writeBytes(t(0x1))
         .writeU16(0x106)
@@ -701,16 +706,19 @@ export class BaseClient extends Trapper {
         .writeBytes(t(0x511))
         .writeBytes(t(0x187))
         .writeBytes(t(0x188))
-        .writeBytes(t(0x194))
         .writeBytes(t(0x191))
-        .writeBytes(t(0x202))
         .writeBytes(t(0x177))
         .writeBytes(t(0x516))
-        .writeBytes(t(0x521, 8))
+        .writeBytes(t(0x521, [Platform.Watch].includes(this.config.platform as Platform) ? 8 : 3))
         .writeU16(0x318)
         .writeTlv(t318)
-        .read()
-      this[FN_SEND_LOGIN]("wtlogin.login", body)
+      if (!this.device.qImei16) writer.writeBytes(t(0x194))
+      if (!this.device.qImei16) writer.writeBytes(t(0x202))
+      if (this.device.qImei16) writer.writeBytes(t(0x545, this.device.qImei16))
+      if (this.apk.ssover > 12) {
+        writer.writeBytes(await this.getT544('810_9'))
+      }
+      this[FN_SEND_LOGIN]("wtlogin.login", writer.read())
     } else {
       let message
       switch (retcode) {
@@ -1193,7 +1201,7 @@ async function buildLoginPacket(this: BaseClient, cmd: LoginCmd, body: Buffer, t
   if (cmd === "wtlogin.trans_emp") {
     uin = 0
     cmdid = 0x812
-    subappid = getApkInfo(Platform.Watch).subid
+    //subappid = getApkInfo(Platform.Watch).subid
   }
   if (type === 2) {
     body = new Writer()

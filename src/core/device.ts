@@ -395,24 +395,43 @@ const tim: Apk[] = [
         ...shortInfo
     }
 })
-const watch: Apk = {
-    id: "com.tencent.qqlite",
-    app_key: '0S200MNJT807V3GE',
-    name: "A2.0.8",
-    version: "2.0.8",
-    ver: "2.0.8",
-    sign: Buffer.from('A6 B7 45 BF 24 A2 C2 77 52 77 16 F6 F3 6E B6 8D'.split(' ').map(s => parseInt(s, 16))),
-    buildtime: 1559564731,
-    appid: 16,
-    subid: 537065138,
-    bitmap: 16252796,
-    main_sig_map: 16724722,
-    sub_sig_map: 0x10400,
-    sdkver: "6.0.0.2365",
-    display: "Watch",
-    qua: '',
-    ssover: 5
-}
+
+const watch: Apk[] = [
+    {
+        name: "A2.1.7",
+        version: "2.1.7",
+        ver: "2.1.7",
+        buildtime: 1654570540,
+        subid: 537140974,
+        bitmap: 16252796,
+        sdkver: "6.0.0.2366",
+        qua: '',
+        ssover: 5
+    }, {
+        name: "A2.0.8",
+        version: "2.0.8",
+        ver: "2.0.8",
+        buildtime: 1559564731,
+        subid: 537065138,
+        bitmap: 16252796,
+        sdkver: "6.0.0.2365",
+        qua: '',
+        ssover: 5
+    }
+].map((shortInfo) => {
+    // 固定信息
+    return {
+        id: "com.tencent.qqlite",
+        app_key: '0S200MNJT807V3GE',
+        sign: Buffer.from('A6 B7 45 BF 24 A2 C2 77 52 77 16 F6 F3 6E B6 8D'.split(' ').map(s => parseInt(s, 16))),
+        appid: 16,
+        main_sig_map: 16724722,
+        sub_sig_map: 0x10400,
+        display: "Watch",
+        ...shortInfo
+    }
+})
+
 const hd: Apk = {
     id: "com.tencent.qq",
     app_key: '0S200MNJT807V3GE',

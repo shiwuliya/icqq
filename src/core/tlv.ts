@@ -3,7 +3,8 @@ import * as tea from "./tea"
 import * as pb from "./protobuf"
 import Writer from "./writer"
 import { md5, BUF0 } from "./constants"
-import { sign } from "../internal/enctyption";
+import { sign } from "../internal/enctyption"
+import { Apk, Device, getApkInfo, Platform, ShortDevice } from "./device"
 
 type BaseClient = import("./base-client").BaseClient
 
@@ -52,14 +53,15 @@ const map: { [tag: number]: (this: BaseClient, ...args: any[]) => Writer } = {
             .writeU16(0)
     },
     0x16: function () {
+        const Watch = getApkInfo(Platform.Watch);
         return new Writer()
-            .writeU32(this.apk.ssover)
-            .writeU32(this.apk.appid)
-            .writeU32(this.apk.subid)
+            .writeU32(Watch.ssover)
+            .writeU32(Watch.appid)
+            .writeU32(Watch.subid)
             .writeBytes(this.device.guid)
-            .writeTlv(this.apk.id)
-            .writeTlv(this.apk.ver)
-            .writeTlv(this.apk.sign);
+            .writeTlv(Watch.id)
+            .writeTlv(Watch.ver)
+            .writeTlv(Watch.sign);
     },
     0x18: function () {
         return new Writer()
