@@ -30,3 +30,10 @@ export { ApiRejection, Device, Apk, Platform, Domain } from "./core"
 export * as core from "./core"
 export { OcrResult, GuildMessageEvent } from "./internal"
 Object.defineProperty(exports, "default", { enumerable: true, get: () => exports });
+
+/**
+ *  axios is too big, so we export it separately for other packages to use if needed
+ *  @see https://pkg-size.dev/axios
+ */
+import axios from "axios"
+export { axios }
