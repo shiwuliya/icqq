@@ -5,6 +5,13 @@ import { parse, MessageElem, Sendable } from "../message"
 
 type Client = import("../client").Client
 
+/** 频道发消息的返回值 */
+export interface GuildMessageRet {
+	seq: number
+	rand: number
+	time: number
+}
+
 /** 频道消息事件 */
 export class GuildMessageEvent {
 	/** 频道id */
@@ -57,7 +64,7 @@ export class GuildMessageEvent {
 	}
 
 	/** 暂时仅支持发送： 文本、AT、表情 */
-	reply!: (content: Sendable) => void
+	reply!: (content: Sendable) => Promise<GuildMessageRet>
 }
 
 export function guildMsgListener(this: Client, payload: Buffer) {
