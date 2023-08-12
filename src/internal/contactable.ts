@@ -384,7 +384,7 @@ export abstract class Contactable {
         this.c.logger.debug("开始语音任务")
         if (typeof elem.file === "string" && elem.file.startsWith("protobuf://"))
             return elem
-        const buf = await getPttBuffer(elem.file, this.c.config.ffmpeg_path)
+        const buf = await getPttBuffer(elem.file, this.c.config.ffmpeg_path || "ffmpeg")
         const hash = md5(buf)
         const codec = String(buf.slice(0, 7)).includes("SILK") ? 1 : 0
         const body = pb.encode({
