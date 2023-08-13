@@ -1,6 +1,6 @@
 import { Gender, GroupRole } from "./common"
 import { PrivateMessage, GroupMessage, DiscussMessage, Sendable } from "./message"
-import { GuildMessageEvent } from "./internal/guild"
+import { GuildMessageEvent } from "./internal"
 import { Friend, FriendNoticeEventMap, FriendRequestEventMap, PrivateMessageEventMap } from "./friend"
 import { Group, Discuss, GroupRequestEventMap, GroupNoticeEventMap, GroupMessageEventMap } from "./group"
 import { Member } from "./member"
