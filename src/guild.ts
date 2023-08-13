@@ -113,6 +113,7 @@ export class Guild {
         const admins = Array.isArray(rsp[25]) ? rsp[25] : [rsp[25]]
         for (const p of admins) {
             const role = p[1] as GuildRole
+            if (!p[2]) continue
             const m = Array.isArray(p[2]) ? p[2] : [p[2]]
             for (const p2 of m) {
                 list.push({
