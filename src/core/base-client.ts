@@ -1138,14 +1138,13 @@ async function refreshToken(this: BaseClient) {
   if (!this.isOnline() || timestamp() - this.sig.emp_time < 43000)
     return
   const t = tlv.getPacker(this)
-  let tlv_count = 18
+  let tlv_count = 16
   const writer = new Writer()
     .writeU16(11)
     .writeU16(tlv_count)
-    .writeBytes(t(0x100, 100))
+    .writeBytes(t(0x100))
     .writeBytes(t(0x10a))
     .writeBytes(t(0x116))
-    .writeBytes(t(0x108))
     .writeBytes(t(0x144))
     .writeBytes(t(0x143))
     .writeBytes(t(0x142))
@@ -1157,9 +1156,8 @@ async function refreshToken(this: BaseClient) {
     .writeBytes(t(0x177))
     .writeBytes(t(0x187))
     .writeBytes(t(0x188))
-    .writeBytes(t(0x194))
-    .writeBytes(t(0x511))
     .writeBytes(t(0x202))
+    .writeBytes(t(0x511))
   const body = writer.read()
   const pkt = await buildLoginPacket.call(this, "wtlogin.exchange_emp", body)
   try {
@@ -1170,6 +1168,7 @@ async function refreshToken(this: BaseClient) {
     const type = stream.read(1).readUInt8()
     stream.read(2)
     const t = readTlv(stream)
+    this.emit("internal.verbose", "refresh token type: " + type, VerboseLevel.Debug)
     if (type === 0) {
       const { token } = decodeT119.call(this, t[0x119])
       await register.call(this, false, true)
