@@ -897,7 +897,7 @@ export class BaseClient extends Trapper {
       6: "android " + this.apk.ver,
     })
     const payload = await this.sendUni(cmd, body)
-    log(payload)
+    //log(payload)
     const rsp = pb.decode(payload)
     if (rsp[3] === 0) return rsp[4]
     throw new ApiRejection(rsp[3], rsp[5])
