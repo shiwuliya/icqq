@@ -1,5 +1,19 @@
 # Changelog
 
+## [0.5.0](https://github.com/icqqjs/icqq/compare/v0.4.14...v0.5.0) (2023-08-14)
+
+
+### Features
+
+* export axios for reuse in other projects ([f7c9f37](https://github.com/icqqjs/icqq/commit/f7c9f37c34f6403870b7a1aaeaf53610b64b6a60))
+
+
+### Bug Fixes
+
+* 刷新登录token失败问题。 ([6642e59](https://github.com/icqqjs/icqq/commit/6642e595f62d96fd38836e4fd870772f94a37869))
+* 更新GuildMessageEvent.reply方法签名 ([57bf4ec](https://github.com/icqqjs/icqq/commit/57bf4ec308d2c109557d9b7105dcead81f55ca20))
+* 频道身份组成员列表为空时出错问题。 ([28e6da8](https://github.com/icqqjs/icqq/commit/28e6da8da4b316a60d1c2849dd2a47b34dad4909))
+
 ## [0.4.14](https://github.com/icqqjs/icqq/compare/v0.4.13...v0.4.14) (2023-08-09)
 
 
