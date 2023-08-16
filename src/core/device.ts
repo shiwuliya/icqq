@@ -297,6 +297,17 @@ const mobile: Apk[] = [
         ssover: 20,
     },
     {
+        name: "A8.9.75.354d41fc",
+        version: "8.9.75.12110",
+        ver: "8.9.75",
+        buildtime: 1691565978,
+        subid: 537173381,
+        bitmap: 150470524,
+        sdkver: "6.0.0.2554",
+        qua: 'V1_AND_SQ_8.9.75_4482_YYB_D',
+        ssover: 20,
+    },
+    {
         name: "A8.9.73.11945",
         version: "8.9.73.11945",
         ver: "8.9.73",
@@ -344,6 +355,10 @@ const mobile: Apk[] = [
     }
 })
 const aPadSubids = [
+    {
+        ver: '8.9.75',
+        subid: 537173429,
+    },
     {
         ver: '8.9.73',
         subid: 537171737,
