@@ -87,8 +87,8 @@ export class Gfs {
 					2: 3
 				}
 			})
-			const payload = await this.c.sendOidb("OidbSvc.0x6d8_3", body)
-			const rsp = pb.decode(payload)[4][4]
+			const payload = await this.c.sendOidbSvcTrpcTcp("OidbSvcTrpcTcp.0x6d8_3", body)
+			const rsp = payload[4]
 			const total = Number(rsp[4]), used = Number(rsp[5]), free = total - used
 			return {
 				/** 总空间 */
@@ -106,8 +106,8 @@ export class Gfs {
 					2: 2
 				}
 			})
-			const payload = await this.c.sendOidb("OidbSvc.0x6d8_2", body)
-			const rsp = pb.decode(payload)[4][3]
+			const payload = await this.c.sendOidbSvcTrpcTcp("OidbSvcTrpcTcp.0x6d8_2", body)
+			const rsp = payload[3]
 			const file_count = Number(rsp[4]), max_file_count = Number(rsp[6])
 			return {
 				/** 文件数 */
@@ -127,8 +127,8 @@ export class Gfs {
 				4: String(fid)
 			}
 		})
-		const payload = await this.c.sendOidb("OidbSvc.0x6d8_0", body)
-		const rsp = pb.decode(payload)[4][1]
+		const payload = await this.c.sendOidbSvcTrpcTcp("OidbSvcTrpcTcp.0x6d8_0", body)
+		const rsp = payload[1]
 		checkRsp(rsp)
 		return genGfsFileStat(rsp[4])
 	}
@@ -169,8 +169,8 @@ export class Gfs {
 				13: Number(start) || 0
 			}
 		})
-		const payload = await this.c.sendOidb("OidbSvc.0x6d8_1", body)
-		const rsp = pb.decode(payload)[4][2]
+		const payload = await this.c.sendOidbSvcTrpcTcp("OidbSvcTrpcTcp.0x6d8_1", body)
+		const rsp = payload[2]
 		checkRsp(rsp)
 		const arr: (GfsDirStat | GfsFileStat)[] = []
 		if (!rsp[5]) return arr
@@ -198,8 +198,8 @@ export class Gfs {
 				4: String(name)
 			}
 		})
-		const payload = await this.c.sendOidb("OidbSvc.0x6d7_0", body)
-		const rsp = pb.decode(payload)[4][1]
+		const payload = await this.c.sendOidbSvcTrpcTcp("OidbSvcTrpcTcp.0x6d7_0", body)
+		const rsp = payload[1]
 		checkRsp(rsp)
 		return genGfsDirStat(rsp[4])
 	}
@@ -219,8 +219,8 @@ export class Gfs {
 					5: file.fid,
 				}
 			})
-			const payload = await this.c.sendOidb("OidbSvc.0x6d6_3", body)
-			rsp = pb.decode(payload)[4][4]
+			const payload = await this.c.sendOidbSvcTrpcTcp("OidbSvcTrpcTcp.0x6d6_3", body)
+			rsp = payload[4]
 		} else { //rm dir
 			const body = pb.encode({
 				2: {
@@ -229,8 +229,8 @@ export class Gfs {
 					3: String(fid)
 				}
 			})
-			const payload = await this.c.sendOidb("OidbSvc.0x6d7_1", body)
-			rsp = pb.decode(payload)[4][2]
+			const payload = await this.c.sendOidbSvcTrpcTcp("OidbSvcTrpcTcp.0x6d7_1", body)
+			rsp = payload[2]
 		}
 		checkRsp(rsp)
 	}
@@ -255,8 +255,8 @@ export class Gfs {
 					6: String(name)
 				}
 			})
-			const payload = await this.c.sendOidb("OidbSvc.0x6d6_4", body)
-			rsp = pb.decode(payload)[4][5]
+			const payload = await this.c.sendOidbSvcTrpcTcp("OidbSvcTrpcTcp.0x6d6_4", body)
+			rsp = payload[5]
 
 		} else { //rename dir
 			const body = pb.encode({
@@ -267,8 +267,8 @@ export class Gfs {
 					4: String(name)
 				}
 			})
-			const payload = await this.c.sendOidb("OidbSvc.0x6d7_2", body)
-			rsp = pb.decode(payload)[4][3]
+			const payload = await this.c.sendOidbSvcTrpcTcp("OidbSvcTrpcTcp.0x6d7_2", body)
+			rsp = payload[3]
 		}
 		checkRsp(rsp)
 	}
@@ -290,8 +290,8 @@ export class Gfs {
 				6: String(pid)
 			}
 		})
-		const payload = await this.c.sendOidb("OidbSvc.0x6d6_5", body)
-		const rsp = pb.decode(payload)[4][6]
+		const payload = await this.c.sendOidbSvcTrpcTcp("OidbSvcTrpcTcp.0x6d6_5", body)
+		const rsp = payload[6]
 		checkRsp(rsp)
 	}
 
@@ -308,8 +308,8 @@ export class Gfs {
 				}
 			}
 		})
-		const payload = await this.c.sendOidb("OidbSvc.0x6d9_4", body)
-		let rsp = pb.decode(payload)[4][5]
+		const payload = await this.c.sendOidbSvcTrpcTcp("OidbSvcTrpcTcp.0x6d9_4", body)
+		let rsp = payload[5]
 		checkRsp(rsp)
 		rsp = rsp[4]
 		checkRsp(rsp)
@@ -353,8 +353,8 @@ export class Gfs {
 				15: 1,
 			}
 		})
-		const payload = await this.c.sendOidb("OidbSvc.0x6d6_0", body)
-		const rsp = pb.decode(payload)[4][1]
+		const payload = await this.c.sendOidbSvcTrpcTcp("OidbSvcTrpcTcp.0x6d6_0", body)
+		const rsp = payload[1]
 		checkRsp(rsp)
 		if (!rsp[10]) {
 			const ext = pb.encode({
@@ -431,8 +431,8 @@ export class Gfs {
 				15: 1,
 			}
 		})
-		const payload = await this.c.sendOidb("OidbSvc.0x6d6_0", body)
-		const rsp = pb.decode(payload)[4][1]
+		const payload = await this.c.sendOidbSvcTrpcTcp("OidbSvcTrpcTcp.0x6d6_0", body)
+		const rsp = payload[1]
 		checkRsp(rsp)
 		if (!rsp[10])
 			drop(ErrorCode.GroupFileNotExists, "文件不存在，无法被转发")
@@ -453,8 +453,8 @@ export class Gfs {
 				4: file.fid,
 			}
 		})
-		const payload = await this.c.sendOidb("OidbSvc.0x6d6_2", body)
-		const rsp = pb.decode(payload)[4][3]
+		const payload = await this.c.sendOidbSvcTrpcTcp("OidbSvcTrpcTcp.0x6d6_2", body)
+		const rsp = payload[3]
 		checkRsp(rsp)
 		return {
 			name: file.name,
