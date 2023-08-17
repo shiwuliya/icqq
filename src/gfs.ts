@@ -439,6 +439,35 @@ export class Gfs {
 		return await this._feed(String(rsp[7]), rsp[6])
 	}
 
+
+	/**
+	 * 将离线(私聊)文件转发到当前群
+	 * @param fid 私聊文件fid
+	 * @param name 转发后的文件名，默认不变
+	 * @returns 转发的文件在当前群的属性
+	 */
+	async forwardOfflineFile(fid: string, name?: string) {
+		const stat = await this.c.pickFriend(this.c.uin).getFileInfo(fid)
+		const body = pb.encode({
+			1: 60100,
+			2: 0,
+			101: 3,
+			102: 103,
+			90000: {
+				10: this.gid,
+				30: 102,
+				40: this.c.uin,
+				50: stat.size,
+				60: String(name || stat.name),
+				80: fid
+			}
+		})
+		const payload = await this.c.sendOidbSvcTrpcTcp("OidbSvcTrpcTcp.0xe37_60100", body)
+		const rsp = payload[90000]
+		if (rsp[10] !== 0) drop(ErrorCode.OfflineFileNotExists, "文件不存在，无法被转发")
+		return await this._feed(String(rsp[30]), rsp[50])
+	}
+
 	/**
 	 * 获取文件下载地址
 	 * @param fid 文件id

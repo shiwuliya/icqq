@@ -677,46 +677,78 @@ export class Friend extends User {
 
 	/**
 	 * 转发离线文件
-	 * @param fid 文件id
+	 * @param fid 文件fid
+	 * @param group_id 群号，转发群文件时填写
 	 * @returns 转发成功后新文件的id
 	 */
-	async forwardFile(fid: string) {
-		const body = pb.encode({
-			1: 700,
-			2: 0,
-			9: {
-				10: this.c.uin,
-				20: this.uid,
-				30: fid
-			},
-			101: 3,
-			102: 104,
-			200: 1,
-		})
-		const payload = await this.c.sendUni("OfflineFilleHandleSvr.pb_ftn_CMD_REQ_APPLY_FORWARD_FILE-700", body)
-		const rsp = pb.decode(payload)[9]
-		const new_fid = rsp[50]
-		const ticket = rsp[60]
-
-		if (rsp[10] !== 0)
-			drop(rsp[10], rsp[20])
-
-		const info = await this.getFileInfo(fid)
-
-		const proto3 = {
-			2: {
-				1: {
-					1: 0,
-					3: new_fid,
-					4: Buffer.from(info.md5, "hex"),
-					5: info.name,
-					6: info.size,
-					9: 1,
-					57: ticket
+	async forwardFile(fid: string, group_id: number = 0) {
+		let new_fid
+		if (group_id > 0) {
+			const body = pb.encode({
+				3: {
+					1: group_id,
+					2: 3,
+					3: 102,
+					4: `/${fid}`,
+					5: 3,
+					6: this.uid
+				}
+			})
+			const payload = await this.c.sendOidbSvcTrpcTcp("OidbSvcTrpcTcp.0x6d9_2", body)
+			const rsp = payload[3]
+			if (rsp[1] !== 0) drop(rsp[1], rsp[2])
+			new_fid = rsp[4]
+			const info = await this.getFileInfo(new_fid)
+			const proto3 = {
+				2: {
+					1: {
+						1: 0,
+						3: new_fid,
+						4: Buffer.from(info.md5, "hex"),
+						5: info.name,
+						6: info.size,
+						9: 1,
+					}
 				}
 			}
+			await this._sendMsg(proto3, `[文件：${info.name}]`, true)
+		} else {
+			const body = pb.encode({
+				1: 700,
+				2: 0,
+				9: {
+					10: this.c.uin,
+					20: this.uid,
+					30: fid
+				},
+				101: 3,
+				102: 104,
+				200: 1,
+			})
+			const payload = await this.c.sendUni("OfflineFilleHandleSvr.pb_ftn_CMD_REQ_APPLY_FORWARD_FILE-700", body)
+			const rsp = pb.decode(payload)[9]
+			new_fid = rsp[50]
+			const ticket = rsp[60]
+
+			if (rsp[10] !== 0) drop(rsp[10], rsp[20])
+
+			const info = await this.getFileInfo(fid)
+
+			const proto3 = {
+				2: {
+					1: {
+						1: 0,
+						3: new_fid,
+						4: Buffer.from(info.md5, "hex"),
+						5: info.name,
+						6: info.size,
+						9: 1,
+						57: ticket
+					}
+				}
+			}
+			await this._sendMsg(proto3, `[文件：${info.name}]`, true)
 		}
-		await this._sendMsg(proto3, `[文件：${info.name}]`, true)
 		return String(new_fid)
 	}
 }
