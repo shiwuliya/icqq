@@ -729,11 +729,8 @@ export class Friend extends User {
 			const rsp = pb.decode(payload)[9]
 			new_fid = rsp[50]
 			const ticket = rsp[60]
-
 			if (rsp[10] !== 0) drop(rsp[10], rsp[20])
-
 			const info = await this.getFileInfo(fid)
-
 			const proto3 = {
 				2: {
 					1: {
