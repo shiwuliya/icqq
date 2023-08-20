@@ -39,13 +39,14 @@ export async function getT544(this: BaseClient, cmd: string) {
 			} else if (typeof (data.data?.sign) === 'string') {
 				sign = Buffer.from(data.data.sign, 'hex');
 			}
-		} else if (data.code === 1) {
-			if (data.msg.includes('Uin is not registered.')) {
-				if (await register.call(this)) {
-					return await this.getT544(cmd);
+		} else {
+			if (data.code === 1) {
+				if (data.msg.includes('Uin is not registered.')) {
+					if (await register.call(this)) {
+						return await this.getT544(cmd);
+					}
 				}
 			}
-		} else {
 			this.emit("internal.verbose", `[qsign]签名api(energy)异常： ${cmd} result(${Date.now() - time}ms): ${JSON.stringify(data)}`, VerboseLevel.Error);
 		}
 	}
@@ -94,13 +95,14 @@ export async function getSign(this: BaseClient, cmd: string, seq: number, body: 
 			else {
 				this.ssoPacketListHandler(list);
 			}
-		} else if (data.code === 1) {
-			if (data.msg.includes('Uin is not registered.')) {
-				if (await register.call(this)) {
-					return await this.getSign(cmd, seq, body);
+		} else {
+			if (data.code === 1) {
+				if (data.msg.includes('Uin is not registered.')) {
+					if (await register.call(this)) {
+						return await this.getSign(cmd, seq, body);
+					}
 				}
 			}
-		} else {
 			this.emit("internal.verbose", `[qsign]签名api异常： ${cmd} result(${Date.now() - time}ms): ${JSON.stringify(data)}`, VerboseLevel.Error);
 		}
 	}
