@@ -302,7 +302,7 @@ export class Client extends BaseClient {
      */
     async login(uin?: number, password?: string | Buffer): Promise<void>
     async login(uin?: number | string | Buffer, password?: string | Buffer) {
-        if (await this.switchQQVer()) {
+        if (!this.config.ver && await this.switchQQVer()) {
             this.logger.info(`[${uin}]获取到签名Api协议版本：${this.config.ver}`)
         }
         // let [uin, password] = args
