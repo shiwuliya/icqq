@@ -102,7 +102,7 @@ LQ+FLkpncClKVIrBwv6PHyUvuCb0rIarmgDnzkfQAqVufEtR64iazGDKatvJ9y6B
 9NMbHddGSAUmRTCrHQIDAQAB
 -----END PUBLIC KEY-----`;
 
-    constructor(private apk: Apk, d?: ShortDevice) {
+    constructor(public apk: Apk, d?: ShortDevice) {
         if (!d) d = generateShortDevice()
         Object.assign(this, generateFullDevice(apk, d))
     }
@@ -286,17 +286,6 @@ export type Apk = {
 const mobile: Apk[] = [
     // 每个版本不同的信息
     {
-        name: "A8.9.70.11730",
-        version: "8.9.70.11730",
-        ver: "8.9.70",
-        buildtime: 1688720082,
-        subid: 537169928,
-        bitmap: 150470524,
-        sdkver: "6.0.0.2551",
-        qua: 'V1_AND_SQ_8.9.70_4330_YYB_D',
-        ssover: 20,
-    },
-    {
         name: "A8.9.76.c71a1fa8",
         version: "8.9.76.12115",
         ver: "8.9.76",
@@ -327,6 +316,17 @@ const mobile: Apk[] = [
         bitmap: 150470524,
         sdkver: "6.0.0.2553",
         qua: 'V1_AND_SQ_8.9.73_4416_YYB_D',
+        ssover: 20,
+    },
+    {
+        name: "A8.9.70.11730",
+        version: "8.9.70.11730",
+        ver: "8.9.70",
+        buildtime: 1688720082,
+        subid: 537169928,
+        bitmap: 150470524,
+        sdkver: "6.0.0.2551",
+        qua: 'V1_AND_SQ_8.9.70_4330_YYB_D',
         ssover: 20,
     },
     {
@@ -514,7 +514,13 @@ const apklist: { [platform in Platform]: Apk | Apk[] } = {
 }
 
 export function getApkInfo(p: Platform, ver?: string): Apk {
-    const apis = apklist[p]
-    if (Array.isArray(apis)) return apis.find(a => a.ver === ver) || apis[0]
-    return apis as Apk
+    const apks = apklist[p]
+    if (Array.isArray(apks)) return apks.find(a => a.ver === ver) || apks[0]
+    return apks as Apk
+}
+
+export function getApkInfoList(p: Platform): Apk[] {
+    const apks = apklist[p]
+    if (!Array.isArray(apks)) return [apks]
+    return apks
 }

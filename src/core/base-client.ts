@@ -13,7 +13,7 @@ import { Apk, Device, getApkInfo, Platform, ShortDevice } from "./device"
 import * as log4js from "log4js"
 import { log } from "../common"
 import * as path from "path"
-import { Config } from "../client";
+import { Client, Config } from "../client";
 
 const FN_NEXT_SEQ = Symbol("FN_NEXT_SEQ")
 const FN_SEND = Symbol("FN_SEND")
@@ -98,7 +98,7 @@ export class BaseClient extends Trapper {
   private readonly [NET] = new Network
   // 回包的回调函数
   private readonly [HANDLERS] = new Map<number, (buf: Buffer) => void>()
-  readonly apk: Apk
+  apk: Apk
   readonly device: Device
   readonly sig: Record<string, any> = {
     seq: randomBytes(4).readUInt32BE() & 0xfff,
@@ -140,6 +140,7 @@ export class BaseClient extends Trapper {
     time_diff: 0,
     requestTokenTime: 0,
   }
+  readonly pkg: any = require("../../package.json")
   readonly pskey: { [domain: string]: Buffer } = {}
   readonly pt4token: { [domain: string]: Buffer } = {}
   /** 心跳间隔(秒) */
@@ -193,7 +194,7 @@ export class BaseClient extends Trapper {
     this[NET].on("lost", lostListener.bind(this))
     this.on("internal.online", onlineListener)
     this.on("internal.sso", ssoListener)
-    lock(this, "apk")
+    Object.defineProperty(this, "apk", { writable: false })
     lock(this, "device")
     lock(this, "sig")
     lock(this, "pskey")
@@ -223,6 +224,7 @@ export class BaseClient extends Trapper {
     let url = new URL(this.sig.sign_api_addr)
     if (url.searchParams.get('key')) {
       import('./qsign').then((module) => {
+        this.getApiQQVer = module.getApiQQVer.bind(this);
         this.getT544 = module.getT544.bind(this);
         this.getSign = module.getSign.bind(this);
         this.requestSignToken = module.requestSignToken.bind(this);
@@ -230,6 +232,7 @@ export class BaseClient extends Trapper {
       })
     } else {
       import('./sign').then((module) => {
+        this.getApiQQVer = module.getApiQQVer.bind(this);
         this.getT544 = module.getT544.bind(this);
         this.getSign = module.getSign.bind(this);
         this.requestSignToken = module.requestSignToken.bind(this);
@@ -257,6 +260,26 @@ export class BaseClient extends Trapper {
   /** 是否为在线状态 (可以收发业务包的状态) */
   isOnline() {
     return this[IS_ONLINE]
+  }
+
+  async switchQQVer(ver: string = '') {
+    const old_ver = this.config.ver;
+    this.config.ver = !ver ? await this.getApiQQVer() : ver;
+    if (old_ver != this.config.ver) {
+      const new_apk = getApkInfo(this.config.platform, this.config.ver);
+      if (new_apk.ver === this.config.ver) {
+        Object.defineProperty(this, "apk", { writable: true });
+        this.apk = new_apk;
+        Object.defineProperty(this, "apk", { writable: false });
+        this.device.apk = this.apk;
+        return true;
+      }
+    }
+    return false;
+  }
+
+  async getApiQQVer() {
+    return this.config.ver;
   }
 
   async getT544(cmd: string) {
@@ -1005,7 +1028,7 @@ async function parseSso(this: BaseClient, buf: Buffer) {
   const seq = buf.readInt32BE(4)
   const retcode = buf.readInt32BE(8)
   if (retcode !== 0) {
-    this.emit("internal.error.token")
+    this.emit("internal.error.token", retcode)
     throw new Error("unsuccessful retcode: " + retcode)
   }
   let offset = buf.readUInt32BE(12) + 12

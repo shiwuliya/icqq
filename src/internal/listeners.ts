@@ -158,7 +158,8 @@ function verifyListener(this: Client, url: string, phone: string) {
  */
 function loginErrorListener(this: Client, code: number, message: string) {
     // toke expired
-    if (!code) {
+    if (!code || code === -10003) {
+        if (code === -10003) fs.unlink(path.join(this.dir, this.uin + "_token_bak"), NOOP)
         this.logger.mark("登录token过期")
         this.em('system.token.expire')
         fs.unlink(path.join(this.dir, this.uin + "_token"), NOOP)

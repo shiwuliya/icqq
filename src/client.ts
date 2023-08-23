@@ -32,9 +32,7 @@ import { Forwardable, Image, ImageElem, parseDmMessageId, parseGroupMessageId, Q
 import { Listener, Matcher, ToDispose } from "triptrap";
 import { Guild } from "./guild";
 import { ErrorCode } from "./errors";
-import {Configuration} from "log4js";
-
-const pkg = require("../package.json")
+import { Configuration } from "log4js";
 
 /** 事件接口 */
 export interface Client extends BaseClient {
@@ -222,7 +220,7 @@ export class Client extends BaseClient {
             isNew = true
             fs.writeFileSync(file, JSON.stringify(device, null, 2))
         }
-        super(config.platform, device,config as Required<Config>);
+        super(config.platform, device, config as Required<Config>);
         this.logger = log4js.getLogger('[icqq]');
         if (!config.sign_api_addr) {
             this.logger.warn(`未配置签名API地址，登录/消息发送可能失败`)
@@ -234,7 +232,7 @@ export class Client extends BaseClient {
         if (isNew)
             this.logger.mark("创建了新的设备文件：" + file)
         this.logger.mark("----------")
-        this.logger.mark(`Package Version: icqq@${pkg.version} (Released on ${pkg.upday})`)
+        this.logger.mark(`Package Version: icqq@${this.pkg.version} (Released on ${this.pkg.upday})`)
         this.logger.mark("View Changelogs：https://github.com/icqqjs/icqq/releases")
         this.logger.mark("----------")
 
@@ -300,6 +298,9 @@ export class Client extends BaseClient {
      */
     async login(uin?: number, password?: string | Buffer): Promise<void>
     async login(uin?: number | string | Buffer, password?: string | Buffer) {
+        if (await this.switchQQVer()) {
+            this.logger.info(`[${uin}]获取到签名Api协议版本：${this.config.ver}`)
+        }
         // let [uin, password] = args
         if (typeof uin !== "number") {
             password = uin
@@ -315,7 +316,7 @@ export class Client extends BaseClient {
                 md5pass = md5(String(password))
             this.password_md5 = md5pass
         }
-        let apk_info = this.apk.display == 'Android_8.8.88' ? this.apk.display : `${this.apk.display}_${this.apk.version}`
+        let apk_info = `${this.apk.display}_${this.apk.version}`
         this.logger.info(`[${uin}]使用协议：${apk_info}`)
         try {
             if (!uin) throw new Error()
@@ -682,8 +683,8 @@ export class Client extends BaseClient {
      * @param member_id {number} 成员QQ号
      * @param isScreen {boolean} 是否屏蔽 默认true
      */
-    async setGroupMemberScreenMsg(group_id:number,member_id:number,isScreen?:boolean){
-        return this.pickGroup(group_id).setScreenMemberMsg(member_id,isScreen)
+    async setGroupMemberScreenMsg(group_id: number, member_id: number, isScreen?: boolean) {
+        return this.pickGroup(group_id).setScreenMemberMsg(member_id, isScreen)
     }
 
     /** @cqhttp use {@link Group.setName} */
@@ -887,10 +888,10 @@ export class Client extends BaseClient {
 /** 日志等级 */
 export type LogLevel = "trace" | "debug" | "info" | "warn" | "error" | "fatal" | "mark" | "off"
 export type LogLevelMap = { [key in LogLevel]: number }
-export type LoggerFn={
+export type LoggerFn = {
     [key in LogLevel]: (...args: any[]) => any
 }
-export interface Logger extends LoggerFn{
+export interface Logger extends LoggerFn {
     level?: LogLevel
 }
 /** 配置项 */
@@ -905,7 +906,7 @@ export interface Config {
     /** 使用版本，仅在对应platform中有多个版本是有效，不填则使用最新版本 */
     ver?: string
     /** log4js配置 */
-    log_config?: Configuration| string
+    log_config?: Configuration | string
     /** 群聊和频道中过滤自己的消息，默认`true` */
     ignore_self?: boolean
     /** 被风控时是否尝试用分片发送，默认`true` */

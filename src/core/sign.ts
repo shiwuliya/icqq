@@ -1,6 +1,7 @@
 import axios from 'axios';
 import { BaseClient, VerboseLevel } from "./base-client";
 import { BUF0 } from './constants';
+import { getApkInfoList } from "./device";
 
 export async function getT544(this: BaseClient, cmd: string) {
 	let sign = BUF0;
@@ -27,7 +28,7 @@ export async function getT544(this: BaseClient, cmd: string) {
 		const { data } = await axios.post(url.href, post_params, {
 			timeout: 15000,
 			headers: {
-				'User-Agent': `Dalvik/2.1.0 (Linux; U; Android ${this.device.version.release}; PCRT00 Build/N2G48H)`,
+				'User-Agent': `icqq@${this.pkg.version} (Released on ${this.pkg.upday})`,
 				'Content-Type': "application/x-www-form-urlencoded"
 			}
 		}).catch(err => ({ data: { code: -1, msg: err?.message } }));
@@ -73,7 +74,7 @@ export async function getSign(this: BaseClient, cmd: string, seq: number, body: 
 		const { data } = await axios.post(url.href, post_params, {
 			timeout: 15000,
 			headers: {
-				'User-Agent': `Dalvik/2.1.0 (Linux; U; Android ${this.device.version.release}; PCRT00 Build/N2G48H)`,
+				'User-Agent': `icqq@${this.pkg.version} (Released on ${this.pkg.upday})`,
 				'Content-Type': "application/x-www-form-urlencoded"
 			}
 		}).catch(err => ({ data: { code: -1, msg: err?.message } }));
@@ -121,7 +122,7 @@ export async function requestSignToken(this: BaseClient) {
 		const { data } = await axios.post(url.href, post_params, {
 			timeout: 15000,
 			headers: {
-				'User-Agent': `Dalvik/2.1.0 (Linux; U; Android ${this.device.version.release}; PCRT00 Build/N2G48H)`,
+				'User-Agent': `icqq@${this.pkg.version} (Released on ${this.pkg.upday})`,
 				'Content-Type': "application/x-www-form-urlencoded"
 			}
 		}).catch(err => ({ data: { code: -1, msg: err?.message } }));
@@ -164,7 +165,7 @@ export async function submitSsoPacket(this: BaseClient, cmd: string, callbackId:
 		const { data } = await axios.post(url.href, post_params, {
 			timeout: 15000,
 			headers: {
-				'User-Agent': `Dalvik/2.1.0 (Linux; U; Android ${this.device.version.release}; PCRT00 Build/N2G48H)`,
+				'User-Agent': `icqq@${this.pkg.version} (Released on ${this.pkg.upday})`,
 				'Content-Type': "application/x-www-form-urlencoded"
 			}
 		}).catch(err => ({ data: { code: -1, msg: err?.message } }));
@@ -176,4 +177,42 @@ export async function submitSsoPacket(this: BaseClient, cmd: string, callbackId:
 		}
 	}
 	return [];
+}
+
+
+export async function getApiQQVer(this: BaseClient) {
+	let QQVer = this.config.ver;
+	if (!this.sig.sign_api_addr) {
+		return QQVer;
+	}
+	const apks = getApkInfoList(this.config.platform);
+	const packageName = this.apk.id;
+	let url = new URL(this.sig.sign_api_addr);
+	let path = url.pathname;
+	if (path.substring(path.length - 1) === '/') {
+		path += 'ver';
+	} else {
+		path = path.replace(/\/sign$/, '/ver');
+	}
+	url.pathname = path;
+	const { data } = await axios.get(url.href, {
+		timeout: 6000,
+		headers: {
+			'User-Agent': `icqq@${this.pkg.version} (Released on ${this.pkg.upday})`,
+			'Content-Type': "application/x-www-form-urlencoded"
+		}
+	}).catch(err => ({ data: { code: -1, msg: err?.message } }));
+
+	if(data.code === 0){
+		const vers = data?.data[packageName];
+		if(vers && vers.length > 0){
+			for(let ver of vers){
+				if(apks.find(val => val.ver === ver)){
+					QQVer = ver;
+					break;
+				}
+			}
+		}
+	}
+	return QQVer;
 }
