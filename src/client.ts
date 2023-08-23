@@ -42,6 +42,10 @@ export interface Client extends BaseClient {
 
     on<S extends Matcher>(event: S & Exclude<S, keyof EventMap>, listener: Listener): ToDispose<this>
 
+    once<T extends keyof EventMap>(event: T, listener: EventMap[T]): ToDispose<this>
+
+    once<S extends Matcher>(event: S & Exclude<S, keyof EventMap>, listener: Listener): ToDispose<this>
+
     trap<T extends keyof EventMap>(event: T, listener: EventMap[T]): ToDispose<this>
 
     trap<S extends Matcher>(event: S & Exclude<S, keyof EventMap>, listener: Listener): ToDispose<this>
