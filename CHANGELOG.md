@@ -1,5 +1,17 @@
 # Changelog
 
+## [0.5.1](https://github.com/icqqjs/icqq/compare/v0.5.0...v0.5.1) (2023-08-23)
+
+
+### Bug Fixes
+
+* qsignApi异常时不输出错误问题。 ([e3411f8](https://github.com/icqqjs/icqq/commit/e3411f8f7b547fb1d93ff4d57bca9dead655dd58))
+* 增加8.9.75.12110 ([261c992](https://github.com/icqqjs/icqq/commit/261c992e13dcb6a5fc01d004cf633114c3b3185b))
+* 增加8.9.76.12115 ([5157ea7](https://github.com/icqqjs/icqq/commit/5157ea7c25ec05942b0c7cf26c9be425ce142cc5))
+* 支持群文件转发到私聊以及私聊文件转发到群聊。 ([338c5d2](https://github.com/icqqjs/icqq/commit/338c5d2a6f500e6a419382e4a4f2e1b56b8344b8))
+* 未在config中指定版本时，自动使用签名Api支持的协议版本。 ([11f85fe](https://github.com/icqqjs/icqq/commit/11f85fe70713ffaab52571b3626d48a2a0725bac))
+* 群文件操作。 ([0078316](https://github.com/icqqjs/icqq/commit/0078316e7340bb64cd236ed42d1241df49c646b8))
+
 ## [0.5.0](https://github.com/icqqjs/icqq/compare/v0.4.14...v0.5.0) (2023-08-14)
 
 
