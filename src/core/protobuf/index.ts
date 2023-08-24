@@ -135,3 +135,106 @@ export function decode(encoded: Buffer): Proto {
 	}
 	return result
 }
+
+export function decodePb(buffer_data:Buffer) {
+	
+	let pb = {
+		decode,
+		encode
+	};
+	let proto = pb.decode(buffer_data);
+	let json = {}
+	let data:any;
+	//delete proto;
+	//console.log("小叶子调试",pb.decode(proto[3][1][2][1][1][1]));
+	let index = 0;
+	async function decode2(proto:Proto, json:{[key:number]:any}) {
+		for (let key in proto) {
+			if (key == "encoded") {
+				continue;
+			}
+			if (proto[key] instanceof Object) {
+				if (proto[key] instanceof Array) {
+					json[key] = [];
+					for (let i = 0; i < proto[key].length; i++) {
+						json[key].push({});
+						decode2(proto[key][i], json[key][i]);
+					}
+				} else {
+					try {
+						if (pb.decode(proto[key].encoded) == null) {
+							if (data.length > 3) {
+								let Prefix = ""
+								if (data[0] == 0x01 || data[0] == 0x00) {
+									Prefix = data.toString("hex").slice(0, 2);
+									data = data.slice(1);
+								}
+								let data_json:any = {}
+								data_json.Prefix = Prefix
+								if (data[0] == 0x78 && data[1] == 0x9c) {
+									let Deflatedata = zlib.unzipSync(data);
+									// data_json.RawData = proto[key].encoded;
+									// data_json.DecompressedData =Deflatedata;
+									// data_json.CompressType = "Deflate"
+									data_json.txt = Deflatedata.toString();
+									data_json.tip = "数据被加密过,使用时请把数据加密回去 deflateSync()"
+									json[key] = data_json
+									decode2(proto[key], json[key]);
+									continue;
+								} else {
+									json[key] = proto[key].encoded.toString();
+									decode2(proto[key], json[key]);
+									continue;
+								}
+							}
+							json[key] = proto[key].encoded.toString();
+							decode2(proto[key], json[key]);
+							continue;
+						}
+						json[key] = {};
+						decode2(proto[key], json[key]);
+					} catch (error) {
+						data = proto[key].encoded
+						if (data.length > 3) {
+							let Prefix = ""
+							if (data[0] == 0x01 || data[0] == 0x00) {
+								Prefix = data.toString("hex").slice(0, 2);
+								data = data.slice(1);
+							}
+							let data_json:any = {}
+							data_json.Prefix = Prefix
+							if (data[0] == 0x78 && data[1] == 0x9c) {
+								let Deflatedata = zlib.unzipSync(data);
+								// data_json.RawData = proto[key].encoded;
+								// data_json.DecompressedData =Deflatedata;
+								// data_json.CompressType = "Deflate"
+								data_json.txt = Deflatedata.toString();
+								data_json.tip = "数据被加密过,使用时请把数据加密回去 deflateSync()"
+								json[key] = data_json
+								decode2(proto[key], json[key]);
+								continue;
+							} else {
+								json[key] = proto[key].encoded.toString();
+								decode2(proto[key], json[key]);
+								continue;
+							}
+						}
+						json[key] = proto[key].encoded.toString();
+						decode2(proto[key], json[key]);
+						continue;
+					}
+				}
+			} else {
+				//console.log("小叶子调试",proto[key]);
+				let value = proto[key];
+				if (typeof value == "bigint") {
+					value = value.toString();
+					value = Number(value);
+				}
+				json[key] = value
+			}
+		}
+	}
+	decode2(proto, json);
+	return json;
+}

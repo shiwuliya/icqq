@@ -14,6 +14,7 @@ import {
 	MessageRet,
 } from "./events"
 import { GroupInfo, MemberInfo } from "./entities"
+import { decodePb } from "./core/protobuf"
 
 type Client = import("./client").Client
 type Member = import("./member").Member
@@ -784,5 +785,58 @@ export class Group extends Discuss {
 	 */
 	pokeMember(uid: number) {
 		return this.pickMember(uid).poke()
+	}
+
+	/**
+	 * 获取群内被禁言人
+	 * @returns 
+	 */
+	async getMuteMemberList(){
+		let body = {
+			"1": 2201,
+			"3": 0,
+			"4": {
+				"1": this.group_id,
+				"2": 0,
+				"3": 6,
+				"5": {
+					"1": 0,
+					"12": 0
+				}
+			}
+		}
+
+		let toTime = (timestamp:number)=>{
+			var date = new Date(timestamp * 1000);
+			var Y = date.getFullYear() + '-';
+			var M = (date.getMonth() + 1 < 10 ? '0' + (date.getMonth() + 1) : date.getMonth() + 1) + '-';
+			var D = (date.getDate() < 10 ? '0' + (date.getDate() ) : date.getDate()) + ' ';
+			var h = date.getHours() + ':';
+			var m = date.getMinutes();
+			return Y+ M + D + h + m;
+		}
+	
+		let resBody = await this.c.sendUni("OidbSvc.0x899_0",pb.encode(body));
+		let res = ((await decodePb(resBody)) as any)[4][4]
+	
+		if(!(res instanceof Array)){
+			res = [res];
+		}
+	
+		type Temp = {
+			1:number,
+			12:number
+		}
+		return (res as Array<Temp>).map((item:Temp)=>{
+	
+			if(!item){
+				return null
+			}
+	
+			return {
+				uin:item?item[1]:null,
+				unMuteTime:item?toTime(item[12]):null
+			}
+		}).filter(item=>item);
 	}
 }

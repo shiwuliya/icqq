@@ -15,6 +15,7 @@ import {
 	PrivateMessageEvent
 } from "./events"
 import { FriendInfo } from "./entities"
+import { decodePb } from "./core/protobuf"
 
 type Client = import("./client").Client
 
@@ -748,4 +749,59 @@ export class Friend extends User {
 		}
 		return String(new_fid)
 	}
+
+	/**
+	 * 查找机器人与这个人的共群
+	 * @returns 
+	 */
+    async searchSameGroup(){
+    
+        let body = pb.encode({
+            "1": 3316,
+            "2": 0,
+            "3": 0,
+            "4": {
+                "1": this.c.uin,
+                "2": this.uid,
+                "4": 1,
+                "5": [
+                    {
+                        "3": {
+                            "1": this.c.uin,
+                            "2": this.uid
+                        },
+                        "5": 3436
+                    },
+                    {
+                        "3": {
+                            "1": {
+                                "1": {
+                                    "6": `${this.uid}`
+                                },
+                                "2": 1
+                            }
+                        },
+                        "5": 3460
+                    }
+                ],
+                "6": 0
+            },
+            "6": "android 8.9.28"
+        });
+    
+        const payload = await this.c.sendUni("OidbSvc.0xcf4", body);
+        let res = await decodePb(payload);
+        //console.log();
+        //console.log((res as any)[4][12]);
+        if(!(res as any)[4][12][1]){
+            return []
+        }
+    
+        return (res as any)[4][12][1].map((item:{"1":number,"3":string})=>{
+            return {
+                groupName:item['3'],
+                Group_Id:item['1']
+            }
+        }); 
+    }
 }
