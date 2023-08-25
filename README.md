@@ -3,7 +3,7 @@
 [![npm version](https://img.shields.io/npm/v/icqq/latest.svg)](https://www.npmjs.com/package/icqq) [![dm](https://shields.io/npm/dm/icqq)](https://www.npmjs.com/package/icqq) [![node engine](https://img.shields.io/node/v/icqq/latest.svg)](https://nodejs.org) [![group:860669870](https://img.shields.io/badge/group-860669870-blue)](https://jq.qq.com/?_wv=1027&k=xAdGDRVh) [![discord](https://img.shields.io/static/v1?label=chat&message=on%20discord&color=7289da&logo=discord)](https://discord.gg/D7T7wPtwvb)
 
 - QQ（安卓）协议基于 Node.js 的实现，支持最低node版本为 v14
-- 若你不熟悉 Node.js 或不会组织代码，可通过 [template](https://github.com/icqqjs/icqq-template) 创建一个简单的应用程序
+- 若你不熟悉 Node.js 或不会组织代码，可通过 [template](https://github.com/icqqjs/icqq-template)或[demo](./demo) 创建一个简单的应用程序
 - [Type Docs](https://icqqjs.github.io/icqq/docs/)（文档仅供参考，具体类型以包内d.ts声明文件为准）
 - [从 OICQ v1.x 升级](https://github.com/takayama-lily/oicq/projects/3#column-16638290)（v1 在 OICQ 的 master 分支）
 - 如果你仍在使用 OICQ v1.x，又不想升级，可以使用 [oicq-icalingua-plus-plus](https://github.com/icalingua-plus-plus/oicq-icalingua-plus-plus)
