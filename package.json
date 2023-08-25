@@ -8,6 +8,8 @@
   "scripts": {
     "build": "tsc && cp -r src/core/protobuf/*.min.* lib/core/protobuf",
     "build_": "tsc && copy .\\src\\core\\protobuf\\*.min.* lib\\core\\protobuf",
+    "lint": "prettier --check ./**/*.{ts,js,vue}",
+    "lint:fix": "prettier --write ./**/*.{ts,js,vue,md}",
     "docs": "typedoc src/index.ts",
     "dev": "ts-node src/test.ts",
     "pub": "npm publish --access public",
@@ -41,6 +43,7 @@
   "devDependencies": {
     "@types/node": "^16.18.31",
     "@types/pngjs": "^6.0.1",
+    "prettier": "^3.0.0",
     "@types/probe-image-size": "^7.0.1",
     "@types/ws": "^8.2.0",
     "protobufjs": "^6.11.2",

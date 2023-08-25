@@ -72,4 +72,7 @@ client.on("system.login.qrcode", function (e) {
 
 * [QQWebApi](./web-api.md) QQ Web Api 收集整理 (途中)
 * [TXHook](https://github.com/fuqiuluo/TXHook) 抓包工具推荐
+**参与贡献：**
+
+* [贡献指南](./CONTRIBUTING.md)
 
