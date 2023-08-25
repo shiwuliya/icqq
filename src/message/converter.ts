@@ -221,11 +221,22 @@ export class Converter {
             text = String(id)
         text = "[" + text + "]"
         this.elems.push({
-            34: {
-                1: Number(id),
-                2: 1,
+            "53": {
+                "1": 37,
+                "2": {
+                    "1": "1",
+                    "2": "1",
+                    "3": id,
+                    "4": 1,
+                    "5": 1,
+                    "6": {},
+                    "7": text,
+                    "9": 1
+                },
+                "3": 1
             }
-        })
+        });
+        //console.log(JSON.stringify(this.elems));
         this._text(text)
     }
 
