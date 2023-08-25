@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.5.2](https://github.com/icqqjs/icqq/compare/v0.5.1...v0.5.2) (2023-08-25)
+
+
+### Bug Fixes
+
+* 对超级表情进行修复，sface消息类型 ([feca7ed](https://github.com/icqqjs/icqq/commit/feca7eda721b351bc24cb967bc844de1416c8d89))
+
 ## [0.5.1](https://github.com/icqqjs/icqq/compare/v0.5.0...v0.5.1) (2023-08-23)
 
 
