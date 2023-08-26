@@ -699,7 +699,7 @@ export class BaseClient extends Trapper {
     if (retcode < 0) {
       this.emit("internal.error.network", -2, "server is busy")
     } else if (retcode === 0 && t106 && t16a && t318 && tgtgt) {
-      if (this.apk.ssover >= 12 && (!this.device.qImei36 || !this.device.qImei16)) {
+      if (this.apk.qua != '' && (!this.device.qImei36 || !this.device.qImei16)) {
         await this.device.getQIMEI()
       }
       this.uin = uin as number
