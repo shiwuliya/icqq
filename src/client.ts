@@ -553,6 +553,28 @@ export class Client extends BaseClient {
         });
     }
 
+    /** @cqhttp use {@link Guild.info} */
+    getGuildInfo(guild_id: string) {
+        const guild = this.pickGuild(guild_id);
+        if (!guild) return null;
+        return {
+            guild_id: guild.guild_id,
+            guild_name: guild.guild_name,
+        }
+    }
+    getChannelInfo(guild_id: string, channel_id: string) {
+        const guild = this.pickGuild(guild_id);
+        if (!guild) return null
+        const channel = guild.channels.get(channel_id);
+        if (!channel) return null;
+        return {
+            guild_id: guild.guild_id,
+            channel_id: channel.channel_id,
+            channel_name: channel.channel_name,
+            channel_type: channel.channel_type,
+        }
+    }
+
     /**
      * 添加群精华消息
      * use {@link Group.addEssence}
