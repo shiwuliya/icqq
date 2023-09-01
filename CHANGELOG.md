@@ -1,5 +1,17 @@
 # Changelog
 
+## [0.5.3](https://github.com/icqqjs/icqq/compare/v0.5.2...v0.5.3) (2023-09-01)
+
+
+### Bug Fixes
+
+* add some demo of icqq ([b8f6e12](https://github.com/icqqjs/icqq/commit/b8f6e12e83071776cd5cf1309927a93fd2a06c93))
+* run lint:fix ([226926b](https://github.com/icqqjs/icqq/commit/226926b0b305be76212726e628f73579f12f84ee))
+* 增加Android 8.9.78.12275。 ([1c4bce8](https://github.com/icqqjs/icqq/commit/1c4bce8eb94b3c8aaf0a6f4e0d6db789e059c8f1))
+* 增加频道相关接口 ([ce7cd33](https://github.com/icqqjs/icqq/commit/ce7cd3344fe71744621621d426d4212ad2bfa4c4))
+* 更新QQ版本信息。 ([fc428ac](https://github.com/icqqjs/icqq/commit/fc428ac301ac31197b98c8979c6f8e190e3b68f4))
+* 获取签名Api协议版本时判断sign是否已经初始化。 ([acb6c78](https://github.com/icqqjs/icqq/commit/acb6c78be6b58db58fbda038408ad4ca698af5ce))
+
 ## [0.5.2](https://github.com/icqqjs/icqq/compare/v0.5.1...v0.5.2) (2023-08-25)
 
 
