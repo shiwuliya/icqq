@@ -159,6 +159,7 @@ export class BaseClient extends Trapper {
     msg_cnt_per_min: 0,
     remote_ip: "",
     sign_api_addr: "",
+    sign_api_init: false,
     remote_port: 0,
   }
   protected signLoginCmd = [
@@ -215,30 +216,27 @@ export class BaseClient extends Trapper {
     }
   }
 
-  setSignServer(addr?: string): void {
+  async setSignServer(addr?: string): Promise<void> {
     if (!addr) return
     unlock(this, "sig")
+    this.sig.sign_api_init = false
     if (!/http(s)?:\/\//.test(addr)) addr = `http://${addr}`
     this.sig.sign_api_addr = addr
-    lock(this, "sig")
+
     let url = new URL(this.sig.sign_api_addr)
+    let module
     if (url.searchParams.get('key')) {
-      import('./qsign').then((module) => {
-        this.getApiQQVer = module.getApiQQVer.bind(this);
-        this.getT544 = module.getT544.bind(this);
-        this.getSign = module.getSign.bind(this);
-        this.requestSignToken = module.requestSignToken.bind(this);
-        this.submitSsoPacket = module.submitSsoPacket.bind(this);
-      })
+      module = await import('./qsign')
     } else {
-      import('./sign').then((module) => {
-        this.getApiQQVer = module.getApiQQVer.bind(this);
-        this.getT544 = module.getT544.bind(this);
-        this.getSign = module.getSign.bind(this);
-        this.requestSignToken = module.requestSignToken.bind(this);
-        this.submitSsoPacket = module.submitSsoPacket.bind(this);
-      })
+      module = await import('./sign')
     }
+    this.getApiQQVer = module.getApiQQVer.bind(this)
+    this.getT544 = module.getT544.bind(this)
+    this.getSign = module.getSign.bind(this)
+    this.requestSignToken = module.requestSignToken.bind(this)
+    this.submitSsoPacket = module.submitSsoPacket.bind(this)
+    this.sig.sign_api_init = true
+    lock(this, "sig")
   }
 
   on(matcher: Matcher, listener: Listener) {
@@ -263,6 +261,10 @@ export class BaseClient extends Trapper {
   }
 
   async switchQQVer(ver: string = '') {
+    if (this.config.sign_api_addr && !this.sig.sign_api_init) {
+      await this.setSignServer(this.config.sign_api_addr);
+    }
+    if (this.config.ver) return false;
     const old_ver = this.config.ver;
     this.config.ver = !ver ? await this.getApiQQVer() : ver;
     if (old_ver != this.config.ver) {
@@ -699,7 +701,7 @@ export class BaseClient extends Trapper {
     if (retcode < 0) {
       this.emit("internal.error.network", -2, "server is busy")
     } else if (retcode === 0 && t106 && t16a && t318 && tgtgt) {
-      if (this.apk.ssover >= 12 && (!this.device.qImei36 || !this.device.qImei16)) {
+      if (this.apk.qua != '' && (!this.device.qImei36 || !this.device.qImei16)) {
         await this.device.getQIMEI()
       }
       this.uin = uin as number

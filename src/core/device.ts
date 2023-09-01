@@ -286,6 +286,17 @@ export type Apk = {
 const mobile: Apk[] = [
     // 每个版本不同的信息
     {
+        name: "A8.9.78.d5d9d71d",
+        version: "8.9.78.12275",
+        ver: "8.9.78",
+        buildtime: 1691565978,
+        subid: 537175315,
+        bitmap: 150470524,
+        sdkver: "6.0.0.2554",
+        qua: 'V1_AND_SQ_8.9.78_4548_YYB_D',
+        ssover: 20,
+    },
+    {
         name: "A8.9.76.c71a1fa8",
         version: "8.9.76.12115",
         ver: "8.9.76",
@@ -319,7 +330,18 @@ const mobile: Apk[] = [
         ssover: 20,
     },
     {
-        name: "A8.9.70.11730",
+        name: "A8.9.71.9fd08ae5",
+        version: "8.9.71.11735",
+        ver: "8.9.71",
+        buildtime: 1688720082,
+        subid: 537170024,
+        bitmap: 150470524,
+        sdkver: "6.0.0.2551",
+        qua: 'V1_AND_SQ_8.9.71_4332_YYB_D',
+        ssover: 20,
+    },
+    {
+        name: "A8.9.70.b4332bd3",
         version: "8.9.70.11730",
         ver: "8.9.70",
         buildtime: 1688720082,
@@ -330,7 +352,7 @@ const mobile: Apk[] = [
         ssover: 20,
     },
     {
-        name: "A8.9.68.11565",
+        name: "A8.9.68.e757227e",
         version: "8.9.68.11565",
         ver: "8.9.68",
         buildtime: 1687254022,
@@ -341,7 +363,7 @@ const mobile: Apk[] = [
         ssover: 20,
     },
     {
-        name: "A8.9.63.11390",
+        name: "A8.9.63.5156de84",
         version: "8.9.63.11390",
         ver: "8.9.63",
         buildtime: 1685069178,
@@ -367,6 +389,10 @@ const mobile: Apk[] = [
 })
 const aPadSubids = [
     {
+        ver: '8.9.78',
+        subid: 537175354,
+    },
+    {
         ver: '8.9.76',
         subid: 537173525,
     },
@@ -377,6 +403,10 @@ const aPadSubids = [
     {
         ver: '8.9.73',
         subid: 537171737,
+    },
+    {
+        ver: '8.9.71',
+        subid: 537170072,
     },
     {
         ver: '8.9.70',
@@ -394,7 +424,7 @@ const aPadSubids = [
 const tim: Apk[] = [
     // 每个版本不同的信息
     {
-        name: "A3.5.2.3178",
+        name: "A3.5.2.3f4af297",
         version: "3.5.2.3178",
         ver: "3.5.2",
         buildtime: 1630062176,
@@ -405,7 +435,7 @@ const tim: Apk[] = [
         ssover: 18,
     },
     {
-        name: "A3.5.1.3168",
+        name: "A3.5.1.db08e878",
         version: "3.5.1.3168",
         ver: "3.5.1",
         buildtime: 1630062176,
