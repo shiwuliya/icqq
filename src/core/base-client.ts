@@ -262,7 +262,7 @@ export class BaseClient extends Trapper {
 
   async switchQQVer(ver: string = '') {
     if (this.sig.sign_api_addr && !this.sig.sign_api_init) {
-      await this.setSignServer(this.sig.sign_api_addr)
+      await this.setSignServer(this.sig.sign_api_addr);
     }
     if (!this.config.ver) return false;
     const old_ver = this.config.ver;
