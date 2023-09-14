@@ -11,9 +11,8 @@ import * as jce from "./jce"
 import { BUF0, BUF16, BUF4, hide, int32ip2str, lock, md5, NOOP, timestamp, unlock, unzip } from "./constants"
 import { Apk, Device, getApkInfo, Platform, ShortDevice } from "./device"
 import * as log4js from "log4js"
-import { log } from "../common"
 import * as path from "path"
-import { Client, Config } from "../client";
+import {  Config } from "../client";
 
 const FN_NEXT_SEQ = Symbol("FN_NEXT_SEQ")
 const FN_SEND = Symbol("FN_SEND")
@@ -86,7 +85,12 @@ export interface BaseClient {
 
   on(name: string | symbol, listener: (this: this, ...args: any[]) => void): ToDispose<this>
 }
-
+type Packet={
+  cmd:string
+  type:number
+  callbackId?:number
+  body:Buffer
+}
 export class BaseClient extends Trapper {
 
   private [IS_ONLINE] = false
@@ -171,7 +175,7 @@ export class BaseClient extends Trapper {
     'trpc.o3.ecdh_access.EcdhAccess.SsoSecureA2Establish',
     'trpc.o3.ecdh_access.EcdhAccess.SsoSecureA2Access'
   ];
-  private ssoPacketList: any = [];
+  private ssoPacketList: Packet[] = [];
 
   constructor(p: Platform = Platform.Android, d: ShortDevice, public config: Required<Config>) {
     super()
@@ -333,9 +337,9 @@ export class BaseClient extends Trapper {
     return Buffer.from(pb.encode(pbdata));
   }
 
-  async ssoPacketListHandler(list: any) {
+  async ssoPacketListHandler(list: Packet[]|null) {
     let handle = (list: any) => {
-      let new_list = [];
+      let new_list:Packet[] = [];
       for (let val of list) {
         try {
           let data = pb.decode(Buffer.from(val.body, 'hex'));
@@ -351,7 +355,7 @@ export class BaseClient extends Trapper {
         this.ssoPacketList = [];
       }
     }
-    if (!list || list.length < 1) return;
+    if (!list || !list.length) return;
     if (!this.isOnline()) {
       list = handle(list);
       if (this.ssoPacketList.length > 0) {
@@ -375,8 +379,8 @@ export class BaseClient extends Trapper {
 
     for (let ssoPacket of list) {
       let cmd = ssoPacket.cmd;
-      let body = Buffer.from(ssoPacket.body, 'hex');
-      let callbackId = ssoPacket.callbackId;
+      let body = Buffer.from(ssoPacket.body as unknown as string, 'hex');
+      let callbackId = ssoPacket.callbackId as number;
       let payload = await this.sendUni(cmd, body);
       this.emit("internal.verbose", `sendUni ${cmd} result: ${payload.toString('hex')}`, VerboseLevel.Debug);
       if (callbackId > -1) {
@@ -397,7 +401,7 @@ export class BaseClient extends Trapper {
     return [];
   }
 
-  async submitSsoPacket(cmd: string, callbackId: number, body: Buffer) {
+  async submitSsoPacket(cmd: string, callbackId: number, body: Buffer):Promise<Packet[]> {
     return [];
   }
 
