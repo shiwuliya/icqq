@@ -338,7 +338,7 @@ export class Client extends BaseClient {
      */
     async login(uin?: number, password?: string | Buffer): Promise<void>;
     async login(uin?: number | string | Buffer, password?: string | Buffer) {
-        if (!this.config.ver && (await this.switchQQVer())) {
+        if ((await this.switchQQVer())) {
             this.logger.info(`[${uin}]获取到签名Api协议版本：${this.config.ver}`);
         }
         // let [uin, password] = args
@@ -552,27 +552,29 @@ export class Client extends BaseClient {
             };
         });
     }
+
     /** @cqhttp use {@link Guild.info} */
-    getGuildInfo(guild_id:string){
-        const guild=this.pickGuild(guild_id);
-        if(!guild) return null;
+    getGuildInfo(guild_id: string) {
+        const guild = this.pickGuild(guild_id);
+        if (!guild) return null;
         return {
-            guild_id:guild.guild_id,
-            guild_name:guild.guild_name,
+            guild_id: guild.guild_id,
+            guild_name: guild.guild_name,
         }
     }
-    getChannelInfo(guild_id:string,channel_id:string){
-        const guild=this.pickGuild(guild_id);
-        if(!guild) return null
-        const channel=guild.channels.get(channel_id);
-        if(!channel) return null;
+    getChannelInfo(guild_id: string, channel_id: string) {
+        const guild = this.pickGuild(guild_id);
+        if (!guild) return null
+        const channel = guild.channels.get(channel_id);
+        if (!channel) return null;
         return {
-            guild_id:guild.guild_id,
-            channel_id:channel.channel_id,
-            channel_name:channel.channel_name,
-            channel_type:channel.channel_type,
+            guild_id: guild.guild_id,
+            channel_id: channel.channel_id,
+            channel_name: channel.channel_name,
+            channel_type: channel.channel_type,
         }
     }
+
     /**
      * 添加群精华消息
      * use {@link Group.addEssence}
@@ -613,6 +615,7 @@ export class Client extends BaseClient {
             };
         });
     }
+
     /**
      * 获取频道成员列表
      * use {@link Guild.getMemberList}
