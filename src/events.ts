@@ -271,9 +271,9 @@ export type MessageEventMap = {
 };
 export type NoticeEventMap = {
     "notice"(
-        event:
+        ...event:
             | Parameters<MergeEventMap["notice.friend"]>
-            | Parameters<MergeEventMap["notice.group"]>,
+            | Parameters<MergeEventMap["notice.group"]>
     ): void;
 } & {
     [P in keyof FriendNoticeEventMap as PushStrToNextStr<"friend", P>]: FriendNoticeEventMap[P];
@@ -282,9 +282,9 @@ export type NoticeEventMap = {
 };
 export type RequestEventMap = {
     "request"(
-        event:
+        ...event:
             | Parameters<MergeEventMap["request.friend"]>
-            | Parameters<MergeEventMap["request.group"]>,
+            | Parameters<MergeEventMap["request.group"]>
     ): void;
 } & {
     [P in keyof FriendRequestEventMap as PushStrToNextStr<"friend", P>]: FriendRequestEventMap[P];
