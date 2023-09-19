@@ -1,5 +1,13 @@
 # Changelog
 
+## [0.5.4](https://github.com/icqqjs/icqq/compare/v0.5.3...v0.5.4) (2023-09-19)
+
+
+### Bug Fixes
+
+* 增加频道相关接口... ([e071ea8](https://github.com/icqqjs/icqq/commit/e071ea80f728720cd5e2e306d9440ffb59e12248))
+* 类型错误处理 ([b081084](https://github.com/icqqjs/icqq/commit/b081084500469f324b388668f4c7767f82711160))
+
 ## [0.5.3](https://github.com/icqqjs/icqq/compare/v0.5.2...v0.5.3) (2023-09-01)
 
 
