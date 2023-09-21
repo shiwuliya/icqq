@@ -23,6 +23,7 @@ export class Parser {
     quotation?: pb.Proto
     atme = false
     atall = false
+    imgprefix = ""
 
     private exclusive = false
     private it?: IterableIterator<[number, pb.Proto]>
@@ -315,6 +316,8 @@ export class Parser {
                             this.parseExclusiveElem(37, proto);
                         } else if (proto[1] === 20) { //json
                             this.parseExclusiveElem(51, proto[2]);
+                        } else if (proto[1] === 48) { //image prefix of qqnt
+                            this.imgprefix = "https://" + proto[2][1][2][3] + proto[2][1][2][1]
                         }
                         break
                     default:
@@ -326,6 +329,16 @@ export class Parser {
 
     private parseImgElem(proto: pb.Proto, type: "flash" | "image") {
         let elem: T.ImageElem | T.FlashElem
+		if (proto[34] && proto[34][30] && String(proto[34][30]).startsWith("&rkey=") && this.imgprefix) {
+			// QQNT图片
+			elem = {
+				type,
+				file: buildImageFileParam(proto[13].toHex(), proto[25], proto[22], proto[23], proto[20]),
+				url: this.imgprefix + String(proto[34][30]) + "&spec=0",
+			}
+			this.imgprefix = ""
+			return elem
+		}
         if (proto[7]?.toHex) {
             elem = {
                 type,
