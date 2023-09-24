@@ -197,7 +197,7 @@ export class Image {
 			this.parseFileParam(file)
 		} catch {
 			//本地图片
-			file.startsWith("file://") && (file = file.slice(7).replaceAll('%20',' '))
+			file.startsWith("file://") && (file = file.slice(7).replace(/%20/g, " "))
 			IS_WIN && file.startsWith("/") && (file = file.slice(1))
 			const stat = await fs.promises.stat(file)
 			if (stat.size <= 0 || stat.size > MAX_UPLOAD_SIZE)
