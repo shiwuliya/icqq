@@ -237,10 +237,10 @@ async function get(this: BaseClient, url: string, params: object = {}, post: boo
 		if (num > 1) await new Promise((resolve) => setTimeout(resolve, 2000));
 		num++;
 		if (post) {
-			data = await axios.post(url, params, config).catch(err => ({ data: { code: -1, msg: err?.message } }));
+			data = await axios.post(url, params, config).catch(err => ({ code: -1, msg: err?.message }));
 		} else {
 			config.params = params;
-			data = await axios.get(url, config).catch(err => ({ data: { code: -1, msg: err?.message } }));
+			data = await axios.get(url, config).catch(err => ({ code: -1, msg: err?.message }));
 		}
 	}
 	return data;
