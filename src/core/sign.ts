@@ -25,13 +25,7 @@ export async function getT544(this: BaseClient, cmd: string) {
 			path = path.replace(/\/sign$/, '/energy');
 		}
 		url.pathname = path;
-		const { data } = await axios.post(url.href, post_params, {
-			timeout: 15000,
-			headers: {
-				'User-Agent': `icqq@${this.pkg.version} (Released on ${this.pkg.upday})`,
-				'Content-Type': "application/x-www-form-urlencoded"
-			}
-		}).catch(err => ({ data: { code: -1, msg: err?.message } }));
+		const data = await get.bind(this)(url.href, post_params, true);
 		this.emit("internal.verbose", `getT544 ${cmd} result(${Date.now() - time}ms): ${JSON.stringify(data)}`, VerboseLevel.Debug);
 		if (data.code === 0) {
 			if (typeof (data.data) === 'string') {
@@ -71,13 +65,7 @@ export async function getSign(this: BaseClient, cmd: string, seq: number, body: 
 			path += 'sign';
 		}
 		url.pathname = path;
-		const { data } = await axios.post(url.href, post_params, {
-			timeout: 15000,
-			headers: {
-				'User-Agent': `icqq@${this.pkg.version} (Released on ${this.pkg.upday})`,
-				'Content-Type': "application/x-www-form-urlencoded"
-			}
-		}).catch(err => ({ data: { code: -1, msg: err?.message } }));
+		const data = await get.bind(this)(url.href, post_params, true);
 		this.emit("internal.verbose", `sign ${cmd} result(${Date.now() - time}ms): ${JSON.stringify(data)}`, VerboseLevel.Debug);
 		if (data.code === 0) {
 			const Data = data.data || {};
@@ -119,13 +107,7 @@ export async function requestSignToken(this: BaseClient) {
 			path = path.replace(/\/sign$/, '/request_token');
 		}
 		url.pathname = path;
-		const { data } = await axios.post(url.href, post_params, {
-			timeout: 15000,
-			headers: {
-				'User-Agent': `icqq@${this.pkg.version} (Released on ${this.pkg.upday})`,
-				'Content-Type': "application/x-www-form-urlencoded"
-			}
-		}).catch(err => ({ data: { code: -1, msg: err?.message } }));
+		const data = await get.bind(this)(url.href, post_params, true);
 		this.emit("internal.verbose", `requestSignToken result(${Date.now() - time}ms): ${JSON.stringify(data)}`, VerboseLevel.Debug);
 		if (data.code === 0) {
 			let ssoPacketList = data.data?.ssoPacketList || data.data?.requestCallback || data.data;
@@ -162,13 +144,7 @@ export async function submitSsoPacket(this: BaseClient, cmd: string, callbackId:
 			path = path.replace(/\/sign$/, '/submit');
 		}
 		url.pathname = path;
-		const { data } = await axios.post(url.href, post_params, {
-			timeout: 15000,
-			headers: {
-				'User-Agent': `icqq@${this.pkg.version} (Released on ${this.pkg.upday})`,
-				'Content-Type': "application/x-www-form-urlencoded"
-			}
-		}).catch(err => ({ data: { code: -1, msg: err?.message } }));
+		const data = await get.bind(this)(url.href, post_params, true);
 		this.emit("internal.verbose", `submitSsoPacket result(${Date.now() - time}ms): ${JSON.stringify(data)}`, VerboseLevel.Debug);
 		if (data.code === 0) {
 			let ssoPacketList = data.data?.ssoPacketList || data.data?.requestCallback || data.data;
@@ -195,19 +171,12 @@ export async function getApiQQVer(this: BaseClient) {
 		path = path.replace(/\/sign$/, '/ver');
 	}
 	url.pathname = path;
-	const { data } = await axios.get(url.href, {
-		timeout: 6000,
-		headers: {
-			'User-Agent': `icqq@${this.pkg.version} (Released on ${this.pkg.upday})`,
-			'Content-Type': "application/x-www-form-urlencoded"
-		}
-	}).catch(err => ({ data: { code: -1, msg: err?.message } }));
-
-	if(data.code === 0){
+	const data = await get.bind(this)(url.href);
+	if (data.code === 0) {
 		const vers = data?.data[packageName];
-		if(vers && vers.length > 0){
-			for(let ver of vers){
-				if(apks.find(val => val.ver === ver)){
+		if (vers && vers.length > 0) {
+			for (let ver of vers) {
+				if (apks.find(val => val.ver === ver)) {
 					QQVer = ver;
 					break;
 				}
@@ -215,4 +184,26 @@ export async function getApiQQVer(this: BaseClient) {
 		}
 	}
 	return QQVer;
+}
+
+async function get(this: BaseClient, url: string, params: object = {}, post: boolean = false) {
+	const config: any = {
+		timeout: 20000,
+		headers: {
+			'User-Agent': `icqq@${this.pkg.version} (Released on ${this.pkg.upday})`,
+			'Content-Type': "application/x-www-form-urlencoded"
+		}
+	};
+	let data: any = { code: -1 };
+	let num: number = 0;
+	while (data.code < 0 && num < 3) {
+		num++;
+		if (post) {
+			data = await axios.post(url, params, config).catch(err => ({ code: -1, msg: err?.message }));
+		} else {
+			config.params = params;
+			data = await axios.get(url, config).catch(err => ({ code: -1, msg: err?.message }));
+		}
+	}
+	return data;
 }
