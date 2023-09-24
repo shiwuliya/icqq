@@ -234,7 +234,7 @@ async function get(this: BaseClient, url: string, params: object = {}, post: boo
 	let data: any = { code: -1 };
 	let num: number = 0;
 	while (data.code < 0 && num < 3) {
-		if (num > 1) await new Promise((resolve) => setTimeout(resolve, 2000));
+		if (num > 0) await new Promise((resolve) => setTimeout(resolve, 2000));
 		num++;
 		if (post) {
 			data = await axios.post(url, params, config).catch(err => ({ code: -1, msg: err?.message }));
