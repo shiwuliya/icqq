@@ -1437,8 +1437,30 @@ function decodeLoginResponse(this: BaseClient, payload: Buffer): any {
     return this.emit("internal.error.login", type, "[登陆失败]未知格式的验证码")
   }
   if (type === 40) {
+    if (t[0x146]) {
+      const stream = Readable.from(t[0x146], { objectMode: false })
+      const version = stream.read(4)
+      const title = stream.read(stream.read(2).readUInt16BE()).toString()
+      const content = stream.read(stream.read(2).readUInt16BE()).toString()
+      const message = `[${title}]${content}`;
+      this.emit("internal.verbose", message + "(错误码：" + type + ")", VerboseLevel.Warn)
+    }
     return this.emit('internal.error.login', type, '账号被冻结')
   }
+
+  if (type === 45 && t[0x146]) {
+    const stream = Readable.from(t[0x146], { objectMode: false });
+    const version = stream.read(4)
+    const title = stream.read(stream.read(2).readUInt16BE()).toString()
+    const content = stream.read(stream.read(2).readUInt16BE()).toString()
+    const message = `[${title}]${content}`
+    this.emit("internal.verbose", message + "(错误码：" + type + ")", VerboseLevel.Warn)
+    if (content.includes("你当前使用的QQ版本过低")) {
+      this.emit('internal.error.login', type, 'QQ协议版本过低，请更新！')
+    }
+    return
+  }
+
   if (type === 160 || type === 162 || type === 239) {
     if (!t[0x204] && !t[0x174])
       return this.emit("internal.verbose", "已向密保手机发送短信验证码", VerboseLevel.Mark)
@@ -1473,12 +1495,12 @@ function decodeLoginResponse(this: BaseClient, payload: Buffer): any {
 
   if (t[0x146]) {
     const stream = Readable.from(t[0x146], { objectMode: false });
-    const version = stream.read(4);
-    const title = stream.read(stream.read(2).readUInt16BE()).toString();
-    const content = stream.read(stream.read(2).readUInt16BE()).toString();
-    const message = `[${title}]${content}`;
-    this.emit("internal.verbose", "token失效: " + message + "(错误码：" + type + ")", VerboseLevel.Warn);
-    return this.emit("internal.error.login", type, message);
+    const version = stream.read(4)
+    const title = stream.read(stream.read(2).readUInt16BE()).toString()
+    const content = stream.read(stream.read(2).readUInt16BE()).toString()
+    const message = `[${title}]${content}`
+    this.emit("internal.verbose", message + "(错误码：" + type + ")", VerboseLevel.Warn)
+    return this.emit("internal.error.login", type, message)
   }
 
   this.emit("internal.error.login", type, `[登陆失败]未知错误`)
