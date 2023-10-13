@@ -12,7 +12,7 @@ import { BUF0, BUF16, BUF4, hide, int32ip2str, lock, md5, NOOP, timestamp, unloc
 import { Apk, Device, getApkInfo, Platform, ShortDevice } from "./device"
 import * as log4js from "log4js"
 import * as path from "path"
-import {  Config } from "../client";
+import { Config } from "../client";
 
 const FN_NEXT_SEQ = Symbol("FN_NEXT_SEQ")
 const FN_SEND = Symbol("FN_SEND")
@@ -85,11 +85,11 @@ export interface BaseClient {
 
   on(name: string | symbol, listener: (this: this, ...args: any[]) => void): ToDispose<this>
 }
-type Packet={
-  cmd:string
-  type:number
-  callbackId?:number
-  body:Buffer
+type Packet = {
+  cmd: string
+  type: number
+  callbackId?: number
+  body: Buffer
 }
 export class BaseClient extends Trapper {
 
@@ -339,9 +339,9 @@ export class BaseClient extends Trapper {
     return Buffer.from(pb.encode(pbdata));
   }
 
-  async ssoPacketListHandler(list: Packet[]|null) {
+  async ssoPacketListHandler(list: Packet[] | null) {
     let handle = (list: any) => {
-      let new_list:Packet[] = [];
+      let new_list: Packet[] = [];
       for (let val of list) {
         try {
           let data = pb.decode(Buffer.from(val.body, 'hex'));
@@ -403,7 +403,7 @@ export class BaseClient extends Trapper {
     return [];
   }
 
-  async submitSsoPacket(cmd: string, callbackId: number, body: Buffer):Promise<Packet[]> {
+  async submitSsoPacket(cmd: string, callbackId: number, body: Buffer): Promise<Packet[]> {
     return [];
   }
 
@@ -1418,10 +1418,10 @@ function decodeLoginResponse(this: BaseClient, payload: Buffer): any {
       this.sig.randomSeed = t[0x403]
     }
     const { token, nickname, gender, age } = decodeT119.call(this, t[0x119])
-    return register.call(this).then(() => {
+    return register.call(this).then(async () => {
       if (this[IS_ONLINE]) {
+        await this.ssoPacketListHandler(null)
         this.emit("internal.online", token, nickname, gender, age)
-        this.ssoPacketListHandler(null)
       }
     })
   }
