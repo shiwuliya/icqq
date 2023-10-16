@@ -12,7 +12,7 @@ import { BUF0, BUF16, BUF4, hide, int32ip2str, lock, md5, NOOP, timestamp, unloc
 import { Apk, Device, getApkInfo, Platform, ShortDevice } from "./device"
 import * as log4js from "log4js"
 import * as path from "path"
-import {  Config } from "../client";
+import { Config } from "../client";
 
 const FN_NEXT_SEQ = Symbol("FN_NEXT_SEQ")
 const FN_SEND = Symbol("FN_SEND")
@@ -85,11 +85,11 @@ export interface BaseClient {
 
   on(name: string | symbol, listener: (this: this, ...args: any[]) => void): ToDispose<this>
 }
-type Packet={
-  cmd:string
-  type:number
-  callbackId?:number
-  body:Buffer
+type Packet = {
+  cmd: string
+  type: number
+  callbackId?: number
+  body: Buffer
 }
 export class BaseClient extends Trapper {
 
@@ -339,9 +339,9 @@ export class BaseClient extends Trapper {
     return Buffer.from(pb.encode(pbdata));
   }
 
-  async ssoPacketListHandler(list: Packet[]|null) {
+  async ssoPacketListHandler(list: Packet[] | null) {
     let handle = (list: any) => {
-      let new_list:Packet[] = [];
+      let new_list: Packet[] = [];
       for (let val of list) {
         try {
           let data = pb.decode(Buffer.from(val.body, 'hex'));
@@ -403,7 +403,7 @@ export class BaseClient extends Trapper {
     return [];
   }
 
-  async submitSsoPacket(cmd: string, callbackId: number, body: Buffer):Promise<Packet[]> {
+  async submitSsoPacket(cmd: string, callbackId: number, body: Buffer): Promise<Packet[]> {
     return [];
   }
 
@@ -1418,10 +1418,10 @@ function decodeLoginResponse(this: BaseClient, payload: Buffer): any {
       this.sig.randomSeed = t[0x403]
     }
     const { token, nickname, gender, age } = decodeT119.call(this, t[0x119])
-    return register.call(this).then(() => {
+    return register.call(this).then(async () => {
       if (this[IS_ONLINE]) {
+        await this.ssoPacketListHandler(null)
         this.emit("internal.online", token, nickname, gender, age)
-        this.ssoPacketListHandler(null)
       }
     })
   }
@@ -1437,8 +1437,30 @@ function decodeLoginResponse(this: BaseClient, payload: Buffer): any {
     return this.emit("internal.error.login", type, "[登陆失败]未知格式的验证码")
   }
   if (type === 40) {
+    if (t[0x146]) {
+      const stream = Readable.from(t[0x146], { objectMode: false })
+      const version = stream.read(4)
+      const title = stream.read(stream.read(2).readUInt16BE()).toString()
+      const content = stream.read(stream.read(2).readUInt16BE()).toString()
+      const message = `[${title}]${content}`;
+      this.emit("internal.verbose", message + "(错误码：" + type + ")", VerboseLevel.Warn)
+    }
     return this.emit('internal.error.login', type, '账号被冻结')
   }
+
+  if (type === 45 && t[0x146]) {
+    const stream = Readable.from(t[0x146], { objectMode: false });
+    const version = stream.read(4)
+    const title = stream.read(stream.read(2).readUInt16BE()).toString()
+    const content = stream.read(stream.read(2).readUInt16BE()).toString()
+    const message = `[${title}]${content}`
+    this.emit("internal.verbose", message + "(错误码：" + type + ")", VerboseLevel.Warn)
+    if (content.includes("你当前使用的QQ版本过低")) {
+      this.emit('internal.error.login', type, 'QQ协议版本过低，请更新！')
+    }
+    return
+  }
+
   if (type === 160 || type === 162 || type === 239) {
     if (!t[0x204] && !t[0x174])
       return this.emit("internal.verbose", "已向密保手机发送短信验证码", VerboseLevel.Mark)
@@ -1473,12 +1495,12 @@ function decodeLoginResponse(this: BaseClient, payload: Buffer): any {
 
   if (t[0x146]) {
     const stream = Readable.from(t[0x146], { objectMode: false });
-    const version = stream.read(4);
-    const title = stream.read(stream.read(2).readUInt16BE()).toString();
-    const content = stream.read(stream.read(2).readUInt16BE()).toString();
-    const message = `[${title}]${content}`;
-    this.emit("internal.verbose", "token失效: " + message + "(错误码：" + type + ")", VerboseLevel.Warn);
-    return this.emit("internal.error.login", type, message);
+    const version = stream.read(4)
+    const title = stream.read(stream.read(2).readUInt16BE()).toString()
+    const content = stream.read(stream.read(2).readUInt16BE()).toString()
+    const message = `[${title}]${content}`
+    this.emit("internal.verbose", message + "(错误码：" + type + ")", VerboseLevel.Warn)
+    return this.emit("internal.error.login", type, message)
   }
 
   this.emit("internal.error.login", type, `[登陆失败]未知错误`)
