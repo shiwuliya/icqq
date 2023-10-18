@@ -409,6 +409,9 @@ const map: { [tag: number]: (this: BaseClient, ...args: any[]) => Writer } = {
             .read();
         const t548 = this.calcPoW(t546);
         return new Writer().writeBytes(t548);
+    },
+    0x553: function () {
+        return new Writer().writeBytes(BUF0);
     }
 }
 
