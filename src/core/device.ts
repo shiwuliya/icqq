@@ -286,6 +286,17 @@ export type Apk = {
 const mobile: Apk[] = [
     // 每个版本不同的信息
     {
+        name: "A8.9.85.3377f9bf",
+        version: "8.9.85.12820",
+        ver: "8.9.85",
+        buildtime: 1697015435,
+        subid: 537180568,
+        bitmap: 150470524,
+        sdkver: "6.0.0.2556",
+        qua: 'V1_AND_SQ_8.9.85_4766_YYB_D',
+        ssover: 21,
+    },
+    {
         name: "A8.9.83.c9a61e5e",
         version: "8.9.83.12605",
         ver: "8.9.83",
@@ -403,13 +414,17 @@ const mobile: Apk[] = [
         app_key: '0S200MNJT807V3GE',
         sign: Buffer.from('A6 B7 45 BF 24 A2 C2 77 52 77 16 F6 F3 6E B6 8D'.split(' ').map(s => parseInt(s, 16))),
         main_sig_map: 16724722,
-        sub_sig_map: 0x10400,
+        sub_sig_map: 66560,
         display: "Android",
         device_type: 3,
         ...shortInfo
     }
 })
 const aPadSubids = [
+    {
+        ver: '8.9.85',
+        subid: 537180607,
+    },
     {
         ver: '8.9.83',
         subid: 537178685,
