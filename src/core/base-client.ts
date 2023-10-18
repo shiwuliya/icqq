@@ -121,6 +121,7 @@ export class BaseClient extends Trapper {
     t543: BUF0,
     t546: BUF0,
     t547: BUF0,
+    t553: BUF0,
     /** 大数据上传通道 */
     bigdata: {
       ip: "",
@@ -559,42 +560,47 @@ export class BaseClient extends Trapper {
     this.sig.tgtgt = randomBytes(16)
     this[ECDH] = new Ecdh
     const t = tlv.getPacker(this)
-    let tlv_count = this.device.qImei16 ? 25 : 26
-    if (this.apk.ssover < 12) tlv_count--
+
+    const tlvs = [
+      t(0x1),
+      t(0x8),
+      t(0x18),
+      t(0x100),
+      t(0x106, md5pass),
+      t(0x107),
+      t(0x116),
+      t(0x141),
+      t(0x142),
+      t(0x144),
+      t(0x145),
+      t(0x147),
+      t(0x154),
+      t(0x177),
+      t(0x187),
+      t(0x188),
+      t(0x191),
+      t(0x511),
+      t(0x516),
+      t(0x521, 0),
+      t(0x525),
+      t(0x542),
+      t(0x548)
+    ]
+    if (this.apk.ssover >= 12) {
+      tlvs.push(await this.getT544('810_9'))
+      if (this.apk.buildtime >= 1691565978) tlvs.push(t(0x553))
+    }
+    if (this.device.qImei16) {
+      tlvs.push(t(0x545, this.device.qImei16))
+    } else {
+      tlvs.push(t(0x194))
+      tlvs.push(t(0x202))
+    }
     let writer = new Writer()
       .writeU16(9)
-      .writeU16(tlv_count)
-      .writeBytes(t(0x18))
-      .writeBytes(t(0x1))
-      .writeBytes(t(0x106, md5pass))
-      .writeBytes(t(0x116))
-      .writeBytes(t(0x100))
-      .writeBytes(t(0x107))
-      //.writeBytes(t(0x108))
-      .writeBytes(t(0x142))
-      .writeBytes(t(0x144))
-      .writeBytes(t(0x145))
-      .writeBytes(t(0x147))
-      .writeBytes(t(0x154))
-      .writeBytes(t(0x141))
-      .writeBytes(t(0x8))
-      .writeBytes(t(0x511))
-      .writeBytes(t(0x187))
-      .writeBytes(t(0x188))
-      .writeBytes(t(0x191))
-      .writeBytes(t(0x177))
-      .writeBytes(t(0x516))
-      .writeBytes(t(0x521, 0))
-      .writeBytes(t(0x525))
-      .writeBytes(t(0x548))
-      .writeBytes(t(0x542))
-
-    if (!this.device.qImei16) writer.writeBytes(t(0x194))
-    if (!this.device.qImei16) writer.writeBytes(t(0x202))
-    if (this.device.qImei16) writer.writeBytes(t(0x545, this.device.qImei16))
-
-    if (this.apk.ssover >= 12) {
-      writer.writeBytes(await this.getT544('810_9'))
+      .writeU16(tlvs.length)
+    for (let tlv of tlvs) {
+      writer.writeBytes(tlv)
     }
 
     this[FN_SEND_LOGIN]("wtlogin.login", writer.read())
@@ -608,19 +614,27 @@ export class BaseClient extends Trapper {
     }
     ticket = String(ticket).trim()
     const t = tlv.getPacker(this)
-    let tlv_count = this.sig.t547.length ? 6 : 5
-    if (this.apk.ssover < 12) tlv_count--
-    const writer = new Writer()
-      .writeU16(2)
-      .writeU16(tlv_count)
-      .writeBytes(t(0x193, ticket))
-      .writeBytes(t(0x8))
-      .writeBytes(t(0x104))
-      .writeBytes(t(0x116))
-    if (this.sig.t547.length) writer.writeBytes(t(0x547))
+
+    const tlvs = [
+      t(0x8),
+      t(0x104),
+      t(0x116),
+      t(0x193, ticket),
+    ]
     if (this.apk.ssover >= 12) {
-      writer.writeBytes(await this.getT544('810_2'))
+      tlvs.push(await this.getT544('810_2'))
+      if (this.apk.buildtime >= 1691565978) tlvs.push(t(0x553))
     }
+    if (this.sig.t547.length) {
+      tlvs.push(t(0x547))
+    }
+    let writer = new Writer()
+      .writeU16(2)
+      .writeU16(tlvs.length)
+    for (let tlv of tlvs) {
+      writer.writeBytes(tlv)
+    }
+
     this[FN_SEND_LOGIN]("wtlogin.login", writer.read())
   }
 
@@ -646,21 +660,30 @@ export class BaseClient extends Trapper {
     if (Buffer.byteLength(code) !== 6)
       code = "123456"
     const t = tlv.getPacker(this)
-    let tlv_count = 8
-    if (this.apk.ssover < 12) tlv_count--
-    const writer = new Writer()
-      .writeU16(7)
-      .writeU16(tlv_count)
-      .writeBytes(t(0x8))
-      .writeBytes(t(0x104))
-      .writeBytes(t(0x116))
-      .writeBytes(t(0x174))
-      .writeBytes(t(0x17c, code))
-      .writeBytes(t(0x401))
-      .writeBytes(t(0x198))
+
+    const tlvs = [
+      t(0x8),
+      t(0x104),
+      t(0x116),
+      t(0x174),
+      t(0x17c, code),
+      t(0x198),
+      t(0x401)
+    ]
     if (this.apk.ssover >= 12) {
-      writer.writeBytes(await this.getT544('810_7'))
+      tlvs.push(await this.getT544('810_7'))
+      if (this.apk.buildtime >= 1691565978) tlvs.push(t(0x553))
     }
+    if (this.sig.t547.length) {
+      tlvs.push(t(0x547))
+    }
+    let writer = new Writer()
+      .writeU16(7)
+      .writeU16(tlvs.length)
+    for (let tlv of tlvs) {
+      writer.writeBytes(tlv)
+    }
+
     this[FN_SEND_LOGIN]("wtlogin.login", writer.read())
   }
 
@@ -711,42 +734,49 @@ export class BaseClient extends Trapper {
       this.uin = uin as number
       this.sig.qrsig = BUF0
       this.sig.tgtgt = tgtgt
-      let tlv_count = this.device.qImei16 ? 24 : 25;
-      if (this.apk.ssover < 12) tlv_count--
       const t = tlv.getPacker(this)
-      const writer = new Writer()
-        .writeU16(9)
-        .writeU16(tlv_count)
-        .writeBytes(t(0x18))
-        .writeBytes(t(0x1))
-        .writeU16(0x106)
-        .writeTlv(t106)
-        .writeBytes(t(0x116))
-        .writeBytes(t(0x100))
-        .writeBytes(t(0x107))
-        .writeBytes(t(0x142))
-        .writeBytes(t(0x144))
-        .writeBytes(t(0x145))
-        .writeBytes(t(0x147))
-        .writeBytes(t(0x16a, t16a))
-        .writeBytes(t(0x154))
-        .writeBytes(t(0x141))
-        .writeBytes(t(0x8))
-        .writeBytes(t(0x511))
-        .writeBytes(t(0x187))
-        .writeBytes(t(0x188))
-        .writeBytes(t(0x191))
-        .writeBytes(t(0x177))
-        .writeBytes(t(0x516))
-        .writeBytes(t(0x521, this.apk.device_type))
-        .writeU16(0x318)
-        .writeTlv(t318)
-      if (!this.device.qImei16) writer.writeBytes(t(0x194))
-      if (!this.device.qImei16) writer.writeBytes(t(0x202))
-      if (this.device.qImei16) writer.writeBytes(t(0x545, this.device.qImei16))
+
+      const tlvs = [
+        t(0x1),
+        t(0x8),
+        t(0x18),
+        t(0x100),
+        new Writer().writeU16(0x106).writeTlv(t106).read(),
+        t(0x107),
+        t(0x116),
+        t(0x141),
+        t(0x142),
+        t(0x144),
+        t(0x145),
+        t(0x147),
+        t(0x154),
+        t(0x16a, t16a),
+        t(0x177),
+        t(0x187),
+        t(0x188),
+        t(0x191),
+        t(0x511),
+        t(0x516),
+        t(0x521, this.apk.device_type),
+        new Writer().writeU16(0x318).writeTlv(t318).read(),
+      ]
       if (this.apk.ssover >= 12) {
-        writer.writeBytes(await this.getT544('810_9'))
+        tlvs.push(await this.getT544('810_9'))
+        if (this.apk.buildtime >= 1691565978) tlvs.push(t(0x553))
       }
+      if (this.device.qImei16) {
+        tlvs.push(t(0x545, this.device.qImei16))
+      } else {
+        tlvs.push(t(0x194))
+        tlvs.push(t(0x202))
+      }
+      let writer = new Writer()
+        .writeU16(9)
+        .writeU16(tlvs.length)
+      for (let tlv of tlvs) {
+        writer.writeBytes(tlv)
+      }
+
       this[FN_SEND_LOGIN]("wtlogin.login", writer.read())
     } else {
       let message

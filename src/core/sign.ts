@@ -32,6 +32,7 @@ export async function getT544(this: BaseClient, cmd: string) {
 				sign = Buffer.from(data.data, 'hex');
 			} else if (typeof (data.data?.sign) === 'string') {
 				sign = Buffer.from(data.data.sign, 'hex');
+				if (typeof (data.data.t553) === 'string') this.sig.t553 = Buffer.from(data.data.t553, 'hex');
 			}
 		} else {
 			this.emit("internal.verbose", `签名api(energy)异常： ${cmd} result(${Date.now() - time}ms): ${JSON.stringify(data)}`, VerboseLevel.Error);

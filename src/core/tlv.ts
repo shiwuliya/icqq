@@ -411,7 +411,7 @@ const map: { [tag: number]: (this: BaseClient, ...args: any[]) => Writer } = {
         return new Writer().writeBytes(t548);
     },
     0x553: function () {
-        return new Writer().writeBytes(BUF0);
+        return new Writer().writeBytes(this.sig.t553);
     }
 }
 
