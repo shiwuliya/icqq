@@ -167,11 +167,9 @@ export class BaseClient extends Trapper {
     sign_api_init: false,
     remote_port: 0,
   }
-  protected signLoginCmd = [
-    'wtlogin.login',
-    'wtlogin.exchange_emp'
-  ];
   protected signCmd = [
+    'wtlogin.login',
+    'wtlogin.exchange_emp',
     'MessageSvc.PbSendMsg',
     'trpc.o3.ecdh_access.EcdhAccess.SsoEstablishShareKey',
     'trpc.o3.ecdh_access.EcdhAccess.SsoSecureA2Establish',
@@ -1295,7 +1293,7 @@ async function buildLoginPacket(this: BaseClient, cmd: LoginCmd, body: Buffer, t
   }
 
   let BodySign = BUF0;
-  if (this.signLoginCmd.includes(cmd)) {
+  if (this.signCmd.includes(cmd)) {
     BodySign = await this.getSign(cmd, this.sig.seq, Buffer.from(body));
   }
 
