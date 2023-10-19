@@ -1146,7 +1146,7 @@ async function register(this: BaseClient, logout = false, reflush = false) {
   this[IS_ONLINE] = false
   clearInterval(this[HEARTBEAT])
   let err
-  for (let count = 0; count < 3; count++) {
+  for (let count = 0; count < 1; count++) {
     err = false
     const pb_buf = pb.encode({
       1: [
