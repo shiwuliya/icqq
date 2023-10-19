@@ -263,6 +263,42 @@ export class BaseClient extends Trapper {
     return this[IS_ONLINE]
   }
 
+  buildReserveFields(cmd: string, sec_info: any) {
+    let qImei36 = this.device.qImei36 || this.device.qImei16;
+    let reserveFields;
+    if (this.apk.ssover >= 20) {
+      reserveFields = {
+        9: 1,
+        11: 2052,
+        12: qImei36,
+        14: 0,
+        15: '',
+        16: this.uid || '',
+        18: 0,
+        19: 1,
+        20: 1,
+        21: 32,
+        24: sec_info,
+        26: 100,
+        28: 3
+      };
+    } else {
+      reserveFields = {
+        9: 1,
+        12: qImei36,
+        14: 0,
+        16: this.uin,
+        18: 0,
+        19: 1,
+        20: 1,
+        21: 0,
+        24: sec_info,
+        28: 3
+      };
+    }
+    return Buffer.from(pb.encode(reserveFields));
+  }
+
   async switchQQVer(ver: string = '') {
     if (this.config.sign_api_addr && !this.sig.sign_api_init) {
       await this.setSignServer(this.config.sign_api_addr);
@@ -318,24 +354,12 @@ export class BaseClient extends Trapper {
     if (!sign) {
       return BUF0;
     }
-    let qImei36 = this.device.qImei36 || this.device.qImei16;
-    let pbdata = {
-      9: 1,
-      12: qImei36,
-      14: 0,
-      16: this.uin,
-      18: 0,
-      19: 1,
-      20: 1,
-      21: 0,
-      24: {
-        1: Buffer.from(sign, 'hex'),
-        2: Buffer.from(token, 'hex'),
-        3: Buffer.from(extra, 'hex')
-      },
-      28: 3
+    let sec_info = {
+      1: Buffer.from(sign, 'hex'),
+      2: Buffer.from(token, 'hex'),
+      3: Buffer.from(extra, 'hex')
     };
-    return Buffer.from(pb.encode(pbdata));
+    return Buffer.from(pb.encode(sec_info));
   }
 
   async ssoPacketListHandler(list: Packet[] | null) {
@@ -962,12 +986,12 @@ export class BaseClient extends Trapper {
 }
 
 async function buildUniPktSign(this: BaseClient, cmd: string, body: Uint8Array, seq = 0) {
-  let BodySign = await this.getSign(cmd, this.sig.seq, Buffer.from(body));
-  if (BodySign == BUF0 && this.sig.sign_api_addr && this.apk.qua) return BUF0
-  return buildUniPkt.call(this, cmd, body, seq, BodySign);
+  let sec_info = await this.getSign(cmd, this.sig.seq, Buffer.from(body));
+  if (sec_info == BUF0 && this.sig.sign_api_addr && this.apk.qua) return BUF0
+  return buildUniPkt.call(this, cmd, body, seq, sec_info);
 }
 
-function buildUniPkt(this: BaseClient, cmd: string, body: Uint8Array, seq = 0, BodySign = BUF0) {
+function buildUniPkt(this: BaseClient, cmd: string, body: Uint8Array, seq = 0, sec_info = BUF0) {
   seq = seq || this[FN_NEXT_SEQ]()
   this.emit("internal.verbose", `send:${cmd} seq:${seq}`, VerboseLevel.Debug)
   let len = cmd.length + 20
@@ -975,7 +999,7 @@ function buildUniPkt(this: BaseClient, cmd: string, body: Uint8Array, seq = 0, B
     .writeWithLength(new Writer()
       .writeWithLength(cmd)
       .writeWithLength(this.sig.session)
-      .writeWithLength(BodySign || BUF0)
+      .writeWithLength(this.buildReserveFields(cmd, sec_info))
       .read())
     .writeWithLength(body)
     .read();
@@ -1292,9 +1316,9 @@ async function buildLoginPacket(this: BaseClient, cmd: LoginCmd, body: Buffer, t
       .read()
   }
 
-  let BodySign = BUF0;
+  let sec_info = BUF0;
   if (this.signCmd.includes(cmd)) {
-    BodySign = await this.getSign(cmd, this.sig.seq, Buffer.from(body));
+    sec_info = await this.getSign(cmd, this.sig.seq, Buffer.from(body));
   }
 
   const ksid = this.sig.ksid ||= Buffer.from(`|${this.device.imei}|` + this.apk.name)
@@ -1311,7 +1335,7 @@ async function buildLoginPacket(this: BaseClient, cmd: LoginCmd, body: Buffer, t
       .writeU32(4)
       .writeU16(ksid.length + 2)
       .writeBytes(ksid)
-      .writeWithLength(BodySign)
+      .writeWithLength(this.buildReserveFields(cmd, sec_info))
       .read()
     )
     .writeWithLength(body)
