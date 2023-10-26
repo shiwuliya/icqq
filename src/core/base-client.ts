@@ -144,6 +144,7 @@ export class BaseClient extends Trapper {
     emp_time: 0,
     time_diff: 0,
     requestTokenTime: 0,
+    retry_num: 0
   }
   readonly pkg: any = require("../../package.json")
   readonly pskey: { [domain: string]: Buffer } = {}
@@ -152,6 +153,8 @@ export class BaseClient extends Trapper {
   protected interval = 60
   /** 随心跳一起触发的函数，可以随意设定 */
   protected heartbeat = NOOP
+  /** 上线失败重试次数 */
+  protected retry_num = 3
   /** 数据统计 */
   protected readonly statistics = {
     start_time: timestamp(),
@@ -1128,7 +1131,7 @@ async function packetListener(this: BaseClient, pkt: Buffer) {
         decrypted = tea.decrypt(encrypted, BUF16)
         break
       default:
-        this.emit("internal.error.token")
+        this.emit("internal.error.token", flag)
         throw new Error("unknown flag:" + flag)
     }
     const sso = await parseSso.call(this, decrypted)
@@ -1145,64 +1148,65 @@ async function packetListener(this: BaseClient, pkt: Buffer) {
 async function register(this: BaseClient, logout = false, reflush = false) {
   this[IS_ONLINE] = false
   clearInterval(this[HEARTBEAT])
-  let err
-  for (let count = 0; count < 1; count++) {
-    err = false
-    const pb_buf = pb.encode({
-      1: [
-        { 1: 46, 2: timestamp() },
-        { 1: 283, 2: 0 }
-      ]
-    })
-    const d = this.device
-    const SvcReqRegister = jce.encodeStruct([
-      this.uin,
-      (logout ? 0 : 7), 0, "", (logout ? 21 : 11), 0,
-      0, 0, 0, 0, (logout ? 44 : 0),
-      d.version.sdk, 1, "", 0, null,
-      d.guid, 2052, 0, d.model, d.model,
-      d.version.release, 1, 0, 0, null,
-      0, 0, "", 0, d.brand,
-      d.brand, "", pb_buf, 0, null,
-      0, null, 1000, 98
-    ])
-    const body = jce.encodeWrapper({ SvcReqRegister }, "PushService", "SvcReqRegister")
-    const pkt = await buildLoginPacket.call(this, "StatSvc.register", body, 1)
-    try {
-      const payload = await this[FN_SEND](pkt, 10)
-      if (logout) return
-      const rsp = jce.decodeWrapper(payload)
-      const result = !!rsp[9]
-      if (!result && !reflush) {
-        this.emit("internal.error.token")
-      } else {
-        this[IS_ONLINE] = true
-        this[HEARTBEAT] = setInterval(async () => {
-          syncTimeDiff.call(this)
-          if (typeof this.heartbeat === "function")
-            await this.heartbeat()
-          let heartbeat_cmd = [Platform.Tim].includes(this.config.platform as Platform) ? 'OidbSvc.0x480_9' : 'OidbSvc.0x480_9_IMCore'
+  let err = 0
+  const pb_buf = pb.encode({
+    1: [
+      { 1: 46, 2: timestamp() },
+      { 1: 283, 2: 0 }
+    ]
+  })
+  const d = this.device
+  const SvcReqRegister = jce.encodeStruct([
+    this.uin,
+    (logout ? 0 : 7), 0, "", (logout ? 21 : 11), 0,
+    0, 0, 0, 0, (logout ? 44 : 0),
+    d.version.sdk, 1, "", 0, null,
+    d.guid, 2052, 0, d.model, d.model,
+    d.version.release, 1, 0, 0, null,
+    0, 0, "", 0, d.brand,
+    d.brand, "", pb_buf, 0, null,
+    0, null, 1000, 98
+  ])
+  const body = jce.encodeWrapper({ SvcReqRegister }, "PushService", "SvcReqRegister")
+  const pkt = await buildLoginPacket.call(this, "StatSvc.register", body, 1)
+  try {
+    const payload = await this[FN_SEND](pkt, 6)
+    if (logout) return
+    const rsp = jce.decodeWrapper(payload)
+    const result = !!rsp[9]
+    if (!result && !reflush) {
+      err = 1
+      //this.emit("internal.verbose", "register error:" + JSON.stringify(rsp), VerboseLevel.Error)
+    } else if (result) {
+      this[IS_ONLINE] = true
+      this[HEARTBEAT] = setInterval(async () => {
+        syncTimeDiff.call(this)
+        if (typeof this.heartbeat === "function")
+          await this.heartbeat()
+        let heartbeat_cmd = [Platform.Tim].includes(this.config.platform as Platform) ? 'OidbSvc.0x480_9' : 'OidbSvc.0x480_9_IMCore'
+        this.sendUni(heartbeat_cmd, this.sig.hb480).catch(() => {
+          this.emit("internal.verbose", "heartbeat timeout", VerboseLevel.Warn)
           this.sendUni(heartbeat_cmd, this.sig.hb480).catch(() => {
-            this.emit("internal.verbose", "heartbeat timeout", VerboseLevel.Warn)
-            this.sendUni(heartbeat_cmd, this.sig.hb480).catch(() => {
-              this.emit("internal.verbose", "heartbeat timeout x 2", VerboseLevel.Error)
-              this[NET].destroy()
-            })
-          }).then(async () => {
-            await this[FN_SEND](await buildLoginPacket.call(this, "Heartbeat.Alive", BUF0, 0), 5).catch(() => {
-              this.emit("internal.verbose", "Heartbeat.Alive timeout", VerboseLevel.Warn)
-            })
-            await refreshToken.bind(this)()
-            this.requestToken()
+            this.emit("internal.verbose", "heartbeat timeout x 2", VerboseLevel.Error)
+            this[NET].destroy()
           })
-        }, this.interval * 1000)
-      }
-      break;
-    } catch {
-      err = true
+        }).then(async () => {
+          await this[FN_SEND](await buildLoginPacket.call(this, "Heartbeat.Alive", BUF0, 0), 5).catch(() => {
+            this.emit("internal.verbose", "Heartbeat.Alive timeout", VerboseLevel.Warn)
+          })
+          await refreshToken.bind(this)()
+          this.requestToken()
+        })
+      }, this.interval * 1000)
+    } else {
+      throw new Error("");
     }
+  } catch {
+    err = 2
   }
-  if (!logout && err) this.emit("internal.error.network", -3, "server is busy(register)")
+  //if (!logout && err == 1) this.emit("internal.error.token")
+  if (!logout && err == 2) this.emit("internal.error.network", -3, "server is busy(register)")
+  return err
 }
 
 async function syncTimeDiff(this: BaseClient) {
@@ -1470,10 +1474,23 @@ function decodeLoginResponse(this: BaseClient, payload: Buffer): any {
       this.sig.randomSeed = t[0x403]
     }
     const { token, nickname, gender, age } = decodeT119.call(this, t[0x119])
-    return register.call(this).then(async () => {
+    return register.call(this).then(async (err) => {
       if (this[IS_ONLINE]) {
+        this.sig.retry_num = 0
         await this.ssoPacketListHandler(null)
         this.emit("internal.online", token, nickname, gender, age)
+      } else if (err === 1) {
+        if (this.retry_num > this.sig.retry_num) {
+          this.sig.retry_num++
+          this.emit("internal.verbose", '上线失败，第' + this.sig.retry_num + '次重试', VerboseLevel.Warn)
+          setTimeout(() => {
+            this.tokenLogin(token)
+          }, 1000)
+          return
+        } else {
+          this.sig.retry_num = 0
+          this.emit("internal.error.token")
+        }
       }
     })
   }
