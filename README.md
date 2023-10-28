@@ -30,7 +30,7 @@ ICQQ 是 [OICQ](https://github.com/takayama-lily/oicq) 的分支。ICQQ 的存�
 
 ```js
 const { createClient } = require("icqq");
-const client = createClient({ platform: 3, sign_api_addr: 'http://127.0.0.1:8080/sign' });
+const client = createClient({ platform: 3, ver: '2.1.7', sign_api_addr: 'http://127.0.0.1:8080/' });
 
 client.on("system.online", () => console.log("Logged in!"));
 client.on("message", e => {
@@ -38,14 +38,13 @@ client.on("message", e => {
   e.reply("hello world", true); //true表示引用对方的消息
 });
 
-client
-  .on("system.login.qrcode", function (e) {
+client.on("system.login.qrcode", e() => {
     //扫码后按回车登录
     process.stdin.once("data", () => {
-      this.login();
+      client.login();
     });
   })
-  .login();
+client.login();
 ```
 
 注意：
