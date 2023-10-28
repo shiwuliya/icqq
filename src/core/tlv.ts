@@ -379,7 +379,7 @@ const map: { [tag: number]: (this: BaseClient, ...args: any[]) => Writer } = {
         return new Writer().writeBytes(sign((new Date()).getTime(), salt.read()))
     },
     0x545: function (qImei) {
-        return new Writer().writeBytes(md5(qImei || this.device.imei));
+        return new Writer().writeBytes(qImei || md5(this.device.imei));
     },
     0x547: function () {
         return new Writer().writeBytes(this.sig.t547);
