@@ -338,9 +338,6 @@ export class Client extends BaseClient {
      */
     async login(uin?: number, password?: string | Buffer): Promise<void>;
     async login(uin?: number | string | Buffer, password?: string | Buffer) {
-        if ((await this.switchQQVer())) {
-            this.logger.info(`[${uin}]获取到签名Api协议版本：${this.config.ver}`);
-        }
         // let [uin, password] = args
         if (typeof uin !== "number") {
             password = uin;
@@ -352,6 +349,9 @@ export class Client extends BaseClient {
             else md5pass = password;
             if (md5pass.length !== 16) md5pass = md5(String(password));
             this.password_md5 = md5pass;
+        }
+        if ((await this.switchQQVer())) {
+            this.logger.info(`[${uin}]获取到签名Api协议版本：${this.config.ver}`);
         }
         let apk_info = `${this.apk.display}_${this.apk.version}`;
         this.logger.info(`[${uin}]使用协议：${apk_info}`);
