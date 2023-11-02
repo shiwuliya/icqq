@@ -2,6 +2,7 @@ import { randomBytes } from "crypto"
 import { formatTime, md5, randomString } from "./constants"
 import axios from "axios";
 import { aesDecrypt, aesEncrypt, encryptPKCS1 } from "./algo";
+import { platform } from "os";
 
 
 function generateImei() {
@@ -600,6 +601,7 @@ const apklist: { [platform in Platform]: Apk | Apk[] } = {
 }
 
 export function getApkInfo(p: Platform, ver?: string): Apk {
+    if (p == Platform.iPad) p = Platform.aPad
     const apks = apklist[p]
     if (Array.isArray(apks)) return apks.find(a => a.ver === ver) || apks[0]
     return apks as Apk

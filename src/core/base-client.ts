@@ -322,6 +322,15 @@ export class BaseClient extends Trapper {
     return false;
   }
 
+  async updateCmdWhiteList() {
+    let list = await this.getCmdWhiteList();
+    if (list?.length) this.signCmd = this.signCmd.concat(list);
+  }
+
+  async getCmdWhiteList() {
+    return [];
+  }
+
   async getApiQQVer() {
     return this.config.ver;
   }
