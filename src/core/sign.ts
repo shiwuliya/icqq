@@ -202,7 +202,7 @@ export async function getCmdWhiteList(this: BaseClient) {
 	url.pathname = path;
 	const data = await get.bind(this)(url.href, {
 		ver: this.apk.ver,
-		uin: this.uin
+		uin: this.uin || 0
 	});
 	if (data.code === 0) {
 		whiteList = data?.data?.list || [];
