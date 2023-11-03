@@ -187,6 +187,29 @@ export async function getApiQQVer(this: BaseClient) {
 	return QQVer;
 }
 
+export async function getCmdWhiteList(this: BaseClient) {
+	let whiteList: any = [];
+	if (!this.sig.sign_api_addr) {
+		return whiteList;
+	}
+	let url = new URL(this.sig.sign_api_addr);
+	let path = url.pathname;
+	if (path.substring(path.length - 1) === '/') {
+		path += 'cmd_whitelist';
+	} else {
+		path = path.replace(/\/sign$/, '/cmd_whitelist');
+	}
+	url.pathname = path;
+	const data = await get.bind(this)(url.href, {
+		ver: this.apk.ver,
+		uin: this.uin
+	});
+	if (data.code === 0) {
+		whiteList = data?.data?.list || [];
+	}
+	return whiteList;
+}
+
 async function get(this: BaseClient, url: string, params: object = {}, post: boolean = false) {
 	const config: any = {
 		timeout: 20000,

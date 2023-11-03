@@ -235,6 +235,7 @@ export class BaseClient extends Trapper {
       module = await import('./qsign')
     } else {
       module = await import('./sign')
+      this.getCmdWhiteList = module.getCmdWhiteList.bind(this)
     }
     this.getApiQQVer = module.getApiQQVer.bind(this)
     this.getT544 = module.getT544.bind(this)
@@ -1486,6 +1487,7 @@ function decodeLoginResponse(this: BaseClient, payload: Buffer): any {
     return register.call(this).then(async (err) => {
       if (this[IS_ONLINE]) {
         this.sig.retry_num = 0
+        await this.updateCmdWhiteList()
         await this.ssoPacketListHandler(null)
         this.emit("internal.online", token, nickname, gender, age)
       } else if (err === 1) {

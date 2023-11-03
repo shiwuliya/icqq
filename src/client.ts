@@ -355,6 +355,7 @@ export class Client extends BaseClient {
         }
         let apk_info = `${this.apk.display}_${this.apk.version}`;
         this.logger.info(`[${uin}]使用协议：${apk_info}`);
+        await this.updateCmdWhiteList();
         try {
             if (!uin) throw new Error();
             this.uin = uin;
