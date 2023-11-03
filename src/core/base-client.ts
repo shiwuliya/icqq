@@ -325,7 +325,7 @@ export class BaseClient extends Trapper {
 
   async updateCmdWhiteList() {
     let list = await this.getCmdWhiteList();
-    if (list?.length) this.signCmd = this.signCmd.concat(list);
+    if (list?.length) this.signCmd = Array.from(new Set(this.signCmd.concat(list)));
   }
 
   async getCmdWhiteList() {
