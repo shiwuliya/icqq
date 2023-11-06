@@ -183,7 +183,7 @@ export class BaseClient extends Trapper {
   constructor(p: Platform = Platform.Android, d: ShortDevice, public config: Required<Config>) {
     super()
     if (config.log_config) log4js.configure(config.log_config as string)
-    this.apk = getApkInfo(p, config.ver)
+    this.apk = this.getApkInfo(p, config.ver)
     this.device = new Device(this.apk, d)
     this[NET].on("error", err => this.emit("internal.verbose", err.message, VerboseLevel.Error))
     this[NET].on("close", () => {
@@ -267,6 +267,10 @@ export class BaseClient extends Trapper {
     return this[IS_ONLINE]
   }
 
+  getApkInfo(p: Platform, ver?: string) {
+    return getApkInfo(p, ver)
+  }
+
   buildReserveFields(cmd: string, sec_info: any) {
     let qImei36 = this.device.qImei36 || this.device.qImei16;
     let reserveFields;
@@ -311,7 +315,7 @@ export class BaseClient extends Trapper {
     const old_ver = this.config.ver;
     this.config.ver = !ver ? await this.getApiQQVer() : ver;
     if (old_ver != this.config.ver) {
-      const new_apk = getApkInfo(this.config.platform, this.config.ver);
+      const new_apk = this.getApkInfo(this.config.platform, this.config.ver);
       if (new_apk.ver === this.config.ver) {
         Object.defineProperty(this, "apk", { writable: true });
         this.apk = new_apk;
