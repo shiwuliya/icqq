@@ -1,5 +1,18 @@
 # Changelog
 
+## [0.6.2](https://github.com/icqqjs/icqq/compare/v0.6.1...v0.6.2) (2023-11-06)
+
+
+### Bug Fixes
+
+* iPad -&gt; aPad ([98d5110](https://github.com/icqqjs/icqq/commit/98d51109480ecd4e770eec006052a8dd7b2909f2))
+* qimei in T545 ([eba6355](https://github.com/icqqjs/icqq/commit/eba63557f6ad5d974f7a034ce3ac6ccf794dd7ff))
+* ReserveFields ([007db25](https://github.com/icqqjs/icqq/commit/007db258e336f88739fac1f5648051aa4a11ca29))
+* tlv545 ([715df56](https://github.com/icqqjs/icqq/commit/715df56aadabedbcff4a24527c105a6870f9c311))
+* 优化上线流程。 ([a1d4adb](https://github.com/icqqjs/icqq/commit/a1d4adbcd5d312b4c8032b07a37b877e93286306))
+* 增加8.9.85.12820。 ([77a2ec0](https://github.com/icqqjs/icqq/commit/77a2ec023f21e84c0248fd0c06cd288706701912))
+* 增加8.9.88.13035。 ([760c4cd](https://github.com/icqqjs/icqq/commit/760c4cdcf4b737c0812c6b8a27794d461d87c541))
+
 ## [0.6.1](https://github.com/icqqjs/icqq/compare/v0.6.0...v0.6.1) (2023-10-16)
 
 
