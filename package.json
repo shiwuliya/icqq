@@ -1,7 +1,7 @@
 {
   "name": "icqq",
   "version": "0.6.1",
-  "upday": "2023/11/03",
+  "upday": "2023/11/06",
   "description": "QQ protocol for NodeJS!",
   "main": "lib/index.js",
   "types": "lib/index.d.ts",
