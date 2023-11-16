@@ -617,9 +617,8 @@ const apklist: { [platform in Platform]: Apk | Apk[] } = {
 
 export function getApkInfo(p: Platform, ver?: string): Apk {
     if (p == Platform.iPad) p = Platform.aPad
-    const apks = apklist[p]
-    if (Array.isArray(apks)) return apks.find(a => a.ver === ver) || apks[0]
-    return apks as Apk
+    const apks = getApkInfoList(p)
+    return apks.find(a => a.ver === ver) || apks[0]
 }
 
 export function getApkInfoList(p: Platform): Apk[] {

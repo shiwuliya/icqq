@@ -1,7 +1,6 @@
 import axios from 'axios';
 import { BaseClient, VerboseLevel } from "./base-client";
 import { BUF0 } from './constants';
-import { getApkInfoList } from "./device";
 
 export async function getT544(this: BaseClient, cmd: string) {
 	let sign = BUF0;
@@ -203,7 +202,7 @@ export async function getApiQQVer(this: BaseClient) {
 	if (!this.sig.sign_api_addr) {
 		return QQVer;
 	}
-	const apks = getApkInfoList(this.config.platform);
+	const apks = this.getApkInfoList(this.config.platform);
 	const packageName = this.apk.id;
 	let url = new URL(this.sig.sign_api_addr);
 	let path = url.pathname;
