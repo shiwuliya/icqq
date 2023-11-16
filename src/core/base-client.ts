@@ -274,7 +274,7 @@ export class BaseClient extends Trapper {
   buildReserveFields(cmd: string, sec_info: any) {
     let qImei36 = this.device.qImei36 || this.device.qImei16;
     let reserveFields;
-    if (this.apk.ssover >= 20) {
+    if (this.apk.ssover >= 20 && false) {
       reserveFields = {
         9: 1,
         11: 2052,
