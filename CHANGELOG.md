@@ -1,5 +1,13 @@
 # Changelog
 
+## [0.6.3](https://github.com/icqqjs/icqq/compare/v0.6.2...v0.6.3) (2023-11-16)
+
+
+### Bug Fixes
+
+* 增加8.9.90.13250。 ([cd17c52](https://github.com/icqqjs/icqq/commit/cd17c5211f46ff34995f52c1c0a8ae17632d50cb))
+* 禁言等功能失效问题。 ([1245c3e](https://github.com/icqqjs/icqq/commit/1245c3eb6492bb33120e1887b10d17bdc744c012))
+
 ## [0.6.2](https://github.com/icqqjs/icqq/compare/v0.6.1...v0.6.2) (2023-11-06)
 
 
