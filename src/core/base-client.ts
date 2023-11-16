@@ -268,7 +268,7 @@ export class BaseClient extends Trapper {
   }
 
   getApkInfo(platform: Platform, ver?: string) {
-    return getApkInfo(platform, ver)
+    return getApkInfo(this, platform, ver)
   }
 
   getApkInfoList(platform: Platform) {
