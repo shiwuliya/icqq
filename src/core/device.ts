@@ -288,6 +288,17 @@ export type Apk = {
 const mobile: Apk[] = [
     // 每个版本不同的信息
     {
+        name: "A8.9.90.cccfa0d0",
+        version: "8.9.90.13250",
+        ver: "8.9.90",
+        buildtime: 1697015435,
+        subid: 537185007,
+        bitmap: 150470524,
+        sdkver: "6.0.0.2556",
+        qua: 'V1_AND_SQ_8.9.90_4938_YYB_D',
+        ssover: 21,
+    },
+    {
         name: "A8.9.88.46a07457",
         version: "8.9.88.13035",
         ver: "8.9.88",
@@ -434,6 +445,10 @@ const mobile: Apk[] = [
     }
 })
 const aPadSubids = [
+    {
+        ver: '8.9.90',
+        subid: 537185046,
+    },
     {
         ver: '8.9.88',
         subid: 537182808,
@@ -614,12 +629,6 @@ const apklist: { [platform in Platform]: Apk | Apk[] } = {
         display: 'iPad',
         ssover: 19
     },
-}
-
-export function getApkInfo(client: BaseClient, p: Platform, ver?: string): Apk {
-    if (p == Platform.iPad) p = Platform.aPad
-    const apks = client.getApkInfoList(p)
-    return apks.find(a => a.ver === ver) || apks[0]
 }
 
 export function getApkInfoList(p: Platform): Apk[] {

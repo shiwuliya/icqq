@@ -9,7 +9,7 @@ import * as tea from "./tea"
 import * as pb from "./protobuf"
 import * as jce from "./jce"
 import { BUF0, BUF16, BUF4, hide, int32ip2str, lock, md5, NOOP, timestamp, unlock, unzip } from "./constants"
-import { Apk, Device, getApkInfo, getApkInfoList, Platform, ShortDevice } from "./device"
+import { Apk, Device, getApkInfoList, Platform, ShortDevice } from "./device"
 import * as log4js from "log4js"
 import * as path from "path"
 import { Config } from "../client";
@@ -268,7 +268,9 @@ export class BaseClient extends Trapper {
   }
 
   getApkInfo(platform: Platform, ver?: string) {
-    return getApkInfo(this, platform, ver)
+    if (platform == Platform.iPad) platform = Platform.aPad
+    const apks = this.getApkInfoList(platform)
+    return apks.find(val => val.ver === ver) || apks[0]
   }
 
   getApkInfoList(platform: Platform) {
