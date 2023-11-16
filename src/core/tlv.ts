@@ -4,7 +4,7 @@ import * as pb from "./protobuf"
 import Writer from "./writer"
 import { md5, BUF0 } from "./constants"
 import { sign } from "../internal/enctyption"
-import { Apk, Device, getApkInfo, Platform, ShortDevice } from "./device"
+import { Apk, Device, Platform, ShortDevice } from "./device"
 
 type BaseClient = import("./base-client").BaseClient
 
@@ -53,7 +53,7 @@ const map: { [tag: number]: (this: BaseClient, ...args: any[]) => Writer } = {
             .writeU16(0)
     },
     0x16: function () {
-        const Watch = getApkInfo(Platform.Watch);
+        const Watch = this.getApkInfo(Platform.Watch);
         return new Writer()
             .writeU32(Watch.ssover)
             .writeU32(Watch.appid)

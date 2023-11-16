@@ -2,9 +2,6 @@ import { randomBytes } from "crypto"
 import { formatTime, md5, randomString } from "./constants"
 import axios from "axios";
 import { aesDecrypt, aesEncrypt, encryptPKCS1 } from "./algo";
-import { platform } from "os";
-import { BaseClient } from "./base-client";
-
 
 function generateImei() {
     let imei = `86${randomString(12, '0123456789')}`
