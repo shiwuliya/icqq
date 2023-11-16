@@ -355,10 +355,10 @@ export class Client extends BaseClient {
         }
         let apk_info = `${this.apk.display}_${this.apk.version}`;
         this.logger.info(`[${uin}]使用协议：${apk_info}`);
+        this.uin = uin || this.uin;
         await this.updateCmdWhiteList();
         try {
             if (!uin) throw new Error();
-            this.uin = uin;
             const token_path = path.join(this.dir, this.uin + "_token");
             if (!fs.existsSync(token_path) && fs.existsSync(token_path + "_bak")) {
                 fs.renameSync(token_path + "_bak", token_path);
