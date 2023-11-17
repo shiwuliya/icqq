@@ -780,7 +780,6 @@ export class BaseClient extends Trapper {
       this.sig.qrsig = BUF0
       this.sig.tgtgt = tgtgt
       const t = tlv.getPacker(this)
-
       const tlvs = [
         t(0x1),
         t(0x8),
@@ -806,7 +805,9 @@ export class BaseClient extends Trapper {
         new Writer().writeU16(0x318).writeTlv(t318).read(),
       ]
       if (this.apk.ssover >= 12) {
+        tlvs.push(t(0x542))
         tlvs.push(await this.getT544('810_9'))
+        tlvs.push(t(0x548))
         if (this.apk.buildtime >= 1691565978) tlvs.push(t(0x553))
       }
       if (this.device.qImei16) {
