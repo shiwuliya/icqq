@@ -11,7 +11,7 @@ export async function getT544(this: BaseClient, cmd: string) {
 		const time = Date.now();
 		let post_params = {
 			ver: this.apk.ver,
-			uin: this.uin,
+			uin: this.uin || 0,
 			data: cmd,
 			guid: this.device.guid.toString('hex'),
 			version: this.apk.sdkver
@@ -46,16 +46,16 @@ export async function getSign(this: BaseClient, cmd: string, seq: number, body: 
 		return params
 	}
 	let qImei36 = this.device.qImei36 || this.device.qImei16;
-	if (qImei36 && this.apk.qua) {
+	if (this.apk.qua) {
 		const time = Date.now();
 		let post_params = {
 			ver: this.apk.ver,
 			qua: this.apk.qua,
-			uin: this.uin,
+			uin: this.uin || 0,
 			cmd: cmd,
 			seq: seq,
 			androidId: this.device.android_id,
-			qimei36: qImei36,
+			qimei36: qImei36 || this.device.android_id,
 			guid: this.device.guid.toString('hex'),
 			buffer: body.toString('hex')
 		};
@@ -89,14 +89,14 @@ export async function requestSignToken(this: BaseClient) {
 		return [];
 	}
 	let qImei36 = this.device.qImei36 || this.device.qImei16;
-	if (qImei36 && this.apk.qua) {
+	if (this.apk.qua) {
 		const time = Date.now();
 		let post_params = {
 			ver: this.apk.ver,
 			qua: this.apk.qua,
-			uin: this.uin,
+			uin: this.uin || 0,
 			androidId: this.device.android_id,
-			qimei36: qImei36,
+			qimei36: qImei36 || this.device.android_id,
 			guid: this.device.guid.toString('hex'),
 		};
 		let url = new URL(this.sig.sign_api_addr);
@@ -123,16 +123,16 @@ export async function submitSsoPacket(this: BaseClient, cmd: string, callbackId:
 		return [];
 	}
 	let qImei36 = this.device.qImei36 || this.device.qImei16;
-	if (qImei36 && this.apk.qua) {
+	if (this.apk.qua) {
 		const time = Date.now();
 		let post_params = {
 			ver: this.apk.ver,
 			qua: this.apk.qua,
-			uin: this.uin,
+			uin: this.uin || 0,
 			cmd: cmd,
 			callbackId: callbackId,
 			androidId: this.device.android_id,
-			qimei36: qImei36,
+			qimei36: qImei36 || this.device.android_id,
 			buffer: body.toString('hex'),
 			guid: this.device.guid.toString('hex'),
 		};
