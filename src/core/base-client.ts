@@ -534,6 +534,10 @@ export class BaseClient extends Trapper {
     this[NET].destroy()
   }
 
+  async refreshToken() {
+    return await refreshToken.bind(this)()
+  }
+
   /** 使用接收到的token登录 */
   async tokenLogin(token: Buffer = BUF0) {
     if (!this.device.qImei36 || !this.device.qImei16) {
@@ -1239,7 +1243,7 @@ async function register(this: BaseClient, logout = false, reflush = false) {
           await this[FN_SEND](await buildLoginPacket.call(this, "Heartbeat.Alive", BUF0, 0), 5).catch(() => {
             this.emit("internal.verbose", "Heartbeat.Alive timeout", VerboseLevel.Warn)
           })
-          await refreshToken.bind(this)()
+          await this.refreshToken()
           this.requestToken()
         })
       }, this.interval * 1000)
