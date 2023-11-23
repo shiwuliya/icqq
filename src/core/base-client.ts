@@ -535,59 +535,83 @@ export class BaseClient extends Trapper {
   }
 
   /** 使用接收到的token登录 */
-  async tokenLogin(token: Buffer) {
+  async tokenLogin(token: Buffer = BUF0) {
     if (!this.device.qImei36 || !this.device.qImei16) {
       await this.device.getQIMEI()
     }
-    this.sig.session = randomBytes(4)
-    this.sig.randkey = randomBytes(16)
-    this[ECDH] = new Ecdh
-    try {
-      const stream = Readable.from(token, { objectMode: false });
-      this.sig.d2key = stream.read(stream.read(2).readUInt16BE());
-      this.sig.d2 = stream.read(stream.read(2).readUInt16BE());
-      this.sig.tgt = stream.read(stream.read(2).readUInt16BE());
-      this.sig.ticket_key = stream.read(stream.read(2).readUInt16BE());
-      this.sig.sig_key = stream.read(stream.read(2).readUInt16BE());
-      this.sig.srm_token = stream.read(stream.read(2).readUInt16BE());
-      this.sig.tgt = stream.read(stream.read(2).readUInt16BE());
-      this.sig.md5Pass = stream.read(stream.read(2).readUInt16BE());
-      this.sig.device_token = stream.read(stream.read(2).readUInt16BE());
+    if (token != BUF0) {
+      this.sig.session = randomBytes(4)
+      this.sig.randkey = randomBytes(16)
+      this[ECDH] = new Ecdh
       try {
-        this.sig.t543 = stream.read(stream.read(2).readUInt16BE()) || BUF0;
-      } catch { }
-    } catch {
-      this.emit("internal.verbose", '旧版token于当前版本不兼容，请手动删除token后重新运行', VerboseLevel.Error);
-      this.emit("internal.verbose", '若非无法登录，请勿随意升级版本', VerboseLevel.Warn);
-      return this.emit("internal.error.login", 123456, `token不兼容`)
+        const stream = Readable.from(token, { objectMode: false });
+        this.sig.d2key = stream.read(stream.read(2).readUInt16BE());
+        this.sig.d2 = stream.read(stream.read(2).readUInt16BE());
+        this.sig.tgt = stream.read(stream.read(2).readUInt16BE());
+        this.sig.ticket_key = stream.read(stream.read(2).readUInt16BE());
+        this.sig.sig_key = stream.read(stream.read(2).readUInt16BE());
+        this.sig.srm_token = stream.read(stream.read(2).readUInt16BE());
+        this.sig.tgt = stream.read(stream.read(2).readUInt16BE());
+        this.sig.md5Pass = stream.read(stream.read(2).readUInt16BE());
+        this.sig.device_token = stream.read(stream.read(2).readUInt16BE());
+        try {
+          this.sig.t543 = stream.read(stream.read(2).readUInt16BE()) || BUF0;
+        } catch { }
+      } catch {
+        this.emit("internal.verbose", '旧版token于当前版本不兼容，请手动删除token后重新运行', VerboseLevel.Error);
+        this.emit("internal.verbose", '若非无法登录，请勿随意升级版本', VerboseLevel.Warn);
+        this.emit("internal.error.login", 123456, `token不兼容`);
+        return BUF0;
+      }
     }
-    this.sig.tgtgt = md5(this.sig.d2key)
-    const t = tlv.getPacker(this)
-    let tlv_count = 18
-    const writer = new Writer()
+
+    this.sig.tgtgt = md5(this.sig.d2key);
+    const t = tlv.getPacker(this);
+    const tlvs = [
+      t(0x8),
+      t(0x18),
+      t(0x100),
+      t(0x108),
+      t(0x10a),
+      t(0x112),
+      t(0x116),
+      t(0x141),
+      t(0x142),
+      t(0x143),
+      t(0x144),
+      t(0x145),
+      t(0x147),
+      t(0x154),
+      t(0x177),
+      t(0x187),
+      t(0x188),
+      t(0x511),
+      //t(0x542),
+      //t(0x548)
+    ];
+    if (this.apk.ssover >= 5) {
+      tlvs.push(await this.getT544('810_a'));
+      if (this.apk.buildtime >= 1691565978) tlvs.push(t(0x553));
+    }
+    if (this.device.qImei16) {
+      tlvs.push(t(0x545, this.device.qImei16));
+    }
+    else {
+      tlvs.push(t(0x194));
+      tlvs.push(t(0x202));
+    }
+    let writer = new Writer()
       .writeU16(11)
-      .writeU16(tlv_count)
-      .writeBytes(t(0x100, 100))
-      .writeBytes(t(0x10a))
-      .writeBytes(t(0x116))
-      .writeBytes(t(0x108))
-      .writeBytes(t(0x144))
-      //.writeBytes(t(0x112))
-      .writeBytes(t(0x143))
-      .writeBytes(t(0x142))
-      .writeBytes(t(0x154))
-      .writeBytes(t(0x18))
-      .writeBytes(t(0x141))
-      .writeBytes(t(0x8))
-      .writeBytes(t(0x147))
-      .writeBytes(t(0x177))
-      .writeBytes(t(0x187))
-      .writeBytes(t(0x188))
-      .writeBytes(t(0x194))
-      .writeBytes(t(0x511))
-      .writeBytes(t(0x202))
-    const body = writer.read()
-    this[FN_SEND_LOGIN]("wtlogin.exchange_emp", body)
+      .writeU16(tlvs.length);
+    for (let tlv of tlvs) {
+      writer.writeBytes(tlv);
+    }
+    const body = writer.read();
+    if (token != BUF0) {
+      await this[FN_SEND_LOGIN]("wtlogin.exchange_emp", body);
+      return BUF0;
+    }
+    return body;
   }
 
   /**
@@ -1198,7 +1222,7 @@ async function register(this: BaseClient, logout = false, reflush = false) {
     if (!result && !reflush) {
       err = 1
       //this.emit("internal.verbose", "register error:" + JSON.stringify(rsp), VerboseLevel.Error)
-    } else if (result) {
+    } else if (result || (this.apk.id === 'com.tencent.qqlite' && reflush)) {
       this[IS_ONLINE] = true
       this[HEARTBEAT] = setInterval(async () => {
         syncTimeDiff.call(this)
@@ -1265,7 +1289,7 @@ async function refreshToken(this: BaseClient) {
     .writeBytes(t(0x202))
     .writeBytes(t(0x511))
   const body = writer.read()
-  const pkt = await buildLoginPacket.call(this, "wtlogin.exchange_emp", body)
+  const pkt = await buildLoginPacket.call(this, "wtlogin.exchange_emp", await this.tokenLogin())
   try {
     let payload = await this[FN_SEND](pkt)
     payload = tea.decrypt(payload.slice(16, payload.length - 1), this[ECDH].share_key)
