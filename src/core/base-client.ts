@@ -1055,20 +1055,17 @@ function buildUniPkt(this: BaseClient, cmd: string, body: Uint8Array, seq = 0, s
       .read())
     .writeWithLength(body)
     .read();
-
   const encrypted = tea.encrypt(sso, this.sig.d2key)
-  const uin = String(this.uin)
-  len = encrypted.length + uin.length + 18
-  const pkt = Buffer.allocUnsafe(len)
-  pkt.writeUInt32BE(len, 0)
-  pkt.writeUInt32BE(0x0B, 4)
-  pkt.writeUInt8(1, 8) //type
-  pkt.writeInt32BE(seq, 9)
-  pkt.writeUInt8(0, 13)
-  pkt.writeUInt32BE(uin.length + 4, 14)
-  pkt.fill(uin, 18)
-  pkt.fill(encrypted, uin.length + 18)
-  return pkt
+  return new Writer()
+    .writeWithLength(new Writer()
+      .writeU32(0x0B)
+      .writeU8(1)//type
+      .writeU32(seq)
+      .writeU8(0)
+      .writeWithLength(String(this.uin))
+      .writeBytes(encrypted)
+      .read())
+    .read();
 }
 
 const EVENT_KICKOFF = Symbol("EVENT_KICKOFF")
