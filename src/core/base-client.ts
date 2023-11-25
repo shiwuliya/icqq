@@ -1225,24 +1225,25 @@ async function register(this: BaseClient, logout = false, reflush = false) {
       //this.emit("internal.verbose", "register error:" + JSON.stringify(rsp), VerboseLevel.Error)
     } else if (result || (this.apk.id === 'com.tencent.qqlite' && reflush)) {
       this[IS_ONLINE] = true
+      const heartbeatSuccess = async () => {
+        let hb480_cmd = [Platform.Tim].includes(this.config.platform as Platform) ? 'OidbSvc.0x480_9' : 'OidbSvc.0x480_9_IMCore'
+        this.sendUni(hb480_cmd, this.sig.hb480).catch(async () => {
+          this.emit("internal.verbose", hb480_cmd + " timeout", VerboseLevel.Warn)
+        })
+        await this.refreshToken()
+        this.requestToken()
+      }
       this[HEARTBEAT] = setInterval(async () => {
+        if (typeof this.heartbeat === "function") await this.heartbeat()
         syncTimeDiff.call(this)
-        if (typeof this.heartbeat === "function")
-          await this.heartbeat()
-        let heartbeat_cmd = [Platform.Tim].includes(this.config.platform as Platform) ? 'OidbSvc.0x480_9' : 'OidbSvc.0x480_9_IMCore'
-        this.sendUni(heartbeat_cmd, this.sig.hb480).catch(() => {
-          this.emit("internal.verbose", "heartbeat timeout", VerboseLevel.Warn)
-          this.sendUni(heartbeat_cmd, this.sig.hb480).catch(() => {
-            this.emit("internal.verbose", "heartbeat timeout x 2", VerboseLevel.Error)
+        this[FN_SEND](await buildLoginPacket.call(this, "Heartbeat.Alive", BUF0, 0), 5).catch(async () => {
+          this.emit("internal.verbose", "Heartbeat.Alive timeout", VerboseLevel.Warn)
+          this[FN_SEND](await buildLoginPacket.call(this, "Heartbeat.Alive", BUF0, 0), 5).catch(() => {
+            this.emit("internal.verbose", "Heartbeat.Alive timeout x 2", VerboseLevel.Warn)
             this[NET].destroy()
           })
-        }).then(async () => {
-          await this[FN_SEND](await buildLoginPacket.call(this, "Heartbeat.Alive", BUF0, 0), 5).catch(() => {
-            this.emit("internal.verbose", "Heartbeat.Alive timeout", VerboseLevel.Warn)
-          })
-          await this.refreshToken()
-          this.requestToken()
-        })
+
+        }).then(heartbeatSuccess)
       }, this.interval * 1000)
     } else {
       throw new Error("");
