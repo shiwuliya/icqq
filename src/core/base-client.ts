@@ -364,6 +364,8 @@ export class BaseClient extends Trapper {
           return t(0x544, 0, 7);
         case '810_9':
           return t(0x544, 2, 9);
+        case '810_a':
+          return t(0x544, 2, 10);
       }
       return BUF0;
     };

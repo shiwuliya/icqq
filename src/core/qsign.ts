@@ -4,7 +4,7 @@ import { BUF0 } from './constants';
 
 export async function getT544(this: BaseClient, cmd: string) {
 	let sign = BUF0;
-	if (this.apk.qua) {
+	if (this.sig.sign_api_addr && this.apk.qua) {
 		const time = Date.now();
 		let qImei36 = this.device.qImei36 || this.device.qImei16;
 		let post_params = {
