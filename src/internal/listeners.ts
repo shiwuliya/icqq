@@ -93,16 +93,15 @@ async function onlineListener(this: Client, token: Buffer, nickname: string, gen
 
 function tokenUpdatedListener(this: Client, token: Buffer) {
     const token_path = path.join(this.dir, this.uin + '_token')
-    if (fs.existsSync(token_path)) {
-        fs.copyFileSync(token_path, token_path + '_bak')
-    }
     fs.writeFile(token_path, token, NOOP)
+    this.sig.token_retry_count = 0
 }
 
 function kickoffListener(this: Client, message: string) {
     this.logger.warn(message)
     this.terminate()
-    fs.unlink(path.join(this.dir, this.uin + '_token'), NOOP)
+    //fs.unlink(path.join(this.dir, this.uin + '_token'), NOOP)
+    this.sig.token_retry_count++
     this.em("system.offline.kickoff", { message })
 }
 
@@ -160,15 +159,16 @@ function loginErrorListener(this: Client, code: number, message: string) {
     // toke expired
     if (!code || code === -10003) {
         if (code === -10003) {
-            fs.unlink(path.join(this.dir, this.uin + "_token"), NOOP)
-            fs.unlink(path.join(this.dir, this.uin + "_token_bak"), NOOP)
+            //fs.unlink(path.join(this.dir, this.uin + "_token"), NOOP)
+            this.sig.token_retry_count++
             this.logger.mark("登录token过期")
             this.em('system.token.expire')
             return
         }
         this.logger.mark("登录token过期")
         this.em('system.token.expire')
-        fs.unlink(path.join(this.dir, this.uin + "_token"), NOOP)
+        //fs.unlink(path.join(this.dir, this.uin + "_token"), NOOP)
+        this.sig.token_retry_count++
         this.logger.mark("3秒后重新连接")
         setTimeout(this.login.bind(this), 3000)
     }
@@ -177,7 +177,8 @@ function loginErrorListener(this: Client, code: number, message: string) {
         this.terminate()
         this.logger.error(message)
         if (code === -3) //register failed
-            fs.unlink(path.join(this.dir, this.uin + "_token"), NOOP)
+            //fs.unlink(path.join(this.dir, this.uin + "_token"), NOOP)
+            this.sig.token_retry_count++
         const t = this.config.reconn_interval
         if (t >= 1) {
             this.logger.mark(t + "秒后重新连接")

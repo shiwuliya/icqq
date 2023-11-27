@@ -144,7 +144,10 @@ export class BaseClient extends Trapper {
     emp_time: 0,
     time_diff: 0,
     requestTokenTime: 0,
-    retry_num: 0
+    /** token登录重试计数 */
+    token_retry_count: 0,
+    /** 上线失败重试计数 */
+    register_retry_count: 0
   }
   readonly pkg: any = require("../../package.json")
   readonly pskey: { [domain: string]: Buffer } = {}
@@ -153,8 +156,10 @@ export class BaseClient extends Trapper {
   protected interval = 60
   /** 随心跳一起触发的函数，可以随意设定 */
   protected heartbeat = NOOP
+  /** token登录重试次数 */
+  protected token_retry_num = 2
   /** 上线失败重试次数 */
-  protected retry_num = 3
+  protected register_retry_num = 3
   /** 数据统计 */
   protected readonly statistics = {
     start_time: timestamp(),
@@ -1525,20 +1530,20 @@ function decodeLoginResponse(this: BaseClient, payload: Buffer): any {
     const { token, nickname, gender, age } = decodeT119.call(this, t[0x119])
     return register.call(this).then(async (err) => {
       if (this[IS_ONLINE]) {
-        this.sig.retry_num = 0
+        this.sig.register_retry_count = 0
         await this.updateCmdWhiteList()
         await this.ssoPacketListHandler(null)
         this.emit("internal.online", token, nickname, gender, age)
       } else if (err === 1) {
-        if (this.retry_num > this.sig.retry_num) {
-          this.sig.retry_num++
-          this.emit("internal.verbose", '上线失败，第' + this.sig.retry_num + '次重试', VerboseLevel.Warn)
+        if (this.register_retry_num > this.sig.register_retry_count) {
+          this.sig.register_retry_count++
+          this.emit("internal.verbose", '上线失败，第' + this.sig.register_retry_count + '次重试', VerboseLevel.Warn)
           setTimeout(() => {
             this.tokenLogin(token)
           }, 1000)
           return
         } else {
-          this.sig.retry_num = 0
+          this.sig.register_retry_count = 0
           this.emit("internal.error.token")
         }
       }

@@ -360,9 +360,7 @@ export class Client extends BaseClient {
         try {
             if (!uin) throw new Error();
             const token_path = path.join(this.dir, this.uin + "_token");
-            if (!fs.existsSync(token_path) && fs.existsSync(token_path + "_bak")) {
-                fs.renameSync(token_path + "_bak", token_path);
-            }
+            if (!fs.existsSync(token_path) || this.token_retry_num <= this.sig.token_retry_count) throw new Error();
             const token = await fs.promises.readFile(token_path);
             return this.tokenLogin(token);
         } catch (e) {
