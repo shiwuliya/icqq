@@ -1067,7 +1067,7 @@ function buildUniPkt(this: BaseClient, cmd: string, body: Uint8Array, seq = 0, s
     .writeWithLength(new Writer()
       .writeU32(0x0B)
       .writeU8(1)//type
-      .writeU32(seq)
+      .write32(seq)
       .writeU8(0)
       .writeWithLength(String(this.uin))
       .writeBytes(encrypted)
@@ -1382,7 +1382,7 @@ async function buildLoginPacket(this: BaseClient, cmd: LoginCmd, body: Buffer, t
   const ksid = this.sig.ksid ||= Buffer.from(`|${this.device.imei}|` + this.apk.name)
   let sso = new Writer()
     .writeWithLength(new Writer()
-      .writeU32(this.sig.seq)
+      .write32(this.sig.seq)
       .writeU32(subappid)
       .writeU32(subappid)
       .writeBytes(Buffer.from([0x01, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x01, 0x00]))
