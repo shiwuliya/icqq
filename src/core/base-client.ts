@@ -157,7 +157,7 @@ export class BaseClient extends Trapper {
   /** 随心跳一起触发的函数，可以随意设定 */
   protected heartbeat = NOOP
   /** token登录重试次数 */
-  protected token_retry_num = 2
+  protected token_retry_num = 3
   /** 上线失败重试次数 */
   protected register_retry_num = 3
   /** 数据统计 */
