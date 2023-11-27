@@ -93,7 +93,10 @@ async function onlineListener(this: Client, token: Buffer, nickname: string, gen
 
 function tokenUpdatedListener(this: Client, token: Buffer) {
     const token_path = path.join(this.dir, this.uin + '_token')
-    fs.writeFile(token_path, token, NOOP)
+    if (fs.existsSync(token_path)) fs.renameSync(token_path, token_path + '_bak')
+    fs.writeFile(token_path, token, () => {
+        fs.unlink(token_path + '_bak', NOOP)
+    })
     this.sig.token_retry_count = 0
 }
 

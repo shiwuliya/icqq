@@ -541,7 +541,8 @@ export class BaseClient extends Trapper {
     this[NET].destroy()
   }
 
-  async refreshToken() {
+  async refreshToken(force: boolean = false) {
+    if (force) this.sig.emp_time = 0
     return await refreshToken.bind(this)()
   }
 
@@ -1089,6 +1090,7 @@ function ssoListener(this: BaseClient, cmd: string, payload: Buffer, seq: number
     case "QualityTest.PushList":
     case "OnlinePush.SidTicketExpired":
       this.writeUni(cmd, BUF0, seq)
+      this.refreshToken(true)
       break
     case "ConfigPushSvc.PushReq": {
       if (payload[0] === 0)
