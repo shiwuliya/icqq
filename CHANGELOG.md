@@ -1,5 +1,16 @@
 # Changelog
 
+## [0.6.4](https://github.com/icqqjs/icqq/compare/v0.6.3...v0.6.4) (2023-11-27)
+
+
+### Bug Fixes
+
+* Proto类增加toJSON()方法，方便调试 ([3094c6e](https://github.com/icqqjs/icqq/commit/3094c6e49f7047d2fdef7e9759414542ed077199))
+* token可能失效时不删除token文件。 ([035ee3a](https://github.com/icqqjs/icqq/commit/035ee3a76050f2386d34c3dbc732765accd7e8f1))
+* 增加Tim 3.5.6.3208。 ([bd609aa](https://github.com/icqqjs/icqq/commit/bd609aa5a8097e7e432bf0f1514d7dd1ddc0eb9f))
+* 手表协议刷新token失败。 ([55c2245](https://github.com/icqqjs/icqq/commit/55c2245e7ae9dacdd52903faf118d23976af233b))
+* 扫码登录。 ([c2c38d5](https://github.com/icqqjs/icqq/commit/c2c38d570c26ebcd05f68305f9ad4d0a00f42652))
+
 ## [0.6.3](https://github.com/icqqjs/icqq/compare/v0.6.2...v0.6.3) (2023-11-16)
 
 
