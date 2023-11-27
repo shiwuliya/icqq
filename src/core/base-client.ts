@@ -602,7 +602,7 @@ export class BaseClient extends Trapper {
     ];
     if (this.apk.ssover >= 5) {
       tlvs.push(await this.getT544('810_a'));
-      if (this.apk.buildtime >= 1691565978) tlvs.push(t(0x553));
+      if (this.sig.t553) tlvs.push(t(0x553));
     }
     if (this.device.qImei16) {
       tlvs.push(t(0x545, this.device.qImei16));
@@ -668,7 +668,7 @@ export class BaseClient extends Trapper {
     ]
     if (this.apk.ssover >= 12) {
       tlvs.push(await this.getT544('810_9'))
-      if (this.apk.buildtime >= 1691565978) tlvs.push(t(0x553))
+      if (this.sig.t553) tlvs.push(t(0x553))
     }
     if (this.device.qImei16) {
       tlvs.push(t(0x545, this.device.qImei16))
@@ -703,7 +703,7 @@ export class BaseClient extends Trapper {
     ]
     if (this.apk.ssover >= 12) {
       tlvs.push(await this.getT544('810_2'))
-      if (this.apk.buildtime >= 1691565978) tlvs.push(t(0x553))
+      if (this.sig.t553) tlvs.push(t(0x553))
     }
     if (this.sig.t547.length) {
       tlvs.push(t(0x547))
@@ -752,7 +752,7 @@ export class BaseClient extends Trapper {
     ]
     if (this.apk.ssover >= 12) {
       tlvs.push(await this.getT544('810_7'))
-      if (this.apk.buildtime >= 1691565978) tlvs.push(t(0x553))
+      if (this.sig.t553) tlvs.push(t(0x553))
     }
     if (this.sig.t547.length) {
       tlvs.push(t(0x547))
@@ -843,7 +843,7 @@ export class BaseClient extends Trapper {
         tlvs.push(t(0x542))
         tlvs.push(await this.getT544('810_9'))
         tlvs.push(t(0x548))
-        if (this.apk.buildtime >= 1691565978) tlvs.push(t(0x553))
+        if (this.sig.t553) tlvs.push(t(0x553))
       }
       if (this.device.qImei16) {
         tlvs.push(t(0x545, this.device.qImei16))

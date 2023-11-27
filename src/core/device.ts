@@ -498,6 +498,17 @@ const aPadSubids = [
 const tim: Apk[] = [
     // 每个版本不同的信息
     {
+        name: "A3.5.6.b80635c4",
+        version: "3.5.6.3208",
+        ver: "3.5.6",
+        buildtime: 1630062176,
+        subid: 537181169,
+        bitmap: 150470524,
+        sdkver: "6.0.0.2484",
+        qua: "V1_AND_SQ_8.3.9_356_TIM_D",
+        ssover: 18,
+    },
+    {
         name: "A3.5.5.fa2ef27c",
         version: "3.5.5.3198",
         ver: "3.5.5",
