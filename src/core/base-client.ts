@@ -1142,28 +1142,31 @@ async function parseSso(this: BaseClient, buf: Buffer) {
   const headlen = buf.readUInt32BE()
   const seq = buf.readInt32BE(4)
   const retcode = buf.readInt32BE(8)
+  let cmd = ''
+  let payload = BUF0
   if (retcode !== 0) {
     this.emit("internal.error.token", retcode)
-    throw new Error("unsuccessful retcode: " + retcode)
+    //throw new Error("unsuccessful retcode: " + retcode)
+  } else {
+    let offset = buf.readUInt32BE(12) + 12
+    let len = buf.readUInt32BE(offset) // length of cmd
+    cmd = String(buf.slice(offset + 4, offset + len))
+    offset += len
+    len = buf.readUInt32BE(offset) // length of session_id
+    offset += len
+    const flag = buf.readInt32BE(offset)
+    if (flag === 0) {
+      payload = buf.slice(headlen + 4)
+    } else if (flag === 1) {
+      payload = await unzip(buf.slice(headlen + 4))
+    } else if (flag === 8) {
+      payload = buf.slice(headlen)
+    } else {
+      throw new Error("unknown compressed flag: " + flag)
+    }
   }
-  let offset = buf.readUInt32BE(12) + 12
-  let len = buf.readUInt32BE(offset) // length of cmd
-  const cmd = String(buf.slice(offset + 4, offset + len))
-  offset += len
-  len = buf.readUInt32BE(offset) // length of session_id
-  offset += len
-  const flag = buf.readInt32BE(offset)
-  let payload
-  if (flag === 0)
-    payload = buf.slice(headlen + 4)
-  else if (flag === 1)
-    payload = await unzip(buf.slice(headlen + 4))
-  else if (flag === 8)
-    payload = buf.slice(headlen)
-  else
-    throw new Error("unknown compressed flag: " + flag)
   return {
-    seq, cmd, payload
+    retcode, seq, cmd, payload
   }
 }
 
@@ -1189,6 +1192,10 @@ async function packetListener(this: BaseClient, pkt: Buffer) {
         throw new Error("unknown flag:" + flag)
     }
     const sso = await parseSso.call(this, decrypted)
+    if (sso.retcode !== 0) {
+      this.emit("internal.verbose", `recv:retcode:${sso.retcode} seq:${sso.seq}`, VerboseLevel.Error)
+      return
+    }
     this.emit("internal.verbose", `recv:${sso.cmd} seq:${sso.seq}`, VerboseLevel.Debug)
     if (this[HANDLERS].has(sso.seq))
       this[HANDLERS].get(sso.seq)?.(sso.payload)
