@@ -938,14 +938,14 @@ export class BaseClient extends Trapper {
     return this.sig.seq
   }
 
-  private [FN_SEND](pkt: Uint8Array, timeout = 5) {
+  private [FN_SEND](pkt: Uint8Array, timeout = 5, seq = 0) {
     this.statistics.sent_pkt_cnt++
-    const seq = this.sig.seq
+    seq = seq || this.sig.seq
     return new Promise((resolve: (payload: Buffer) => void, reject) => {
       const id = setTimeout(() => {
         this[HANDLERS].delete(seq)
         this.statistics.lost_pkt_cnt++
-        reject(new ApiRejection(-2, `packet timeout (${seq})`))
+        reject(new ApiRejection(-2, `packet timeout (seq: ${seq})`))
       }, timeout * 1000)
       this[NET].join(() => {
         this[NET].write(pkt, () => {
@@ -981,7 +981,7 @@ export class BaseClient extends Trapper {
     if (this.signCmd.includes(cmd)) {
       pkt = await buildUniPktSign.call(this, cmd, body, seq)
     } else {
-      pkt = buildUniPkt.call(this, cmd, body, seq)
+      pkt = await buildUniPkt.call(this, cmd, body, seq)
     }
     if (pkt.length > 0) this[NET].write(pkt)
   }
@@ -1010,19 +1010,20 @@ export class BaseClient extends Trapper {
 
   /** 发送一个业务包并等待返回 */
   async sendUni(cmd: string, body: Uint8Array, timeout = 5) {
-    if (!this[IS_ONLINE]) throw new ApiRejection(-1, `client not online`)
+    if (!this[IS_ONLINE]) throw new ApiRejection(-1, `client not online (cmd: ${cmd})`)
     let pkt
+    let seq = this[FN_NEXT_SEQ]()
     if (this.signCmd.includes(cmd)) {
-      pkt = await buildUniPktSign.call(this, cmd, body)
+      pkt = await buildUniPktSign.call(this, cmd, body, seq)
     } else {
-      pkt = buildUniPkt.call(this, cmd, body)
+      pkt = await buildUniPkt.call(this, cmd, body, seq)
     }
     if (pkt.length < 1) return Buffer.from(pb.encode({
       1: -1,
       2: '签名api异常',
       3: {}
     }))
-    return this[FN_SEND](pkt, timeout)
+    return this[FN_SEND](pkt, timeout, seq)
   }
 
   async sendOidbSvcTrpcTcp(cmd: string, body: Uint8Array) {
@@ -1047,10 +1048,10 @@ export class BaseClient extends Trapper {
 async function buildUniPktSign(this: BaseClient, cmd: string, body: Uint8Array, seq = 0) {
   let sec_info = await this.getSign(cmd, this.sig.seq, Buffer.from(body));
   if (sec_info == BUF0 && this.sig.sign_api_addr && this.apk.qua) return BUF0
-  return buildUniPkt.call(this, cmd, body, seq, sec_info);
+  return await buildUniPkt.call(this, cmd, body, seq, sec_info);
 }
 
-function buildUniPkt(this: BaseClient, cmd: string, body: Uint8Array, seq = 0, sec_info = BUF0) {
+async function buildUniPkt(this: BaseClient, cmd: string, body: Uint8Array, seq = 0, sec_info = BUF0) {
   seq = seq || this[FN_NEXT_SEQ]()
   this.emit("internal.verbose", `send:${cmd} seq:${seq}`, VerboseLevel.Debug)
   let len = cmd.length + 20
