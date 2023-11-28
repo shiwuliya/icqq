@@ -542,8 +542,7 @@ export class BaseClient extends Trapper {
   }
 
   async refreshToken(force: boolean = false) {
-    if (force) this.sig.emp_time = 0
-    return await refreshToken.bind(this)()
+    return await refreshToken.call(this, force)
   }
 
   /** 使用接收到的token登录 */
@@ -1275,8 +1274,8 @@ async function syncTimeDiff(this: BaseClient) {
   }).catch(NOOP)
 }
 
-async function refreshToken(this: BaseClient) {
-  if (!this.isOnline() || timestamp() - this.sig.emp_time < 43000)
+async function refreshToken(this: BaseClient, force: boolean = false) {
+  if ((!this.isOnline() || timestamp() - this.sig.emp_time < 43000) && !force)
     return
   const t = tlv.getPacker(this)
   let tlv_count = 16
