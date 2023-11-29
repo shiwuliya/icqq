@@ -977,12 +977,7 @@ export class BaseClient extends Trapper {
   /** 发送一个业务包不等待返回 */
   async writeUni(cmd: string, body: Uint8Array, seq = 0) {
     this.statistics.sent_pkt_cnt++
-    let pkt
-    if (this.signCmd.includes(cmd)) {
-      pkt = await buildUniPktSign.call(this, cmd, body, seq)
-    } else {
-      pkt = await buildUniPkt.call(this, cmd, body, seq)
-    }
+    const pkt = await buildUniPkt.call(this, cmd, body, seq)
     if (pkt.length > 0) this[NET].write(pkt)
   }
 
@@ -1011,18 +1006,15 @@ export class BaseClient extends Trapper {
   /** 发送一个业务包并等待返回 */
   async sendUni(cmd: string, body: Uint8Array, timeout = 5) {
     if (!this[IS_ONLINE]) throw new ApiRejection(-1, `client not online (cmd: ${cmd})`)
-    let pkt
     let seq = this[FN_NEXT_SEQ]()
-    if (this.signCmd.includes(cmd)) {
-      pkt = await buildUniPktSign.call(this, cmd, body, seq)
-    } else {
-      pkt = await buildUniPkt.call(this, cmd, body, seq)
+    const pkt = await buildUniPkt.call(this, cmd, body, seq)
+    if (pkt.length < 1) {
+      return Buffer.from(pb.encode({
+        1: -1,
+        2: '签名api异常',
+        3: {}
+      }))
     }
-    if (pkt.length < 1) return Buffer.from(pb.encode({
-      1: -1,
-      2: '签名api异常',
-      3: {}
-    }))
     return this[FN_SEND](pkt, timeout, seq)
   }
 
@@ -1045,37 +1037,6 @@ export class BaseClient extends Trapper {
   }
 }
 
-async function buildUniPktSign(this: BaseClient, cmd: string, body: Uint8Array, seq = 0) {
-  let sec_info = await this.getSign(cmd, this.sig.seq, Buffer.from(body));
-  if (sec_info == BUF0 && this.sig.sign_api_addr && this.apk.qua) return BUF0
-  return await buildUniPkt.call(this, cmd, body, seq, sec_info);
-}
-
-async function buildUniPkt(this: BaseClient, cmd: string, body: Uint8Array, seq = 0, sec_info = BUF0) {
-  seq = seq || this[FN_NEXT_SEQ]()
-  this.emit("internal.verbose", `send:${cmd} seq:${seq}`, VerboseLevel.Debug)
-  let len = cmd.length + 20
-  let sso = new Writer()
-    .writeWithLength(new Writer()
-      .writeWithLength(cmd)
-      .writeWithLength(this.sig.session)
-      .writeWithLength(this.buildReserveFields(cmd, sec_info))
-      .read())
-    .writeWithLength(body)
-    .read();
-  const encrypted = tea.encrypt(sso, this.sig.d2key)
-  return new Writer()
-    .writeWithLength(new Writer()
-      .writeU32(0x0B)
-      .writeU8(1)//type
-      .write32(seq)
-      .writeU8(0)
-      .writeWithLength(String(this.uin))
-      .writeBytes(encrypted)
-      .read())
-    .read();
-}
-
 const EVENT_KICKOFF = Symbol("EVENT_KICKOFF")
 
 function ssoListener(this: BaseClient, cmd: string, payload: Buffer, seq: number) {
@@ -1088,6 +1049,8 @@ function ssoListener(this: BaseClient, cmd: string, payload: Buffer, seq: number
     }
       break
     case "QualityTest.PushList":
+      this.writeUni(cmd, BUF0, seq)
+      break
     case "OnlinePush.SidTicketExpired":
       this.writeUni(cmd, BUF0, seq)
       this.refreshToken(true)
@@ -1446,6 +1409,34 @@ function buildCode2dPacket(this: BaseClient, cmdid: number, head: number, body: 
   return buildLoginPacket.call(this, "wtlogin.trans_emp", body)
 }
 
+async function buildUniPkt(this: BaseClient, cmd: string, body: Uint8Array, seq = 0) {
+  seq = seq || this[FN_NEXT_SEQ]()
+  this.emit("internal.verbose", `send:${cmd} seq:${seq}`, VerboseLevel.Debug)
+  let sec_info = BUF0
+  if (this.signCmd.includes(cmd)) {
+    sec_info = await this.getSign(cmd, this.sig.seq, Buffer.from(body))
+    if (sec_info == BUF0 && this.sig.sign_api_addr && this.apk.qua) return BUF0
+  }
+  let sso = new Writer()
+    .writeWithLength(new Writer()
+      .writeWithLength(cmd)
+      .writeWithLength(this.sig.session)
+      .writeWithLength(this.buildReserveFields(cmd, sec_info))
+      .read())
+    .writeWithLength(body)
+    .read();
+  const encrypted = tea.encrypt(sso, this.sig.d2key)
+  return new Writer()
+    .writeWithLength(new Writer()
+      .writeU32(0x0B)
+      .writeU8(1)//type
+      .write32(seq)
+      .writeU8(0)
+      .writeWithLength(String(this.uin))
+      .writeBytes(encrypted)
+      .read())
+    .read();
+}
 
 function decodeT119(this: BaseClient, t119: Buffer) {
   const r = Readable.from(tea.decrypt(t119, this.sig.tgtgt), { objectMode: false })
