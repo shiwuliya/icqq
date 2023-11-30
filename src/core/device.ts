@@ -285,6 +285,17 @@ export type Apk = {
 const mobile: Apk[] = [
     // 每个版本不同的信息
     {
+        name: "A8.9.93.bf80f08f",
+        version: "8.9.93.13475",
+        ver: "8.9.93",
+        buildtime: 1697015435,
+        subid: 537187398,
+        bitmap: 150470524,
+        sdkver: "6.0.0.2556",
+        qua: 'V1_AND_SQ_8.9.93_5028_YYB_D',
+        ssover: 21,
+    },
+    {
         name: "A8.9.90.cccfa0d0",
         version: "8.9.90.13250",
         ver: "8.9.90",
@@ -442,6 +453,10 @@ const mobile: Apk[] = [
     }
 })
 const aPadSubids = [
+    {
+        ver: '8.9.93',
+        subid: 537187437,
+    },
     {
         ver: '8.9.90',
         subid: 537185046,
