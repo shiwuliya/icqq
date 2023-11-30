@@ -1,5 +1,15 @@
 # Changelog
 
+## [0.6.5](https://github.com/icqqjs/icqq/compare/v0.6.4...v0.6.5) (2023-11-30)
+
+
+### Bug Fixes
+
+* packet timeout ([f063def](https://github.com/icqqjs/icqq/commit/f063def8c8851417a48d27ca09f81bf6c2d659b1))
+* SidTicketExpired？ ([daa5c11](https://github.com/icqqjs/icqq/commit/daa5c116968a38d45f3438f07fdb6f0f70be79fe))
+* 修复seq为负数时报错问题。 ([9c8c4f8](https://github.com/icqqjs/icqq/commit/9c8c4f8a7f48e5beaf9afcd74eaca0679bd7cad2))
+* 增加8.9.93.13475。 ([0576fd5](https://github.com/icqqjs/icqq/commit/0576fd527732bdd72178ee0a97040b3c0f999dbe))
+
 ## [0.6.4](https://github.com/icqqjs/icqq/compare/v0.6.3...v0.6.4) (2023-11-27)
 
 
