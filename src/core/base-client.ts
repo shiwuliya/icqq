@@ -1053,7 +1053,6 @@ function ssoListener(this: BaseClient, cmd: string, payload: Buffer, seq: number
       break
     case "OnlinePush.SidTicketExpired":
       this.writeUni(cmd, BUF0, seq)
-      this.refreshToken(true)
       break
     case "ConfigPushSvc.PushReq": {
       if (payload[0] === 0)
