@@ -380,7 +380,7 @@ export abstract class Contactable {
     }
 
     /** 上传一个语音以备发送(理论上传一次所有群和好友都能发) */
-    async uploadPtt(elem: PttElem): Promise<PttElem> {
+    async uploadPtt(elem: PttElem, brief: string = ''): Promise<PttElem> {
         this.c.logger.debug("开始语音任务")
         if (typeof elem.file === "string" && elem.file.startsWith("protobuf://"))
             return elem
@@ -409,7 +409,6 @@ export abstract class Contactable {
             },
         })
         const payload = await this.c.sendUni("PttStore.GroupPttUp", body)
-        console.log('PttStore.GroupPttUp hex:' + payload.toString('hex'))
         const rsp = pb.decode(payload)[5]
         rsp[2] && drop(rsp[2], rsp[3])
         const ip = rsp[5]?.[0] || rsp[5], port = rsp[6]?.[0] || rsp[6]
@@ -448,7 +447,14 @@ export abstract class Contactable {
             6: buf.length,
             11: 1,
             18: fid,
-            30: Buffer.from([8, 0, 40, 0, 56, 0]),
+            29: codec,
+            30: {
+                1: 0,
+                5: 0,
+                6: '',
+                7: 0,
+                8: brief
+            },
         })
         return {
             type: "record", file: "protobuf://" + Buffer.from(b).toString("base64")

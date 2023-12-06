@@ -84,7 +84,7 @@ export interface PttElem {
 	 * @type {Buffer} ptt buffer (silk or amr)
 	 */
 	file: string | Buffer
-	/** 语言url地址，接收时有效 */
+	/** 语音url地址，接收时有效 */
 	url?: string
 	md5?: string
 	/** 文件大小，接收时有效 */
@@ -307,9 +307,9 @@ export const segment = {
 		}
 	},
 	/** 语音，支持http://,base64:// */
-	record(file: string | Buffer): PttElem {
+	record(file: string | Buffer, data: any = {}): PttElem {
 		return {
-			type: "record", file
+			type: "record", file, ...data
 		}
 	},
 	/** 视频，仅支持本地文件 */
