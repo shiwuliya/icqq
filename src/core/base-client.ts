@@ -1077,6 +1077,7 @@ function ssoListener(this: BaseClient, cmd: string, payload: Buffer, seq: number
           this.sig.bigdata.ip = ''
         }
       }
+      ConfigPushSvc_PushResp.call(this, [nested[1], nested[3]])
     }
       break
   }
@@ -1211,6 +1212,7 @@ async function register(this: BaseClient, logout = false, reflush = false) {
         await this.refreshToken()
         this.requestToken()
       }
+      heartbeatSuccess();
       this[HEARTBEAT] = setInterval(async () => {
         if (typeof this.heartbeat === "function") await this.heartbeat()
         syncTimeDiff.call(this)
@@ -1220,11 +1222,10 @@ async function register(this: BaseClient, logout = false, reflush = false) {
             this.emit("internal.verbose", "Heartbeat.Alive timeout x 2", VerboseLevel.Warn)
             this[NET].destroy()
           })
-
         }).then(heartbeatSuccess)
       }, this.interval * 1000)
     } else {
-      throw new Error("");
+      throw new Error("")
     }
   } catch {
     err = 2
@@ -1232,6 +1233,12 @@ async function register(this: BaseClient, logout = false, reflush = false) {
   //if (!logout && err == 1) this.emit("internal.error.token")
   if (!logout && err == 2) this.emit("internal.error.network", -3, "server is busy(register)")
   return err
+}
+
+async function ConfigPushSvc_PushResp(this: BaseClient, data: any) {
+  const MainServant = jce.encodeStruct(data);
+  const body = jce.encodeWrapper({ MainServant }, "QQService.ConfigPushSvc.MainServant", "PushResp");
+  this.writeUni('ConfigPushSvc.PushResp', body);
 }
 
 async function syncTimeDiff(this: BaseClient) {

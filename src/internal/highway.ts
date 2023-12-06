@@ -162,9 +162,9 @@ export function highwayUpload(this: Client, readable: stream.Readable, obj: High
 
 const agent = new http.Agent({ maxSockets: 10 })
 
-export function highwayHttpUpload(this: Client, readable: stream.Readable, obj: HighwayUploadExt) {
-    const ip = this.sig.bigdata.ip
-    const port = this.sig.bigdata.port
+export function highwayHttpUpload(this: Client, readable: stream.Readable, obj: HighwayUploadExt, ip?: string | number, port?: number) {
+    ip = int32ip2str(ip || this.sig.bigdata.ip)
+    port = port || this.sig.bigdata.port
     if (!port) throw new ApiRejection(ErrorCode.NoUploadChannel, "没有上传通道，如果你刚刚登录，请等待几秒")
 
     this.logger.debug(`highway(http) ip:${ip} port:${port}`)

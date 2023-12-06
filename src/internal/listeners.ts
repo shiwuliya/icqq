@@ -74,7 +74,7 @@ async function onlineListener(this: Client, token: Buffer, nickname: string, gen
     this.sex = gender ? (gender === 1 ? "male" : "female") : "unknown"
     // 恢复之前的状态
     this.status = this.status || OnlineStatus.Online
-    this.setOnlineStatus(this.status).catch(NOOP)
+    this.setOnlineStatus(this.status)
     // 存token
     tokenUpdatedListener.call(this, token)
     this.log_level = this.config.log_level;

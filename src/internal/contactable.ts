@@ -409,33 +409,42 @@ export abstract class Contactable {
             },
         })
         const payload = await this.c.sendUni("PttStore.GroupPttUp", body)
+        console.log('PttStore.GroupPttUp hex:' + payload.toString('hex'))
         const rsp = pb.decode(payload)[5]
         rsp[2] && drop(rsp[2], rsp[3])
         const ip = rsp[5]?.[0] || rsp[5], port = rsp[6]?.[0] || rsp[6]
         const ukey = rsp[7].toHex(), filekey = rsp[11].toHex()
-        const params = {
-            ver: 4679,
-            ukey, filekey,
-            filesize: buf.length,
-            bmd5: hash.toString("hex"),
-            mType: "pttDu",
-            voice_encodec: codec
+        if (this.c.sig.bigdata.port) {
+            await highwayUpload.call(this.c, Readable.from(Buffer.from(buf), { objectMode: false }), {
+                cmdid: CmdID.GroupPtt,
+                md5: hash,
+                size: buf.length,
+                ext: body
+            });
+        } else {
+            const params = {
+                ver: 4679,
+                ukey, filekey,
+                filesize: buf.length,
+                bmd5: hash.toString("hex"),
+                mType: "pttDu",
+                voice_encodec: codec
+            }
+            const url = `http://${int32ip2str(ip)}:${port}/?` + querystring.stringify(params)
+            const headers = {
+                "User-Agent": `QQ/${this.c.apk.version} CFNetwork/1126`,
+                "Net-Type": "Wifi"
+            }
+            await axios.post(url, buf, { headers })
         }
-        const url = `http://${int32ip2str(ip)}:${port}/?` + querystring.stringify(params)
-        const headers = {
-            "User-Agent": `QQ/${this.c.apk.version} CFNetwork/1126`,
-            "Net-Type": "Wifi"
-        }
-        await axios.post(url, buf, { headers })
         this.c.logger.debug("语音任务结束")
-
         const fid = rsp[11].toBuffer()
         const b = pb.encode({
             1: 4,
             2: this.c.uin,
             3: fid,
             4: hash,
-            5: hash.toString("hex") + ".amr",
+            5: hash.toString("hex") + (codec == 1 ? ".slk" : ".amr"),
             6: buf.length,
             11: 1,
             18: fid,

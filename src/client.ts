@@ -229,7 +229,7 @@ export class Client extends BaseClient {
         const config = {
             log_level: "info" as LogLevel,
             platform: Platform.Android,
-            auto_server: false,
+            auto_server: true,
             ignore_self: true,
             resend: true,
             cache_group_member: true,
@@ -307,7 +307,7 @@ export class Client extends BaseClient {
             n++;
             if (n > 10) {
                 n = 0;
-                this.setOnlineStatus().catch(NOOP);
+                this.setOnlineStatus();
             }
         };
 

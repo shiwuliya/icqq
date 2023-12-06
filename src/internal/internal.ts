@@ -17,10 +17,7 @@ const d50 = pb.encode({
 })
 
 export async function setStatus(this: Client, status: OnlineStatus) {
-	if (!status)
-		return false
-	if ([Platform.Watch].includes(this.config.platform as Platform))
-		return false
+	if (!status || [Platform.Watch].includes(this.config.platform as Platform)) return false
 	const d = this.device
 	const SvcReqRegister = jce.encodeStruct([
 		this.uin,
@@ -43,7 +40,7 @@ export async function setStatus(this: Client, status: OnlineStatus) {
  * @param sign {string} 签名
  */
 export async function setSign(this: Client, sign: string) {
-	return await setPersonalSign.call(this,sign)
+	return await setPersonalSign.call(this, sign)
 }
 
 /**
@@ -75,14 +72,14 @@ export async function setPersonalSign(this: Client, sign: string) {
 	const payload = await this.sendUni("Signature.auth", body)
 	return pb.decode(payload)[1] === 0
 }
-export async function getPersonalSign(this: Client):Promise<string> {
+export async function getPersonalSign(this: Client): Promise<string> {
 	let body = {
 		1: this.uin,
 		3: {
 			1: [102]
 		}
 	};
-	let result = await this.sendOidbSvcTrpcTcp('OidbSvcTrpcTcp.0xfe1_2',pb.encode(body))
+	let result = await this.sendOidbSvcTrpcTcp('OidbSvcTrpcTcp.0xfe1_2', pb.encode(body))
 	return result[1][2][2][2].toString()
 }
 export async function setAvatar(this: Client, img: Image) {
@@ -257,20 +254,21 @@ export function loadGPL(this: Client) {
 		this.on('internal.sso', (cmd, payload) => {
 			if (cmd === 'trpc.group_pro.synclogic.SyncLogic.PushFirstView') {
 				const proto = pb.decode(payload)
-				if (!proto[3]) return
-				if (!Array.isArray(proto[3])) proto[3] = [proto[3]]
-				const tmp = new Set<string>()
-				for (let p of proto[3]) {
-					const id = String(p[1]), name = String(p[4])
-					tmp.add(id)
-					if (!this.guilds.has(id))
-						this.guilds.set(id, new Guild(this, id))
-					const guild = this.guilds.get(id)!
-					guild._renew(name, p[3])
-				}
-				for (let [id, _] of this.guilds) {
-					if (!tmp.has(id))
-						this.guilds.delete(id)
+				if (proto[3]) {
+					if (!Array.isArray(proto[3])) proto[3] = [proto[3]]
+					const tmp = new Set<string>()
+					for (let p of proto[3]) {
+						const id = String(p[1]), name = String(p[4])
+						tmp.add(id)
+						if (!this.guilds.has(id))
+							this.guilds.set(id, new Guild(this, id))
+						const guild = this.guilds.get(id)!
+						guild._renew(name, p[3])
+					}
+					for (let [id, _] of this.guilds) {
+						if (!tmp.has(id))
+							this.guilds.delete(id)
+					}
 				}
 				clearTimeout(id)
 				resolve()
