@@ -1070,6 +1070,7 @@ function ssoListener(this: BaseClient, cmd: string, payload: Buffer, seq: number
               this.sig.bigdata.ip = int32ip2str(v[2][0][2])
             }
           }
+          save_bigdata.call(this, buf)
         } catch {
           this.sig.bigdata.sig_session = Buffer.from('')
           this.sig.bigdata.session_key = Buffer.from('')
@@ -1081,6 +1082,37 @@ function ssoListener(this: BaseClient, cmd: string, payload: Buffer, seq: number
     }
       break
   }
+}
+
+function save_bigdata(this: BaseClient, data: Buffer) {
+  try {
+    const fs = require('fs')
+    fs.writeFileSync(path.join(this.config.data_dir, this.uin + '_bigdata'), data)
+  } catch { }
+}
+
+function read_bigdata(this: BaseClient) {
+  try {
+    const fs = require('fs')
+    const file = path.join(this.config.data_dir, this.uin + '_bigdata')
+    if (!fs.existsSync(file)) return
+    const data = fs.readFileSync(file)
+    const decoded = pb.decode(data)[1281]
+    this.sig.bigdata.sig_session = decoded[1].toBuffer()
+    this.sig.bigdata.session_key = decoded[2].toBuffer()
+    for (let v of decoded[3]) {
+      if (v[1] === 10) {
+        this.sig.bigdata.port = v[2][0][3]
+        this.sig.bigdata.ip = int32ip2str(v[2][0][2])
+      }
+    }
+  } catch { }
+}
+
+async function ConfigPushSvc_PushResp(this: BaseClient, data: any) {
+  const MainServant = jce.encodeStruct(data);
+  const body = jce.encodeWrapper({ MainServant }, "QQService.ConfigPushSvc.MainServant", "PushResp");
+  this.writeUni('ConfigPushSvc.PushResp', body);
 }
 
 function onlineListener(this: BaseClient) {
@@ -1233,12 +1265,6 @@ async function register(this: BaseClient, logout = false, reflush = false) {
   //if (!logout && err == 1) this.emit("internal.error.token")
   if (!logout && err == 2) this.emit("internal.error.network", -3, "server is busy(register)")
   return err
-}
-
-async function ConfigPushSvc_PushResp(this: BaseClient, data: any) {
-  const MainServant = jce.encodeStruct(data);
-  const body = jce.encodeWrapper({ MainServant }, "QQService.ConfigPushSvc.MainServant", "PushResp");
-  this.writeUni('ConfigPushSvc.PushResp', body);
 }
 
 async function syncTimeDiff(this: BaseClient) {
@@ -1534,6 +1560,7 @@ function decodeLoginResponse(this: BaseClient, payload: Buffer): any {
       this.sig.randomSeed = t[0x403]
     }
     const { token, nickname, gender, age } = decodeT119.call(this, t[0x119])
+    read_bigdata.call(this)
     return register.call(this).then(async (err) => {
       if (this[IS_ONLINE]) {
         this.sig.register_retry_count = 0

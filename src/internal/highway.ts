@@ -20,6 +20,7 @@ export enum CmdID {
     OfflineFile = 69,
     GroupFile = 71,
     Ocr = 76,
+    //
 }
 
 /** 上传时的附加数据，必须知道流的size和md5 */

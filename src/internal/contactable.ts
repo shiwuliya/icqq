@@ -443,7 +443,7 @@ export abstract class Contactable {
             2: this.c.uin,
             3: fid,
             4: hash,
-            5: hash.toString("hex") + (codec == 1 ? ".slk" : ".amr"),
+            5: hash.toString("hex") + ".amr",
             6: buf.length,
             11: 1,
             18: fid,
@@ -460,6 +460,8 @@ export abstract class Contactable {
             type: "record", file: "protobuf://" + Buffer.from(b).toString("base64")
         }
     }
+
+    //
 
     private async _uploadMultiMsg(compressed: Buffer) {
         const body = pb.encode({
