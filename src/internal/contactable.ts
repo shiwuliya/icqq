@@ -386,7 +386,7 @@ export abstract class Contactable {
             return elem
         const buf = await getPttBuffer(elem.file, transcoding, this.c.config.ffmpeg_path || "ffmpeg")
         const hash = md5(buf)
-        const codec = String(buf.slice(0, 7)).includes("SILK") ? 1 : 0
+        const codec = (String(buf.slice(0, 7)).includes("SILK") || transcoding) ? 1 : 0
         const body = {
             1: 3,
             2: 3,
