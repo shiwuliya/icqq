@@ -380,11 +380,11 @@ export abstract class Contactable {
     }
 
     /** 上传一个语音以备发送(理论上传一次所有群和好友都能发) */
-    async uploadPtt(elem: PttElem, brief: string = ''): Promise<PttElem> {
+    async uploadPtt(elem: PttElem, transcoding: boolean = false, brief: string = ''): Promise<PttElem> {
         this.c.logger.debug("开始语音任务")
         if (typeof elem.file === "string" && elem.file.startsWith("protobuf://"))
             return elem
-        const buf = await getPttBuffer(elem.file, this.c.config.ffmpeg_path || "ffmpeg")
+        const buf = await getPttBuffer(elem.file, transcoding, this.c.config.ffmpeg_path || "ffmpeg")
         const hash = md5(buf)
         const codec = String(buf.slice(0, 7)).includes("SILK") ? 1 : 0
         const body = pb.encode({
@@ -396,16 +396,15 @@ export abstract class Contactable {
                 3: 0,
                 4: hash,
                 5: buf.length,
-                6: hash,
-                7: 5,
+                6: hash.toString("hex") + codec ? ".slk" : ".amr",
+                7: 2,
                 8: 9,
-                9: 4,
-                11: 0,
+                9: 3,
                 10: this.c.apk.version,
-                12: 1,
+                12: elem.seconds || 0,
                 13: 1,
                 14: codec,
-                15: 1,
+                15: 2,
             },
         })
         const payload = await this.c.sendUni("PttStore.GroupPttUp", body)
@@ -419,7 +418,7 @@ export abstract class Contactable {
                 md5: hash,
                 size: buf.length,
                 ext: body
-            });
+            })
         } else {
             const params = {
                 ver: 4679,
@@ -445,8 +444,10 @@ export abstract class Contactable {
             4: hash,
             5: hash.toString("hex") + ".amr",
             6: buf.length,
+            8: 0,
             11: 1,
             18: fid,
+            19: elem.seconds || 0,
             29: codec,
             30: {
                 1: 0,
@@ -460,8 +461,6 @@ export abstract class Contactable {
             type: "record", file: "protobuf://" + Buffer.from(b).toString("base64")
         }
     }
-
-    //
 
     private async _uploadMultiMsg(compressed: Buffer) {
         const body = pb.encode({
@@ -766,12 +765,12 @@ async function* concatStreams(readable1: Readable, readable2: Readable) {
         yield chunk
 }
 
-async function getPttBuffer(file: string | Buffer, ffmpeg = "ffmpeg"): Promise<Buffer> {
+async function getPttBuffer(file: string | Buffer, transcoding = false, ffmpeg = "ffmpeg"): Promise<Buffer> {
     if (file instanceof Buffer || file.startsWith("base64://")) {
         // Buffer或base64
         const buf = file instanceof Buffer ? file : Buffer.from(file.slice(9), "base64")
         const head = buf.slice(0, 7).toString()
-        if (head.includes("SILK") || head.includes("AMR")) {
+        if (head.includes("SILK") || head.includes("AMR") || transcoding) {
             return buf
         } else {
             const tmpfile = path.join(TMP_DIR, uuid())
@@ -784,7 +783,7 @@ async function getPttBuffer(file: string | Buffer, ffmpeg = "ffmpeg"): Promise<B
         const tmpfile = path.join(TMP_DIR, uuid())
         await pipeline(readable.pipe(new DownloadTransform), fs.createWriteStream(tmpfile))
         const head = await read7Bytes(tmpfile)
-        if (head.includes("SILK") || head.includes("AMR")) {
+        if (head.includes("SILK") || head.includes("AMR") || transcoding) {
             const buf = await fs.promises.readFile(tmpfile)
             fs.unlink(tmpfile, NOOP)
             return buf
@@ -796,7 +795,7 @@ async function getPttBuffer(file: string | Buffer, ffmpeg = "ffmpeg"): Promise<B
         file = String(file).replace(/^file:\/{2}/, "")
         IS_WIN && file.startsWith("/") && (file = file.slice(1))
         const head = await read7Bytes(file)
-        if (head.includes("SILK") || head.includes("AMR")) {
+        if (head.includes("SILK") || head.includes("AMR") || transcoding) {
             return fs.promises.readFile(file)
         } else {
             return audioTrans(file, ffmpeg)

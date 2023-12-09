@@ -89,7 +89,7 @@ export interface PttElem {
 	md5?: string
 	/** 文件大小，接收时有效 */
 	size?: number
-	/** 语音时长（秒），接收时有效 */
+	/** 语音时长（秒） */
 	seconds?: number
 }
 
