@@ -387,7 +387,7 @@ export abstract class Contactable {
         const buf = await getPttBuffer(elem.file, transcoding, this.c.config.ffmpeg_path || "ffmpeg")
         const hash = md5(buf)
         const codec = String(buf.slice(0, 7)).includes("SILK") ? 1 : 0
-        const body = pb.encode({
+        const body = {
             1: 3,
             2: 3,
             5: {
@@ -401,13 +401,13 @@ export abstract class Contactable {
                 8: 9,
                 9: 3,
                 10: this.c.apk.version,
-                12: elem.seconds || 0,
+                12: elem.seconds || 1,
                 13: 1,
                 14: codec,
                 15: 2,
             },
-        })
-        const payload = await this.c.sendUni("PttStore.GroupPttUp", body)
+        }
+        const payload = await this.c.sendUni("PttStore.GroupPttUp", pb.encode(body))
         const rsp = pb.decode(payload)[5]
         rsp[2] && drop(rsp[2], rsp[3])
         const ip = rsp[5]?.[0] || rsp[5], port = rsp[6]?.[0] || rsp[6]
@@ -417,7 +417,7 @@ export abstract class Contactable {
                 cmdid: CmdID.GroupPtt,
                 md5: hash,
                 size: buf.length,
-                ext: body
+                ext: pb.encode(body)
             })
         } else {
             const params = {
@@ -437,7 +437,7 @@ export abstract class Contactable {
         }
         this.c.logger.debug("语音任务结束")
         const fid = rsp[11].toBuffer()
-        const b = pb.encode({
+        const b: any = {
             1: 4,
             2: this.c.uin,
             3: fid,
@@ -447,7 +447,6 @@ export abstract class Contactable {
             8: 0,
             11: 1,
             18: fid,
-            19: elem.seconds || 0,
             29: codec,
             30: {
                 1: 0,
@@ -456,9 +455,10 @@ export abstract class Contactable {
                 7: 0,
                 8: brief
             },
-        })
+        }
+        if (elem.seconds) b[19] = elem.seconds
         return {
-            type: "record", file: "protobuf://" + Buffer.from(b).toString("base64")
+            type: "record", file: "protobuf://" + Buffer.from(pb.encode(b)).toString("base64")
         }
     }
 
