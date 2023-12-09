@@ -396,7 +396,7 @@ export abstract class Contactable {
                 3: 0,
                 4: hash,
                 5: buf.length,
-                6: hash.toString("hex") + codec ? ".slk" : ".amr",
+                6: hash.toString("hex") + (codec ? ".slk" : ".amr"),
                 7: 2,
                 8: 9,
                 9: 3,
