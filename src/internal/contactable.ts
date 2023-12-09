@@ -765,7 +765,7 @@ async function* concatStreams(readable1: Readable, readable2: Readable) {
         yield chunk
 }
 
-async function getPttBuffer(file: string | Buffer, transcoding = true, ffmpeg = "ffmpeg"): Promise<Buffer> {
+export async function getPttBuffer(file: string | Buffer, transcoding = true, ffmpeg = "ffmpeg"): Promise<Buffer> {
     if (file instanceof Buffer || file.startsWith("base64://")) {
         // Buffer或base64
         const buf = file instanceof Buffer ? file : Buffer.from(file.slice(9), "base64")
