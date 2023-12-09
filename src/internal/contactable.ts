@@ -380,13 +380,13 @@ export abstract class Contactable {
     }
 
     /** 上传一个语音以备发送(理论上传一次所有群和好友都能发) */
-    async uploadPtt(elem: PttElem, transcoding: boolean = false, brief: string = ''): Promise<PttElem> {
+    async uploadPtt(elem: PttElem, transcoding: boolean = true, brief: string = ''): Promise<PttElem> {
         this.c.logger.debug("开始语音任务")
         if (typeof elem.file === "string" && elem.file.startsWith("protobuf://"))
             return elem
         const buf = await getPttBuffer(elem.file, transcoding, this.c.config.ffmpeg_path || "ffmpeg")
         const hash = md5(buf)
-        const codec = (String(buf.slice(0, 7)).includes("SILK") || transcoding) ? 1 : 0
+        const codec = (String(buf.slice(0, 7)).includes("SILK") || !transcoding) ? 1 : 0
         const body = {
             1: 3,
             2: 3,
@@ -765,12 +765,12 @@ async function* concatStreams(readable1: Readable, readable2: Readable) {
         yield chunk
 }
 
-async function getPttBuffer(file: string | Buffer, transcoding = false, ffmpeg = "ffmpeg"): Promise<Buffer> {
+async function getPttBuffer(file: string | Buffer, transcoding = true, ffmpeg = "ffmpeg"): Promise<Buffer> {
     if (file instanceof Buffer || file.startsWith("base64://")) {
         // Buffer或base64
         const buf = file instanceof Buffer ? file : Buffer.from(file.slice(9), "base64")
         const head = buf.slice(0, 7).toString()
-        if (head.includes("SILK") || head.includes("AMR") || transcoding) {
+        if (head.includes("SILK") || head.includes("AMR") || !transcoding) {
             return buf
         } else {
             const tmpfile = path.join(TMP_DIR, uuid())
@@ -783,7 +783,7 @@ async function getPttBuffer(file: string | Buffer, transcoding = false, ffmpeg =
         const tmpfile = path.join(TMP_DIR, uuid())
         await pipeline(readable.pipe(new DownloadTransform), fs.createWriteStream(tmpfile))
         const head = await read7Bytes(tmpfile)
-        if (head.includes("SILK") || head.includes("AMR") || transcoding) {
+        if (head.includes("SILK") || head.includes("AMR") || !transcoding) {
             const buf = await fs.promises.readFile(tmpfile)
             fs.unlink(tmpfile, NOOP)
             return buf
@@ -795,7 +795,7 @@ async function getPttBuffer(file: string | Buffer, transcoding = false, ffmpeg =
         file = String(file).replace(/^file:\/{2}/, "")
         IS_WIN && file.startsWith("/") && (file = file.slice(1))
         const head = await read7Bytes(file)
-        if (head.includes("SILK") || head.includes("AMR") || transcoding) {
+        if (head.includes("SILK") || head.includes("AMR") || !transcoding) {
             return fs.promises.readFile(file)
         } else {
             return audioTrans(file, ffmpeg)
