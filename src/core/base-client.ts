@@ -1141,7 +1141,7 @@ async function parseSso(this: BaseClient, buf: Buffer) {
   let cmd = ''
   let payload = BUF0
   if (retcode !== 0) {
-    this.emit("internal.error.token", retcode)
+    if (retcode > -10010) this.emit("internal.error.token", retcode)
     //throw new Error("unsuccessful retcode: " + retcode)
   } else {
     let offset = buf.readUInt32BE(12) + 12
