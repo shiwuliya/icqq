@@ -1,5 +1,13 @@
 # Changelog
 
+## [0.6.6](https://github.com/icqqjs/icqq/compare/v0.6.5...v0.6.6) (2023-12-20)
+
+
+### Bug Fixes
+
+* ？ ([586d80b](https://github.com/icqqjs/icqq/commit/586d80be24922d50721afc373fc4fc1305bfa611))
+* 增加9.0.0.14110。 ([f8105cb](https://github.com/icqqjs/icqq/commit/f8105cbba66d567062539d24a3a0c89f1e85e454))
+
 ## [0.6.5](https://github.com/icqqjs/icqq/compare/v0.6.4...v0.6.5) (2023-11-30)
 
 
