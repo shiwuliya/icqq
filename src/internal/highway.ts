@@ -119,7 +119,7 @@ export function highwayUpload(this: Client, readable: stream.Readable, obj: High
                     readable.unpipe(highway).destroy()
                     highway.unpipe(socket).destroy()
                     socket.end()
-                    reject(new ApiRejection(rsp[3], "unknown highway error"))
+                    reject(new ApiRejection(rsp[3], `[${obj.md5.toString('hex')}]unknown highway error`))
                 } else {
                     const percentage = ((rsp[2][3] + rsp[2][4]) / rsp[2][2] * 100).toFixed(2)
                     //rsp[2][9].toBuffer()
