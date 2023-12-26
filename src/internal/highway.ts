@@ -97,67 +97,82 @@ export function highwayUpload(this: Client, readable: stream.Readable, obj: High
     port = port || this.sig.bigdata.port
     if (!port) throw new ApiRejection(ErrorCode.NoUploadChannel, "没有上传通道，如果你刚刚登录，请等待几秒")
     if (!readable) throw new ApiRejection(ErrorCode.HighwayFileTypeError, "不支持的file类型")
-    this.logger.debug(`highway ip:${ip} port:${port}`)
     return new Promise((resolve, reject) => {
         const highway = new HighwayTransform(this, obj)
-        const socket = net.connect(
-            port as number, ip as string,
-            () => {
-                readable.pipe(highway).pipe(socket, { end: false })
-            }
-        )
-        const handleRspHeader = (header: Buffer) => {
-            const rsp = pb.decode(header)
-            if (typeof rsp[3] === "number" && rsp[3] !== 0) {
-                this.logger.warn(`highway upload failed (code: ${rsp[3]})`)
-                readable.unpipe(highway).destroy()
-                highway.unpipe(socket).destroy()
-                socket.end()
-                reject(new ApiRejection(rsp[3], "unknown highway error"))
-            } else {
-                const percentage = ((rsp[2][3] + rsp[2][4]) / rsp[2][2] * 100).toFixed(2)
-                this.logger.debug(`highway chunk uploaded (${percentage}%)`)
-                if (typeof obj.callback === "function")
-                    obj.callback(percentage)
-                if (Number(percentage) >= 100) {
-                    socket.end()
-                    resolve(rsp[7])
+        const createSocket = (ip: any, port: any) => {
+            this.logger.debug(`[${obj.md5.toString('hex')}]highway ip:${ip} port:${port}`)
+            let timeout: any = -1
+            const connect_timeout: any = setTimeout(() => {
+                socket.destroy(new Error(`[${obj.md5.toString('hex')}]highway ip:${ip} port:${port} connect timeout`))
+            }, 6000)
+            const socket = net.connect(
+                port as number, ip as string,
+                () => {
+                    clearTimeout(connect_timeout)
+                    readable.pipe(highway).pipe(socket, { end: false })
                 }
-            }
-        }
-        let buf = BUF0
-        socket.on("data", (chunk: Buffer) => {
-            try {
-                buf = buf.length ? Buffer.concat([buf, chunk]) : chunk
-                while (buf.length >= 5) {
-                    const len = buf.readInt32BE(1)
-                    if (buf.length >= len + 10) {
-                        handleRspHeader(buf.slice(9, len + 9))
-                        buf = buf.slice(len + 10)
-                    } else {
-                        break
+            )
+            const handleRspHeader = (header: Buffer) => {
+                const rsp = pb.decode(header)
+                if (typeof rsp[3] === "number" && rsp[3] !== 0) {
+                    this.logger.warn(`[${obj.md5.toString('hex')}]highway upload failed (code: ${rsp[3]})`)
+                    readable.unpipe(highway).destroy()
+                    highway.unpipe(socket).destroy()
+                    socket.end()
+                    reject(new ApiRejection(rsp[3], "unknown highway error"))
+                } else {
+                    const percentage = ((rsp[2][3] + rsp[2][4]) / rsp[2][2] * 100).toFixed(2)
+                    //rsp[2][9].toBuffer()
+                    this.logger.debug(`[${obj.md5.toString('hex')}]highway chunk uploaded (${percentage}%)`)
+                    if (typeof obj.callback === "function")
+                        obj.callback(percentage)
+                    if (Number(percentage) >= 100) {
+                        socket.end()
+                        resolve(rsp[7])
                     }
                 }
-            } catch (err) {
-                this.logger.error(err)
             }
-        })
-        socket.on("close", () => {
-            reject(new ApiRejection(ErrorCode.HighwayNetworkError, "上传遇到网络错误"))
-        })
-        socket.on("error", (err: Error) => {
-            this.logger.error(err)
-        })
-        readable.on("error", (err) => {
-            this.logger.error(err)
-            socket.end()
-        })
-        if (obj.timeout! > 0) {
-            setTimeout(() => {
+            let buf = BUF0
+            socket.on("data", (chunk: Buffer) => {
+                try {
+                    buf = buf.length ? Buffer.concat([buf, chunk]) : chunk
+                    while (buf.length >= 5) {
+                        const len = buf.readInt32BE(1)
+                        if (buf.length >= len + 10) {
+                            handleRspHeader(buf.slice(9, len + 9))
+                            buf = buf.slice(len + 10)
+                        } else {
+                            break
+                        }
+                    }
+                } catch (err) {
+                    this.logger.error(err)
+                }
+            })
+            socket.on("close", (had_error: boolean) => {
+                if (had_error && ip != int32ip2str(this.sig.bigdata.ip) && this.sig.bigdata.port) {
+                    clearTimeout(timeout)
+                    this.logger.error(`[${obj.md5.toString('hex')}]highway ip:${ip} port:${port} network error`)
+                    createSocket(int32ip2str(this.sig.bigdata.ip), this.sig.bigdata.port)
+                    return;
+                }
+                reject(new ApiRejection(ErrorCode.HighwayNetworkError, `[${obj.md5.toString('hex')}]上传遇到网络错误`))
+            })
+            socket.on("error", (err: Error) => {
+                this.logger.error(err)
+            })
+            readable.on("error", (err) => {
+                this.logger.error(err)
                 socket.end()
-                reject(new ApiRejection(ErrorCode.HighwayTimeout, `上传超时(${obj.timeout}s)`))
-            }, obj.timeout! * 1000)
+            })
+            if (obj.timeout! > 0) {
+                timeout = setTimeout(() => {
+                    socket.end()
+                    reject(new ApiRejection(ErrorCode.HighwayTimeout, `[${obj.md5.toString('hex')}]上传超时(${obj.timeout}s)`))
+                }, obj.timeout! * 1000)
+            }
         }
+        createSocket(ip, port)
     })
 }
 
