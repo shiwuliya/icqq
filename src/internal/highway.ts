@@ -101,7 +101,7 @@ export function highwayUpload(this: Client, readable: stream.Readable, obj: High
         const highway = new HighwayTransform(this, obj)
         const createSocket = (ip: any, port: any) => {
             this.logger.debug(`[${obj.md5.toString('hex')}]highway ip:${ip} port:${port}`)
-            let timeout: any = -1
+            let upload_timeout: any = -1
             const connect_timeout: any = setTimeout(() => {
                 socket.destroy(new Error(`[${obj.md5.toString('hex')}]highway ip:${ip} port:${port} connect timeout`))
             }, 6000)
@@ -109,6 +109,12 @@ export function highwayUpload(this: Client, readable: stream.Readable, obj: High
                 port as number, ip as string,
                 () => {
                     clearTimeout(connect_timeout)
+                    if (obj.timeout! > 0) {
+                        upload_timeout = setTimeout(() => {
+                            socket.end()
+                            reject(new ApiRejection(ErrorCode.HighwayTimeout, `[${obj.md5.toString('hex')}]上传超时(${obj.timeout}s)`))
+                        }, obj.timeout! * 1000)
+                    }
                     readable.pipe(highway).pipe(socket, { end: false })
                 }
             )
@@ -150,8 +156,8 @@ export function highwayUpload(this: Client, readable: stream.Readable, obj: High
                 }
             })
             socket.on("close", (had_error: boolean) => {
+                clearTimeout(upload_timeout)
                 if (had_error && ip != int32ip2str(this.sig.bigdata.ip) && this.sig.bigdata.port) {
-                    clearTimeout(timeout)
                     this.logger.error(`[${obj.md5.toString('hex')}]highway ip:${ip} port:${port} network error`)
                     createSocket(int32ip2str(this.sig.bigdata.ip), this.sig.bigdata.port)
                     return;
@@ -165,12 +171,6 @@ export function highwayUpload(this: Client, readable: stream.Readable, obj: High
                 this.logger.error(err)
                 socket.end()
             })
-            if (obj.timeout! > 0) {
-                timeout = setTimeout(() => {
-                    socket.end()
-                    reject(new ApiRejection(ErrorCode.HighwayTimeout, `[${obj.md5.toString('hex')}]上传超时(${obj.timeout}s)`))
-                }, obj.timeout! * 1000)
-            }
         }
         createSocket(ip, port)
     })
