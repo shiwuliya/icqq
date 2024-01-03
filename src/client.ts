@@ -351,12 +351,13 @@ export class Client extends BaseClient {
             this.password_md5 = md5pass;
         }
         if ((await this.switchQQVer())) {
-            this.logger.info(`[${uin}]获取到签名Api协议版本：${this.config.ver}`);
+            this.logger.info(`[${uin}]获取到签名Api协议版本：${this.statistics.ver}`);
         }
-        let apk_info = `${this.apk.display}_${this.apk.version}`;
+        const apk_info = `${this.apk.display}_${this.apk.version}`;
         this.logger.info(`[${uin}]使用协议：${apk_info}`);
         this.uin = uin || this.uin;
         await this.updateCmdWhiteList();
+        this.login_timer = null
         try {
             if (!uin) throw new Error();
             const token_path = path.join(this.dir, this.uin + "_token");

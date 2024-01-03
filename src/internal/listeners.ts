@@ -2,7 +2,7 @@ import * as fs from "fs"
 import * as path from "path"
 import { PNG } from "pngjs"
 import { jce } from "../core"
-import { NOOP, OnlineStatus } from "../common"
+import { BUF0, NOOP, OnlineStatus } from "../common"
 import { getFrdSysMsg, getGrpSysMsg } from "./sysmsg"
 import { pbGetMsg, pushReadedListener } from "./pbgetmsg"
 import {
@@ -92,6 +92,7 @@ async function onlineListener(this: Client, token: Buffer, nickname: string, gen
 }
 
 function tokenUpdatedListener(this: Client, token: Buffer) {
+    if (token == BUF0) return
     const token_path = path.join(this.dir, this.uin + '_token')
     if (fs.existsSync(token_path)) fs.renameSync(token_path, token_path + '_bak')
     fs.writeFile(token_path, token, () => {
@@ -159,33 +160,32 @@ function verifyListener(this: Client, url: string, phone: string) {
  * @param code -2服务器忙 -3上线失败(需要删token)
  */
 function loginErrorListener(this: Client, code: number, message: string) {
-    // toke expired
-    if (!code || code === -10003) {
-        if (code === -10003) {
-            //fs.unlink(path.join(this.dir, this.uin + "_token"), NOOP)
-            this.sig.token_retry_count++
-            this.logger.mark("登录token过期")
-            this.em('system.token.expire')
-            return
-        }
+    if (this.login_timer) return
+    // token expired
+    if (!code || code < -100) {
         this.logger.mark("登录token过期")
         this.em('system.token.expire')
+        if (code === -10003) {
+            this.sig.token_retry_count = this.token_retry_num
+        } else {
+            this.sig.token_retry_count++
+        }
         //fs.unlink(path.join(this.dir, this.uin + "_token"), NOOP)
-        this.sig.token_retry_count++
         this.logger.mark("3秒后重新连接")
-        setTimeout(this.login.bind(this), 3000)
+        this.login_timer = setTimeout(this.login.bind(this), 3000)
     }
     // network error
     else if (code < 0) {
         this.terminate()
         this.logger.error(message)
-        if (code === -3) //register failed
+        if (code === -3) { //register failed
             //fs.unlink(path.join(this.dir, this.uin + "_token"), NOOP)
-            this.sig.token_retry_count++
+            this.sig.token_retry_count = this.token_retry_num
+        }
         const t = this.config.reconn_interval
         if (t >= 1) {
             this.logger.mark(t + "秒后重新连接")
-            setTimeout(this.login.bind(this, this.uin), t * 1000)
+            this.login_timer = setTimeout(this.login.bind(this, this.uin), t * 1000)
         }
         this.em("system.offline.network", { message })
     }

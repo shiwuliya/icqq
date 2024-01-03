@@ -111,11 +111,11 @@ export class BaseClient extends Trapper {
     tgtgt: randomBytes(16),
     tgt: BUF0,
     skey: BUF0,
+    a1: BUF0,
     d2: BUF0,
     d2key: BUF0,
-    t103: BUF0,
+    st_web: BUF0,
     t104: BUF0,
-    t106: BUF0,
     t174: BUF0,
     qrsig: BUF0,
     t543: BUF0,
@@ -160,6 +160,7 @@ export class BaseClient extends Trapper {
   protected token_retry_num = 2
   /** 上线失败重试次数 */
   protected register_retry_num = 3
+  protected login_timer: NodeJS.Timeout | null = null
   /** 数据统计 */
   protected readonly statistics = {
     start_time: timestamp(),
@@ -174,6 +175,7 @@ export class BaseClient extends Trapper {
     sign_api_addr: "",
     sign_api_init: false,
     remote_port: 0,
+    ver: ''
   }
   protected signCmd = [
     'wtlogin.login',
@@ -323,11 +325,11 @@ export class BaseClient extends Trapper {
       await this.setSignServer(this.config.sign_api_addr);
     }
     if (this.config.ver) return false;
-    const old_ver = this.config.ver;
-    this.config.ver = !ver ? await this.getApiQQVer() : ver;
-    if (old_ver != this.config.ver) {
-      const new_apk = this.getApkInfo(this.config.platform, this.config.ver);
-      if (new_apk.ver === this.config.ver) {
+    const old_ver = this.statistics.ver;
+    this.statistics.ver = ver || await this.getApiQQVer();
+    if (old_ver != this.statistics.ver) {
+      const new_apk = this.getApkInfo(this.config.platform, this.statistics.ver);
+      if (new_apk.ver === this.statistics.ver) {
         Object.defineProperty(this, "apk", { writable: true });
         this.apk = new_apk;
         Object.defineProperty(this, "apk", { writable: false });
@@ -371,6 +373,8 @@ export class BaseClient extends Trapper {
           return t(0x544, 2, 9);
         case '810_a':
           return t(0x544, 2, 10);
+        case '810_f':
+          return t(0x544, 2, 15);
       }
       return BUF0;
     };
@@ -546,49 +550,82 @@ export class BaseClient extends Trapper {
   }
 
   /** 使用接收到的token登录 */
-  async tokenLogin(token: Buffer = BUF0) {
-    if (!this.device.qImei36 || !this.device.qImei16) {
-      await this.device.getQIMEI()
-    }
+  async tokenLogin(token: Buffer = BUF0, cmd = 11) {
     if (token != BUF0) {
       this.sig.session = randomBytes(4)
       this.sig.randkey = randomBytes(16)
       this[ECDH] = new Ecdh
       try {
         const stream = Readable.from(token, { objectMode: false });
-        this.sig.d2key = stream.read(stream.read(2).readUInt16BE());
-        this.sig.d2 = stream.read(stream.read(2).readUInt16BE());
-        this.sig.tgt = stream.read(stream.read(2).readUInt16BE());
-        this.sig.ticket_key = stream.read(stream.read(2).readUInt16BE());
-        this.sig.sig_key = stream.read(stream.read(2).readUInt16BE());
-        this.sig.srm_token = stream.read(stream.read(2).readUInt16BE());
-        this.sig.tgt = stream.read(stream.read(2).readUInt16BE());
-        this.sig.md5Pass = stream.read(stream.read(2).readUInt16BE());
-        this.sig.device_token = stream.read(stream.read(2).readUInt16BE());
-        try {
-          this.sig.t543 = stream.read(stream.read(2).readUInt16BE()) || BUF0;
-        } catch { }
-      } catch {
+        let info = stream.read(stream.read(2).readUInt16BE());
+        if ((String(info) || '').includes('icqq')) {
+          info = JSON.parse(String(info));
+          if ((!this.statistics.ver && info.apk.version != this.apk.version) && await this.switchQQVer(info.apk.ver)) {
+            this.emit("internal.verbose", `[${this.uin}]获取到token协议版本：${this.statistics.ver}`, VerboseLevel.Info);
+            const apk_info = `${this.apk.display}_${this.apk.version}`;
+            this.emit("internal.verbose", `[${this.uin}]使用协议：${apk_info}`, VerboseLevel.Info);
+          }
+          const emp_time = info.emp_time;
+          const t119 = stream.read(stream.read(2).readUInt16BE());
+          this.sig.tgtgt = stream.read(stream.read(2).readUInt16BE());
+          this.sig.a1 = stream.read(stream.read(2).readUInt16BE());
+          this.sig.d2 = stream.read(stream.read(2).readUInt16BE());
+          this.sig.d2key = stream.read(stream.read(2).readUInt16BE());
+          this.sig.tgt = stream.read(stream.read(2).readUInt16BE());
+          this.sig.tgt_key = stream.read(stream.read(2).readUInt16BE());
+          this.sig.ticket_key = stream.read(stream.read(2).readUInt16BE());
+          this.sig.sig_key = stream.read(stream.read(2).readUInt16BE());
+          this.sig.srm_token = stream.read(stream.read(2).readUInt16BE());
+          this.sig.device_token = stream.read(stream.read(2).readUInt16BE());
+          this.sig.t543 = stream.read(stream.read(2).readUInt16BE());
+          const { nickname, gender, age } = decodeT119.call(this, t119);
+          read_bigdata.call(this)
+          if ((await register.call(this)) === 0) {
+            this.sig.emp_time = emp_time;
+            this.sig.register_retry_count = 0;
+            await this.updateCmdWhiteList();
+            await this.ssoPacketListHandler(null);
+            this.emit("internal.online", BUF0, nickname, gender, age);
+            return BUF0;
+          }
+        } else {
+          this.sig.d2key = info;
+          this.sig.d2 = stream.read(stream.read(2).readUInt16BE());
+          this.sig.tgt = stream.read(stream.read(2).readUInt16BE());
+          this.sig.ticket_key = stream.read(stream.read(2).readUInt16BE());
+          this.sig.sig_key = stream.read(stream.read(2).readUInt16BE());
+          this.sig.srm_token = stream.read(stream.read(2).readUInt16BE());
+          this.sig.tgt = stream.read(stream.read(2).readUInt16BE());
+          this.sig.md5Pass = stream.read(stream.read(2).readUInt16BE());
+          this.sig.device_token = stream.read(stream.read(2).readUInt16BE());
+          try {
+            this.sig.t543 = stream.read(stream.read(2).readUInt16BE()) || BUF0;
+          } catch { }
+        }
+      } catch (err) {
+        console.log(err);
         this.emit("internal.verbose", '旧版token于当前版本不兼容，请手动删除token后重新运行', VerboseLevel.Error);
         this.emit("internal.verbose", '若非无法登录，请勿随意升级版本', VerboseLevel.Warn);
         this.emit("internal.error.login", 123456, `token不兼容`);
         return BUF0;
       }
     }
+    if (!this.device.qImei36 || !this.device.qImei16) {
+      await this.device.getQIMEI()
+    }
+    cmd = (this.sig.srm_token?.length && this.sig.a1?.length) ? cmd : 11;
 
-    this.sig.tgtgt = md5(this.sig.d2key);
+    this.sig.tgtgt = cmd == 15 ? this.sig.tgtgt : md5(this.sig.d2key);
     const t = tlv.getPacker(this);
     const tlvs = [
       t(0x8),
       t(0x18),
       t(0x100),
-      t(0x108),
-      t(0x10a),
-      t(0x112),
+
       t(0x116),
       t(0x141),
       t(0x142),
-      t(0x143),
+
       t(0x144),
       t(0x145),
       t(0x147),
@@ -597,11 +634,30 @@ export class BaseClient extends Trapper {
       t(0x187),
       t(0x188),
       t(0x511),
-      //t(0x542),
-      //t(0x548)
+      t(0x542),
+      t(0x548)
     ];
+    if (cmd === 15) {
+      tlvs.push(...[
+        t(0x1),
+        new Writer().writeU16(0x106).writeTlv(this.sig.a1).read(),
+        t(0x107),
+        t(0x16a),
+        t(0x191),
+        t(0x516),
+        t(0x521, 0)
+      ]);
+    } else {
+      tlvs.push(...[
+        t(0x108),
+        t(0x10a),
+        t(0x112),
+        t(0x143),
+      ]);
+    }
+
     if (this.apk.ssover >= 5) {
-      tlvs.push(await this.getT544('810_a'));
+      tlvs.push(await this.getT544(cmd === 15 ? '810_f' : '810_a'));
       if (this.sig.t553) tlvs.push(t(0x553));
     }
     if (this.device.qImei16) {
@@ -611,8 +667,9 @@ export class BaseClient extends Trapper {
       tlvs.push(t(0x194));
       tlvs.push(t(0x202));
     }
+
     let writer = new Writer()
-      .writeU16(11)
+      .writeU16(cmd)
       .writeU16(tlvs.length);
     for (let tlv of tlvs) {
       writer.writeBytes(tlv);
@@ -839,7 +896,7 @@ export class BaseClient extends Trapper {
         t(0x521, this.apk.device_type),
         new Writer().writeU16(0x318).writeTlv(t318).read(),
       ]
-      if (this.apk.ssover >= 12) {
+      if (this.apk.ssover >= 5) {
         tlvs.push(t(0x542))
         tlvs.push(await this.getT544('810_9'))
         tlvs.push(t(0x548))
@@ -959,7 +1016,7 @@ export class BaseClient extends Trapper {
     })
   }
 
-  private async [FN_SEND_LOGIN](cmd: LoginCmd, body: Buffer) {
+  private async[FN_SEND_LOGIN](cmd: LoginCmd, body: Buffer) {
     if (this[IS_ONLINE] || this[LOGIN_LOCK])
       return
     const pkt = await buildLoginPacket.call(this, cmd, body)
@@ -1141,7 +1198,36 @@ async function parseSso(this: BaseClient, buf: Buffer) {
   let cmd = ''
   let payload = BUF0
   if (retcode !== 0) {
-    if (retcode > -10010) this.emit("internal.error.token", retcode)
+    const ssoFailCode = {
+      A3_Error: 210,
+      VerifyCode: -10000,
+      D2Expired: -10001,
+      InvalidD2: -10003,
+      D2Key2NotExisted: -10004,
+      D2Required: -10005,
+      UinNoMatch: -10006,
+      VerifyCodeTimeout: -10007,
+      RequiresD2: -10008,
+      InvalidCookie: -10009,
+      FORCEQUIT_PARSEFAIL: -10106,
+      UserExtired: -12003
+    }
+    switch (retcode) {
+      case ssoFailCode.A3_Error:
+      case ssoFailCode.D2Expired:
+      //case ssoFailCode.InvalidD2:
+      case ssoFailCode.D2Key2NotExisted:
+      case ssoFailCode.D2Required:
+      case ssoFailCode.UinNoMatch:
+      case ssoFailCode.RequiresD2:
+      case ssoFailCode.FORCEQUIT_PARSEFAIL:
+      case ssoFailCode.UserExtired:
+        this.emit("internal.error.token")
+        break
+      case ssoFailCode.InvalidD2:
+        this.emit("internal.error.token", retcode)
+      default:
+    }
     //throw new Error("unsuccessful retcode: " + retcode)
   } else {
     let offset = buf.readUInt32BE(12) + 12
@@ -1189,8 +1275,7 @@ async function packetListener(this: BaseClient, pkt: Buffer) {
     }
     const sso = await parseSso.call(this, decrypted)
     if (sso.retcode !== 0) {
-      this.emit("internal.verbose", `recv:retcode:${sso.retcode} seq:${sso.seq}`, VerboseLevel.Error)
-      return
+      sso.cmd = `retcode:${sso.retcode}`;
     }
     this.emit("internal.verbose", `recv:${sso.cmd} seq:${sso.seq}`, VerboseLevel.Debug)
     if (this[HANDLERS].has(sso.seq))
@@ -1315,12 +1400,15 @@ async function refreshToken(this: BaseClient, force: boolean = false) {
     if (type === 0) {
       const { token } = decodeT119.call(this, t[0x119])
       await register.call(this, false, true)
-      if (this[IS_ONLINE])
+      if (this[IS_ONLINE]) {
         this.emit("internal.token", token)
+        return true;
+      }
     }
   } catch (e: any) {
     this.emit("internal.verbose", "refresh token error: " + e?.message, VerboseLevel.Error)
   }
+  return false;
 }
 
 function readTlv(r: Readable) {
@@ -1471,15 +1559,16 @@ async function buildUniPkt(this: BaseClient, cmd: string, body: Uint8Array, seq 
 }
 
 function decodeT119(this: BaseClient, t119: Buffer) {
+  const _t119 = Buffer.from(t119);
+  const _t119key = Buffer.from(this.sig.tgtgt);
   const r = Readable.from(tea.decrypt(t119, this.sig.tgtgt), { objectMode: false })
   r.read(2)
   const t = readTlv(r)
-  this.sig.t543 = t[0x543] || this.sig.t543
   this.sig.tgt = t[0x10a] || this.sig.tgt
   this.sig.tgt_key = t[0x10d] || this.sig.tgt_key
   this.sig.st_key = t[0x10e] || this.sig.st_key
-  this.sig.t103 = t[0x103] || this.sig.t103
-  this.sig.t106 = t[0x106] || this.sig.t106
+  this.sig.st_web = t[0x103] || this.sig.st_web
+  this.sig.a1 = t[0x106] || this.sig.a1
   this.sig.srm_token = t[0x16a] || this.sig.srm_token
   this.sig.skey = t[0x120] || this.sig.skey
   this.sig.d2 = t[0x143] || this.sig.d2
@@ -1489,6 +1578,7 @@ function decodeT119(this: BaseClient, t119: Buffer) {
   this.sig.sig_key = t[0x133] || this.sig.sig_key
   this.sig.ticket_key = t[0x134] || this.sig.ticket_key
   this.sig.device_token = t[0x322] || this.sig.device_token
+  this.sig.t543 = t[0x543] || this.sig.t543
   this.sig.emp_time = timestamp()
   this.uid = this.sig.t543.length > 6 ? this.sig.t543.slice(6).toString() : ''
 
@@ -1501,15 +1591,28 @@ function decodeT119(this: BaseClient, t119: Buffer) {
       this.pt4token[domain] = r.read(r.read(2).readUInt16BE()) as Buffer
     }
   }
+  const info = {
+    emp_time: this.sig.emp_time,
+    icqq_ver: this.pkg.version,
+    token_ver: 1,
+    apk: {
+      ver: this.apk.ver,
+      version: this.apk.version,
+      subid: this.apk.subid
+    }
+  };
   const token = new Writer()
-    .writeTlv(this.sig.d2key)
+    .writeTlv(JSON.stringify(info))
+    .writeTlv(_t119)
+    .writeTlv(_t119key)
+    .writeTlv(this.sig.a1 || BUF0)
     .writeTlv(this.sig.d2)
+    .writeTlv(this.sig.d2key)
     .writeTlv(this.sig.tgt)
+    .writeTlv(this.sig.tgt_key)
     .writeTlv(this.sig.ticket_key)
     .writeTlv(this.sig.sig_key)
     .writeTlv(this.sig.srm_token || BUF0)
-    .writeTlv(this.sig.tgt)
-    .writeTlv(this.sig.md5Pass || BUF0)
     .writeTlv(this.sig.device_token || BUF0)
     .writeTlv(this.sig.t543 || BUF0)
     .read()
@@ -1577,6 +1680,7 @@ function decodeLoginResponse(this: BaseClient, payload: Buffer): any {
           return
         } else {
           this.sig.register_retry_count = 0
+          this.sig.token_retry_count = this.token_retry_num;
           this.emit("internal.error.token")
         }
       }
