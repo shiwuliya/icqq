@@ -1578,7 +1578,7 @@ function decodeT119(this: BaseClient, t119: Buffer) {
   this.sig.sig_key = t[0x133] || this.sig.sig_key
   this.sig.ticket_key = t[0x134] || this.sig.ticket_key
   this.sig.device_token = t[0x322] || this.sig.device_token
-  this.sig.t543 = t[0x543] || this.sig.t543
+  this.sig.t543 = t[0x543] || this.sig.t543 || BUF0
   this.sig.emp_time = timestamp()
   this.uid = this.sig.t543.length > 6 ? this.sig.t543.slice(6).toString() : ''
 
