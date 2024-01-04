@@ -596,16 +596,14 @@ export class BaseClient extends Trapper {
           this.sig.t543 = stream.read(stream.read(2).readUInt16BE());
           const { nickname, gender, age } = decodeT119.call(this, t119);
           read_bigdata.call(this)
-          const ret = (await register.call(this));
-          if (ret === 0) {
+          const err = (await register.call(this));
+          if (err === 0) {
             this.sig.emp_time = emp_time;
             this.sig.register_retry_count = 0;
             await this.updateCmdWhiteList();
             await this.ssoPacketListHandler(null);
             this.emit("internal.online", BUF0, nickname, gender, age);
             return BUF0;
-          } else if (ret === 1) {
-            await new Promise(resolve => setTimeout(resolve, 2000));
           }
         } else {
           this.sig.d2key = info;
@@ -1305,6 +1303,34 @@ async function packetListener(this: BaseClient, pkt: Buffer) {
 }
 
 async function register(this: BaseClient, logout = false, reflush = false) {
+  return await new Promise(async (resolve) => {
+    const re_register = async () => {
+      const err = await _register.call(this, logout, reflush)
+      if (err === 0) {
+        this.sig.register_retry_count = 0
+        resolve(err)
+      } else if (err === 1) {
+        if (this.register_retry_num > this.sig.register_retry_count) {
+          this.sig.register_retry_count++
+          this.emit("internal.verbose", '上线失败，第' + this.sig.register_retry_count + '次重试', VerboseLevel.Warn)
+          setTimeout(() => {
+            re_register()
+          }, 2000)
+        } else {
+          this.sig.register_retry_count = 0
+          this.sig.token_retry_count = this.token_retry_num
+          resolve(err)
+        }
+      } else {
+        this.sig.register_retry_count = 0
+        resolve(err)
+      }
+    }
+    re_register()
+  })
+}
+
+async function _register(this: BaseClient, logout = false, reflush = false) {
   this[IS_ONLINE] = false
   clearInterval(this[HEARTBEAT])
   let err = 0
@@ -1330,12 +1356,12 @@ async function register(this: BaseClient, logout = false, reflush = false) {
   const pkt = await buildLoginPacket.call(this, "StatSvc.register", body, 1)
   try {
     const payload = await this[FN_SEND](pkt, 6)
-    if (logout) return
+    if (logout) return 0
     const rsp = jce.decodeWrapper(payload)
     const result = !!rsp[9]
     if (!result && !reflush) {
       err = 1
-    } else if (result) {
+    } else {
       this[IS_ONLINE] = true
       const heartbeatSuccess = async () => {
         let hb480_cmd = [Platform.Tim].includes(this.config.platform as Platform) ? 'OidbSvc.0x480_9' : 'OidbSvc.0x480_9_IMCore'
@@ -1357,8 +1383,6 @@ async function register(this: BaseClient, logout = false, reflush = false) {
           })
         }).then(heartbeatSuccess)
       }, this.interval * 1000)
-    } else {
-      throw new Error("")
     }
   } catch {
     err = 2
@@ -1683,29 +1707,16 @@ function decodeLoginResponse(this: BaseClient, payload: Buffer): any {
     }
     const { token, nickname, gender, age } = decodeT119.call(this, t[0x119])
     read_bigdata.call(this)
-    const re_register = () => {
-      register.call(this).then(async (err) => {
-        if (this[IS_ONLINE]) {
-          this.sig.register_retry_count = 0
-          await this.updateCmdWhiteList()
-          await this.ssoPacketListHandler(null)
-          this.emit("internal.online", token, nickname, gender, age)
-        } else if (err === 1) {
-          if (this.register_retry_num > this.sig.register_retry_count) {
-            this.sig.register_retry_count++
-            this.emit("internal.verbose", '上线失败，第' + this.sig.register_retry_count + '次重试', VerboseLevel.Warn)
-            setTimeout(() => {
-              re_register()
-            }, 2000)
-          } else {
-            this.sig.register_retry_count = 0
-            this.sig.token_retry_count = this.token_retry_num
-            this.emit("internal.error.token")
-          }
-        }
-      })
-    }
-    re_register()
+    register.call(this).then(async (err) => {
+      if (this[IS_ONLINE]) {
+        this.sig.register_retry_count = 0
+        await this.updateCmdWhiteList()
+        await this.ssoPacketListHandler(null)
+        this.emit("internal.online", token, nickname, gender, age)
+      } else if (err === 1) {
+        this.emit("internal.error.token")
+      }
+    })
     return
   }
 
