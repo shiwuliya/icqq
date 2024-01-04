@@ -105,7 +105,6 @@ function kickoffListener(this: Client, message: string) {
     this.logger.warn(message)
     this.terminate()
     //fs.unlink(path.join(this.dir, this.uin + '_token'), NOOP)
-    this.sig.token_retry_count++
     this.em("system.offline.kickoff", { message })
 }
 

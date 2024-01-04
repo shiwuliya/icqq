@@ -324,16 +324,20 @@ export class BaseClient extends Trapper {
     if (this.config.sign_api_addr && !this.sig.sign_api_init) {
       await this.setSignServer(this.config.sign_api_addr);
     }
-    if (this.config.ver) return false;
-    const old_ver = this.statistics.ver;
-    this.statistics.ver = ver || await this.getApiQQVer();
-    if (old_ver != this.statistics.ver) {
-      const new_apk = this.getApkInfo(this.config.platform, this.statistics.ver);
-      if (new_apk.ver === this.statistics.ver) {
+    if (this.config.ver) {
+      this.statistics.ver = this.config.ver;
+      return false;
+    }
+    const old_ver = this.statistics.ver || this.config.ver;
+    ver = ver || await this.getApiQQVer();
+    if (old_ver != ver) {
+      const new_apk = this.getApkInfo(this.config.platform, ver);
+      if (new_apk.ver === ver) {
         Object.defineProperty(this, "apk", { writable: true });
         this.apk = new_apk;
         Object.defineProperty(this, "apk", { writable: false });
         this.device.apk = this.apk;
+        this.statistics.ver = ver;
         return true;
       }
     }
@@ -551,19 +555,30 @@ export class BaseClient extends Trapper {
 
   /** 使用接收到的token登录 */
   async tokenLogin(token: Buffer = BUF0, cmd = 11) {
+    if (!this.device.qImei36 || !this.device.qImei16) {
+      await this.device.getQIMEI();
+    }
     if (token != BUF0) {
-      this.sig.session = randomBytes(4)
-      this.sig.randkey = randomBytes(16)
-      this[ECDH] = new Ecdh
+      this.sig.session = randomBytes(4);
+      this.sig.randkey = randomBytes(16);
+      this[ECDH] = new Ecdh;
       try {
         const stream = Readable.from(token, { objectMode: false });
         let info = stream.read(stream.read(2).readUInt16BE());
         if ((String(info) || '').includes('icqq')) {
           info = JSON.parse(String(info));
-          if ((!this.statistics.ver && info.apk.version != this.apk.version) && await this.switchQQVer(info.apk.ver)) {
-            this.emit("internal.verbose", `[${this.uin}]获取到token协议版本：${this.statistics.ver}`, VerboseLevel.Info);
-            const apk_info = `${this.apk.display}_${this.apk.version}`;
-            this.emit("internal.verbose", `[${this.uin}]使用协议：${apk_info}`, VerboseLevel.Info);
+          if (info.apk.version != this.apk.version) {
+            if (info.apk.id != this.apk.id || (this.statistics.ver && info.apk.subid > this.apk.subid)) {
+              this.emit("internal.error.token", -10003);
+              return BUF0;
+            } else if (!this.statistics.ver) {
+              if (await this.switchQQVer(info.apk.ver)) {
+                this.emit("internal.verbose", `[${this.uin}]获取到token协议版本：${this.statistics.ver}`, VerboseLevel.Info);
+                const apk_info = `${this.apk.display}_${this.apk.version}`;
+                this.emit("internal.verbose", `[${this.uin}]使用协议：${apk_info}`, VerboseLevel.Info);
+                await this.device.getQIMEI();
+              }
+            }
           }
           const emp_time = info.emp_time;
           const t119 = stream.read(stream.read(2).readUInt16BE());
@@ -609,9 +624,6 @@ export class BaseClient extends Trapper {
         this.emit("internal.error.login", 123456, `token不兼容`);
         return BUF0;
       }
-    }
-    if (!this.device.qImei36 || !this.device.qImei16) {
-      await this.device.getQIMEI()
     }
     cmd = (this.sig.srm_token?.length && this.sig.a1?.length) ? cmd : 11;
 
@@ -1102,6 +1114,7 @@ function ssoListener(this: BaseClient, cmd: string, payload: Buffer, seq: number
     case "MessageSvc.PushForceOffline": {
       const nested = jce.decodeWrapper(payload)
       const msg = nested[4] ? `[${nested[4]}]${nested[3]}` : `[${nested[1]}]${nested[2]}`
+      this.logout()
       this.emit(EVENT_KICKOFF, msg)
     }
       break
@@ -1318,8 +1331,7 @@ async function register(this: BaseClient, logout = false, reflush = false) {
     const result = !!rsp[9]
     if (!result && !reflush) {
       err = 1
-      //this.emit("internal.verbose", "register error:" + JSON.stringify(rsp), VerboseLevel.Error)
-    } else if (result || (this.apk.id === 'com.tencent.qqlite' && reflush)) {
+    } else if (result || reflush) {
       this[IS_ONLINE] = true
       const heartbeatSuccess = async () => {
         let hb480_cmd = [Platform.Tim].includes(this.config.platform as Platform) ? 'OidbSvc.0x480_9' : 'OidbSvc.0x480_9_IMCore'
@@ -1594,11 +1606,14 @@ function decodeT119(this: BaseClient, t119: Buffer) {
   const info = {
     emp_time: this.sig.emp_time,
     icqq_ver: this.pkg.version,
-    token_ver: 1,
+    token_ver: 2,
     apk: {
+      name: this.apk.name,
+      id: this.apk.id,
       ver: this.apk.ver,
       version: this.apk.version,
-      subid: this.apk.subid
+      subid: this.apk.subid,
+      sdkver: this.apk.sdkver
     }
   };
   const token = new Writer()
@@ -1664,27 +1679,30 @@ function decodeLoginResponse(this: BaseClient, payload: Buffer): any {
     }
     const { token, nickname, gender, age } = decodeT119.call(this, t[0x119])
     read_bigdata.call(this)
-    return register.call(this).then(async (err) => {
-      if (this[IS_ONLINE]) {
-        this.sig.register_retry_count = 0
-        await this.updateCmdWhiteList()
-        await this.ssoPacketListHandler(null)
-        this.emit("internal.online", token, nickname, gender, age)
-      } else if (err === 1) {
-        if (this.register_retry_num > this.sig.register_retry_count) {
-          this.sig.register_retry_count++
-          this.emit("internal.verbose", '上线失败，第' + this.sig.register_retry_count + '次重试', VerboseLevel.Warn)
-          setTimeout(() => {
-            this.tokenLogin(token)
-          }, 1000)
-          return
-        } else {
+    const re_register = () => {
+      register.call(this).then(async (err) => {
+        if (this[IS_ONLINE]) {
           this.sig.register_retry_count = 0
-          this.sig.token_retry_count = this.token_retry_num;
-          this.emit("internal.error.token")
+          await this.updateCmdWhiteList()
+          await this.ssoPacketListHandler(null)
+          this.emit("internal.online", token, nickname, gender, age)
+        } else if (err === 1) {
+          if (this.register_retry_num > this.sig.register_retry_count) {
+            this.sig.register_retry_count++
+            this.emit("internal.verbose", '上线失败，第' + this.sig.register_retry_count + '次重试', VerboseLevel.Warn)
+            setTimeout(() => {
+              re_register()
+            }, 2000)
+          } else {
+            this.sig.register_retry_count = 0
+            this.sig.token_retry_count = this.token_retry_num
+            this.emit("internal.error.token")
+          }
         }
-      }
-    })
+      })
+    }
+    re_register()
+    return
   }
 
   if (type === 15 || type === 16) {
