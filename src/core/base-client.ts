@@ -13,6 +13,7 @@ import { Apk, Device, getApkInfoList, Platform, ShortDevice } from "./device"
 import * as log4js from "log4js"
 import * as path from "path"
 import { Config } from "../client";
+import { setTimeout } from 'timers'
 
 const FN_NEXT_SEQ = Symbol("FN_NEXT_SEQ")
 const FN_SEND = Symbol("FN_SEND")
@@ -595,13 +596,16 @@ export class BaseClient extends Trapper {
           this.sig.t543 = stream.read(stream.read(2).readUInt16BE());
           const { nickname, gender, age } = decodeT119.call(this, t119);
           read_bigdata.call(this)
-          if ((await register.call(this)) === 0) {
+          const ret = (await register.call(this));
+          if (ret === 0) {
             this.sig.emp_time = emp_time;
             this.sig.register_retry_count = 0;
             await this.updateCmdWhiteList();
             await this.ssoPacketListHandler(null);
             this.emit("internal.online", BUF0, nickname, gender, age);
             return BUF0;
+          } else if (ret === 1) {
+            await new Promise(resolve => setTimeout(resolve, 2000));
           }
         } else {
           this.sig.d2key = info;
@@ -1112,9 +1116,9 @@ function ssoListener(this: BaseClient, cmd: string, payload: Buffer, seq: number
   switch (cmd) {
     case "StatSvc.ReqMSFOffline":
     case "MessageSvc.PushForceOffline": {
+      this.logout(true)
       const nested = jce.decodeWrapper(payload)
       const msg = nested[4] ? `[${nested[4]}]${nested[3]}` : `[${nested[1]}]${nested[2]}`
-      this.logout()
       this.emit(EVENT_KICKOFF, msg)
     }
       break
@@ -1331,7 +1335,7 @@ async function register(this: BaseClient, logout = false, reflush = false) {
     const result = !!rsp[9]
     if (!result && !reflush) {
       err = 1
-    } else if (result || reflush) {
+    } else if (result) {
       this[IS_ONLINE] = true
       const heartbeatSuccess = async () => {
         let hb480_cmd = [Platform.Tim].includes(this.config.platform as Platform) ? 'OidbSvc.0x480_9' : 'OidbSvc.0x480_9_IMCore'
