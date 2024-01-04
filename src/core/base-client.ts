@@ -596,8 +596,7 @@ export class BaseClient extends Trapper {
           this.sig.t543 = stream.read(stream.read(2).readUInt16BE());
           const { nickname, gender, age } = decodeT119.call(this, t119);
           read_bigdata.call(this)
-          const err = (await register.call(this));
-          if (err === 0) {
+          if (this.sig.token_retry_count === 0 && (await register.call(this)) === 0) {
             this.sig.emp_time = emp_time;
             this.sig.register_retry_count = 0;
             await this.updateCmdWhiteList();
