@@ -164,11 +164,7 @@ function loginErrorListener(this: Client, code: number, message: string) {
     if (!code || code < -100) {
         this.logger.mark("登录token过期")
         this.em('system.token.expire')
-        if (code === -10003) {
-            this.sig.token_retry_count = this.token_retry_num
-        } else {
-            this.sig.token_retry_count++
-        }
+        this.sig.token_retry_count++
         //fs.unlink(path.join(this.dir, this.uin + "_token"), NOOP)
         this.logger.mark("3秒后重新连接")
         this.login_timer = setTimeout(this.login.bind(this), 3000)

@@ -570,7 +570,8 @@ export class BaseClient extends Trapper {
           info = JSON.parse(String(info));
           if (info.apk.version != this.apk.version) {
             if (info.apk.id != this.apk.id || (this.statistics.ver && info.apk.subid > this.apk.subid)) {
-              this.emit("internal.error.token", -10003);
+              this.sig.token_retry_count = this.token_retry_num;
+              this.emit("internal.error.token");
               return BUF0;
             } else if (!this.statistics.ver) {
               if (await this.switchQQVer(info.apk.ver)) {
@@ -1229,7 +1230,7 @@ async function parseSso(this: BaseClient, buf: Buffer) {
     switch (retcode) {
       case ssoFailCode.A3_Error:
       case ssoFailCode.D2Expired:
-      //case ssoFailCode.InvalidD2:
+      case ssoFailCode.InvalidD2:
       case ssoFailCode.D2Key2NotExisted:
       case ssoFailCode.D2Required:
       case ssoFailCode.UinNoMatch:
@@ -1238,8 +1239,6 @@ async function parseSso(this: BaseClient, buf: Buffer) {
       case ssoFailCode.UserExtired:
         this.emit("internal.error.token")
         break
-      case ssoFailCode.InvalidD2:
-        this.emit("internal.error.token", retcode)
       default:
     }
     //throw new Error("unsuccessful retcode: " + retcode)
