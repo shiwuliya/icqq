@@ -1,5 +1,18 @@
 # Changelog
 
+## [0.6.7](https://github.com/icqqjs/icqq/compare/v0.6.6...v0.6.7) (2024-01-05)
+
+
+### Bug Fixes
+
+* highwayUpload ([64d34c6](https://github.com/icqqjs/icqq/commit/64d34c64a13085a83ba12976489c631a406e25a9))
+* 上线失败问题。 ([c12ea7a](https://github.com/icqqjs/icqq/commit/c12ea7a69174ed340b1bb38db2f804f239970fc0))
+* 优化token上线。 ([89f53fe](https://github.com/icqqjs/icqq/commit/89f53fe068eb485ce810abcc06ba39a3d6faec83))
+* 优化token上线。 ([41a076c](https://github.com/icqqjs/icqq/commit/41a076ccbcbd7b39064339b7c4fcaa3453427400))
+* 修改token失效重试。 ([185c80b](https://github.com/icqqjs/icqq/commit/185c80b5fd93da50a7f8dd0ba24b20ff01871597))
+* 增加9.0.8.14755。 ([0f33e42](https://github.com/icqqjs/icqq/commit/0f33e42ba33ed2cc01592539a71ff15cec5c0fe2))
+* 提示：此版本更新了token格式，刷新后token将不兼容旧版本。 ([dbd6ac6](https://github.com/icqqjs/icqq/commit/dbd6ac659d66c2371fbcbe83f06bb2e2be32647d))
+
 ## [0.6.6](https://github.com/icqqjs/icqq/compare/v0.6.5...v0.6.6) (2023-12-20)
 
 
