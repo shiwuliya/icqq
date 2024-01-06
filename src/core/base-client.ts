@@ -1468,8 +1468,8 @@ type LoginCmd =
 type LoginCmdType = 0 | 1 | 2 // 0: 心跳 1: 上线 2: 登录
 
 async function buildLoginPacket(this: BaseClient, cmd: LoginCmd, body: Buffer, type: LoginCmdType = 2): Promise<Buffer> {
-  this[FN_NEXT_SEQ]()
-  this.emit("internal.verbose", `send:${cmd} seq:${this.sig.seq}`, VerboseLevel.Debug)
+  const seq = this[FN_NEXT_SEQ]()
+  this.emit("internal.verbose", `send:${cmd} seq:${seq}`, VerboseLevel.Debug)
   let uin = this.uin, cmdid = 0x810, subappid = this.apk.subid
   if (cmd === "wtlogin.trans_emp") {
     uin = 0
@@ -1506,13 +1506,13 @@ async function buildLoginPacket(this: BaseClient, cmd: LoginCmd, body: Buffer, t
 
   let sec_info = BUF0;
   if (this.signCmd.includes(cmd)) {
-    sec_info = await this.getSign(cmd, this.sig.seq, Buffer.from(body));
+    sec_info = await this.getSign(cmd, seq, Buffer.from(body));
   }
 
   const ksid = this.sig.ksid ||= Buffer.from(`|${this.device.imei}|` + this.apk.name)
   let sso = new Writer()
     .writeWithLength(new Writer()
-      .write32(this.sig.seq)
+      .write32(seq)
       .writeU32(subappid)
       .writeU32(subappid)
       .writeBytes(Buffer.from([0x01, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x01, 0x00]))
@@ -1572,7 +1572,7 @@ async function buildUniPkt(this: BaseClient, cmd: string, body: Uint8Array, seq 
   this.emit("internal.verbose", `send:${cmd} seq:${seq}`, VerboseLevel.Debug)
   let sec_info = BUF0
   if (this.signCmd.includes(cmd)) {
-    sec_info = await this.getSign(cmd, this.sig.seq, Buffer.from(body))
+    sec_info = await this.getSign(cmd, seq, Buffer.from(body))
     if (sec_info == BUF0 && this.sig.sign_api_addr && this.apk.qua) return BUF0
   }
   let sso = new Writer()
