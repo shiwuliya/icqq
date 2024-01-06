@@ -287,7 +287,7 @@ export class User extends Contactable {
         const rsp = pb.decode(payload);
         if (rsp[1] !== 0 || rsp[14] === 0) {
             this.c.logger.error(`failed to send: [Private: ${this.uid}] ${rsp[2]}(${rsp[1]})`);
-            drop(rsp[1] || -70, rsp[2]);
+            drop(rsp[1] || -70, rsp[2] || '私聊消息发送失败，可能被风控');
         }
         this.c.logger.info(`succeed to send: [Private(${this.uid})] ` + brief);
         this.c.stat.sent_msg_cnt++;
