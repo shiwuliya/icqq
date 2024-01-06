@@ -71,11 +71,7 @@ export async function getSign(this: BaseClient, cmd: string, seq: number, body: 
 			params = this.generateSignPacket(Data.sign, Data.token, Data.extra);
 
 			let list = Data.ssoPacketList || Data.requestCallback || [];
-			if (list.length < 1 && cmd.includes('wtlogin')) {
-				this.requestToken();
-			} else {
-				this.ssoPacketListHandler(list);
-			}
+			if (list.length > 0) this.ssoPacketListHandler(list);
 		} else {
 			this.emit("internal.verbose", `签名api异常： ${log}`, VerboseLevel.Error);
 		}

@@ -78,12 +78,7 @@ export async function getSign(this: BaseClient, cmd: string, seq: number, body: 
 			const Data = data.data || {};
 			params = this.generateSignPacket(Data.sign, Data.token, Data.extra);
 			let list = Data.ssoPacketList || Data.requestCallback || [];
-			if (list.length < 1 && cmd.includes('wtlogin')) {
-				this.requestToken();
-			}
-			else {
-				this.ssoPacketListHandler(list);
-			}
+			if (list.length > 0) this.ssoPacketListHandler(list);
 		} else {
 			if (data.code === 1) {
 				if (data.msg.includes('Uin is not registered.')) {
