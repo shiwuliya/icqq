@@ -273,7 +273,7 @@ export class User extends Contactable {
     }
 
     protected async _sendMsg(proto3: pb.Encodable, brief: string, file = false) {
-        let seq: number = this.c.sig.seq + 1;
+        const seq = this.c.sig.seq + 1;
         const rand = randomBytes(4).readUInt32BE();
         const body = pb.encode({
             1: this._getRouting(file),
@@ -292,7 +292,6 @@ export class User extends Contactable {
         this.c.logger.info(`succeed to send: [Private(${this.uid})] ` + brief);
         this.c.stat.sent_msg_cnt++;
         const time = rsp[3];
-        seq = rsp[14];
         const message_id = genDmMessageId(this.uid, seq, rand, time, 1);
         const messageRet: MessageRet = { message_id, seq, rand, time };
         this.c.emit("send", messageRet);
