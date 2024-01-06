@@ -22,8 +22,9 @@ export async function getT544(this: BaseClient, cmd: string) {
 		}
 		url.pathname = path;
 		const data = await get.bind(this)(url.href, post_params, true);
-		this.emit("internal.verbose", `getT544 ${cmd} result(${Date.now() - time}ms): ${JSON.stringify(data)}`, VerboseLevel.Debug);
+		const log = `getT544:${cmd} result(${Date.now() - time}ms):${JSON.stringify(data)}`;
 		if (data.code === 0) {
+			this.emit("internal.verbose", log, VerboseLevel.Debug);
 			if (typeof (data.data) === 'string') {
 				sign = Buffer.from(data.data, 'hex');
 			} else if (typeof (data.data?.sign) === 'string') {
@@ -31,7 +32,7 @@ export async function getT544(this: BaseClient, cmd: string) {
 				if (typeof (data.data.t553) === 'string') this.sig.t553 = Buffer.from(data.data.t553, 'hex');
 			}
 		} else {
-			this.emit("internal.verbose", `签名api(energy)异常： ${cmd} result(${Date.now() - time}ms): ${JSON.stringify(data)}`, VerboseLevel.Error);
+			this.emit("internal.verbose", `签名api异常：${log}`, VerboseLevel.Error);
 		}
 	}
 	return this.generateT544Packet(cmd, sign);
@@ -63,8 +64,9 @@ export async function getSign(this: BaseClient, cmd: string, seq: number, body: 
 		}
 		url.pathname = path;
 		const data = await get.bind(this)(url.href, post_params, true);
-		this.emit("internal.verbose", `sign ${cmd} result(${Date.now() - time}ms): ${JSON.stringify(data)}`, VerboseLevel.Debug);
+		const log = `sign:${cmd} seq:${seq} result(${Date.now() - time}ms):${JSON.stringify(data)}`;
 		if (data.code === 0) {
+			this.emit("internal.verbose", log, VerboseLevel.Debug);
 			const Data = data.data || {};
 			params = this.generateSignPacket(Data.sign, Data.token, Data.extra);
 
@@ -75,7 +77,7 @@ export async function getSign(this: BaseClient, cmd: string, seq: number, body: 
 				this.ssoPacketListHandler(list);
 			}
 		} else {
-			this.emit("internal.verbose", `签名api异常： ${cmd} result(${Date.now() - time}ms): ${JSON.stringify(data)}`, VerboseLevel.Error);
+			this.emit("internal.verbose", `签名api异常： ${log}`, VerboseLevel.Error);
 		}
 	}
 	return params;

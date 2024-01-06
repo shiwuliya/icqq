@@ -187,7 +187,7 @@ export class User extends Contactable {
         for (const proto of obj[6]) {
             try {
                 messages.push(new PrivateMessage(proto, this.c.uin));
-            } catch {}
+            } catch { }
         }
         return messages;
     }
@@ -273,7 +273,7 @@ export class User extends Contactable {
     }
 
     protected async _sendMsg(proto3: pb.Encodable, brief: string, file = false) {
-        const seq = this.c.sig.seq + 1;
+        let seq: number = this.c.sig.seq + 1;
         const rand = randomBytes(4).readUInt32BE();
         const body = pb.encode({
             1: this._getRouting(file),
@@ -285,14 +285,15 @@ export class User extends Contactable {
         });
         const payload = await this.c.sendUni("MessageSvc.PbSendMsg", body);
         const rsp = pb.decode(payload);
-        if (rsp[1] !== 0) {
+        if (rsp[1] !== 0 || rsp[14] == '0') {
             this.c.logger.error(`failed to send: [Private: ${this.uid}] ${rsp[2]}(${rsp[1]})`);
-            drop(rsp[1], rsp[2]);
+            drop(rsp[1] || -70, rsp[2]);
         }
         this.c.logger.info(`succeed to send: [Private(${this.uid})] ` + brief);
         this.c.stat.sent_msg_cnt++;
         const time = rsp[3];
-        const message_id = genDmMessageId(this.uid, seq, rand, rsp[3], 1);
+        seq = rsp[14];
+        const message_id = genDmMessageId(this.uid, seq, rand, time, 1);
         const messageRet: MessageRet = { message_id, seq, rand, time };
         this.c.emit("send", messageRet);
         return messageRet;
@@ -483,8 +484,8 @@ export interface FriendRequestEventMap {
 /** 所有的好友事件 */
 export interface FriendEventMap
     extends PrivateMessageEventMap,
-        FriendNoticeEventMap,
-        FriendRequestEventMap {}
+    FriendNoticeEventMap,
+    FriendRequestEventMap { }
 
 /** 好友 */
 export class Friend extends User {

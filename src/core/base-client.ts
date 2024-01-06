@@ -141,6 +141,8 @@ export class BaseClient extends Trapper {
         4: buf
       })
     })(),
+    sign_api_addr: "",
+    sign_api_init: false,
     /** 上次cookie刷新时间 */
     emp_time: 0,
     time_diff: 0,
@@ -173,8 +175,6 @@ export class BaseClient extends Trapper {
     sent_msg_cnt: 0,
     msg_cnt_per_min: 0,
     remote_ip: "",
-    sign_api_addr: "",
-    sign_api_init: false,
     remote_port: 0,
     ver: ''
   }
@@ -446,7 +446,7 @@ export class BaseClient extends Trapper {
       let body = Buffer.from(ssoPacket.body as unknown as string, 'hex');
       let callbackId = ssoPacket.callbackId as number;
       let payload = await this.sendUni(cmd, body);
-      this.emit("internal.verbose", `sendUni ${cmd} result: ${payload.toString('hex')}`, VerboseLevel.Debug);
+      this.emit("internal.verbose", `sendUni:${cmd} result: ${payload.toString('hex')}`, VerboseLevel.Debug);
       if (callbackId > -1) {
         await this.submitSsoPacket(cmd, callbackId, payload);
       }
