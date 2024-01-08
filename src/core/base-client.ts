@@ -1287,10 +1287,8 @@ async function packetListener(this: BaseClient, pkt: Buffer) {
         throw new Error("unknown flag:" + flag)
     }
     const sso = await parseSso.call(this, decrypted)
-    if (sso.retcode !== 0) {
-      sso.cmd = `retcode:${sso.retcode}`;
-    }
-    this.emit("internal.verbose", `recv:${sso.cmd} seq:${sso.seq}`, VerboseLevel.Debug)
+    if (sso.retcode !== 0) sso.cmd = `retcode:${sso.retcode}`
+    this.emit("internal.verbose", `recv:${sso.cmd} seq:${sso.seq}`, sso.retcode !== 0 ? VerboseLevel.Error : VerboseLevel.Debug)
     if (this[HANDLERS].has(sso.seq))
       this[HANDLERS].get(sso.seq)?.(sso.payload)
     else
