@@ -158,8 +158,8 @@ export interface GroupRequestEventMap {
 /** 所有的群聊事件 */
 export interface GroupEventMap
     extends GroupMessageEventMap,
-        GroupNoticeEventMap,
-        GroupRequestEventMap {}
+    GroupNoticeEventMap,
+    GroupRequestEventMap { }
 
 /** 群 */
 export interface Group {
@@ -394,6 +394,21 @@ export class Group extends Discuss {
         } else {
             return "移除群精华消息成功";
         }
+    }
+
+    /**
+     * 发送一个文件
+     * @param file `string`表示从该本地文件路径上传，`Buffer`表示直接上传这段内容
+     * @param pid 上传的目标目录id，默认根目录
+     * @param name 上传的文件名，`file`为`Buffer`时，若留空则自动以md5命名
+     * @param callback 监控上传进度的回调函数，拥有一个"百分比进度"的参数
+     * @returns 上传的文件属性
+     */
+    async sendFile(file: string | Buffer | Uint8Array,
+        pid = "/",
+        name?: string,
+        callback?: (percentage: string) => void,) {
+        return await this.fs.upload(file, pid, name, callback);
     }
 
     /**
@@ -719,7 +734,7 @@ export class Group extends Discuss {
         for (const proto of obj[6]) {
             try {
                 messages.push(new GroupMessage(proto));
-            } catch {}
+            } catch { }
         }
         return messages;
     }

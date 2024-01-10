@@ -560,8 +560,8 @@ export class BaseClient extends Trapper {
       await this.device.getQIMEI();
     }
     if (token != BUF0) {
-      this.sig.session = randomBytes(4);
       this.sig.randkey = randomBytes(16);
+      this.sig.session = randomBytes(4);
       this[ECDH] = new Ecdh;
       try {
         const stream = Readable.from(token, { objectMode: false });
@@ -582,7 +582,6 @@ export class BaseClient extends Trapper {
               }
             }
           }
-          const emp_time = info.emp_time;
           const t119 = stream.read(stream.read(2).readUInt16BE());
           this.sig.tgtgt = stream.read(stream.read(2).readUInt16BE());
           this.sig.a1 = stream.read(stream.read(2).readUInt16BE());
@@ -595,15 +594,21 @@ export class BaseClient extends Trapper {
           this.sig.srm_token = stream.read(stream.read(2).readUInt16BE());
           this.sig.device_token = stream.read(stream.read(2).readUInt16BE());
           this.sig.t543 = stream.read(stream.read(2).readUInt16BE());
-          const { nickname, gender, age } = decodeT119.call(this, t119);
-          read_bigdata.call(this)
-          if (this.sig.token_retry_count === 0 && (await register.call(this)) === 0) {
-            this.sig.emp_time = emp_time;
-            this.sig.register_retry_count = 0;
-            await this.updateCmdWhiteList();
-            await this.ssoPacketListHandler(null);
-            this.emit("internal.online", BUF0, nickname, gender, age);
-            return BUF0;
+          if (info.token_ver >= 3) {
+            this.sig.randkey = stream.read(stream.read(2).readUInt16BE());
+            this.sig.session = stream.read(stream.read(2).readUInt16BE());
+          }
+          if (this.sig.token_retry_count === 0 && info.token_ver >= 3) {
+            read_bigdata.call(this);
+            const { nickname, gender, age } = decodeT119.call(this, t119);
+            if ((await register.call(this)) === 0) {
+              this.sig.emp_time = info.emp_time;
+              this.sig.register_retry_count = 0;
+              await this.updateCmdWhiteList();
+              await this.ssoPacketListHandler(null);
+              this.emit("internal.online", BUF0, nickname, gender, age);
+              return BUF0;
+            }
           }
         } else {
           this.sig.d2key = info;
@@ -1114,7 +1119,7 @@ function ssoListener(this: BaseClient, cmd: string, payload: Buffer, seq: number
   switch (cmd) {
     case "StatSvc.ReqMSFOffline":
     case "MessageSvc.PushForceOffline": {
-      this.logout(true)
+      this.logout()
       const nested = jce.decodeWrapper(payload)
       const msg = nested[4] ? `[${nested[4]}]${nested[3]}` : `[${nested[1]}]${nested[2]}`
       this.emit(EVENT_KICKOFF, msg)
@@ -1293,8 +1298,9 @@ async function packetListener(this: BaseClient, pkt: Buffer) {
       this[HANDLERS].get(sso.seq)?.(sso.payload)
     else
       this.emit("internal.sso", sso.cmd, sso.payload, sso.seq)
-  } catch (e) {
-    this.emit("internal.verbose", e, VerboseLevel.Error)
+  } catch (e: any) {
+    this.emit("internal.verbose", e.message, VerboseLevel.Error)
+    this.emit("internal.verbose", e.stack, VerboseLevel.Debug)
   }
 }
 
@@ -1367,7 +1373,7 @@ async function _register(this: BaseClient, logout = false, reflush = false) {
         await this.refreshToken()
         this.requestToken()
       }
-      heartbeatSuccess();
+      heartbeatSuccess()
       this[HEARTBEAT] = setInterval(async () => {
         if (typeof this.heartbeat === "function") await this.heartbeat()
         syncTimeDiff.call(this)
@@ -1401,28 +1407,6 @@ async function syncTimeDiff(this: BaseClient) {
 async function refreshToken(this: BaseClient, force: boolean = false) {
   if ((!this.isOnline() || timestamp() - this.sig.emp_time < 43000) && !force)
     return
-  const t = tlv.getPacker(this)
-  let tlv_count = 16
-  const writer = new Writer()
-    .writeU16(11)
-    .writeU16(tlv_count)
-    .writeBytes(t(0x100))
-    .writeBytes(t(0x10a))
-    .writeBytes(t(0x116))
-    .writeBytes(t(0x144))
-    .writeBytes(t(0x143))
-    .writeBytes(t(0x142))
-    .writeBytes(t(0x154))
-    .writeBytes(t(0x18))
-    .writeBytes(t(0x141))
-    .writeBytes(t(0x8))
-    .writeBytes(t(0x147))
-    .writeBytes(t(0x177))
-    .writeBytes(t(0x187))
-    .writeBytes(t(0x188))
-    .writeBytes(t(0x202))
-    .writeBytes(t(0x511))
-  const body = writer.read()
   const pkt = await buildLoginPacket.call(this, "wtlogin.exchange_emp", await this.tokenLogin())
   try {
     let payload = await this[FN_SEND](pkt)
@@ -1595,9 +1579,8 @@ async function buildUniPkt(this: BaseClient, cmd: string, body: Uint8Array, seq 
 }
 
 function decodeT119(this: BaseClient, t119: Buffer) {
-  const _t119 = Buffer.from(t119);
-  const _t119key = Buffer.from(this.sig.tgtgt);
-  const r = Readable.from(tea.decrypt(t119, this.sig.tgtgt), { objectMode: false })
+  const t119key = Buffer.from(this.sig.tgtgt);
+  const r = Readable.from(tea.decrypt(Buffer.from(t119), Buffer.from(t119key)), { objectMode: false })
   r.read(2)
   const t = readTlv(r)
   this.sig.tgt = t[0x10a] || this.sig.tgt
@@ -1630,7 +1613,7 @@ function decodeT119(this: BaseClient, t119: Buffer) {
   const info = {
     emp_time: this.sig.emp_time,
     icqq_ver: this.pkg.version,
-    token_ver: 2,
+    token_ver: 3,
     apk: {
       name: this.apk.name,
       id: this.apk.id,
@@ -1639,11 +1622,11 @@ function decodeT119(this: BaseClient, t119: Buffer) {
       subid: this.apk.subid,
       sdkver: this.apk.sdkver
     }
-  };
+  }
   const token = new Writer()
     .writeTlv(JSON.stringify(info))
-    .writeTlv(_t119)
-    .writeTlv(_t119key)
+    .writeTlv(t119)
+    .writeTlv(t119key)
     .writeTlv(this.sig.a1 || BUF0)
     .writeTlv(this.sig.d2)
     .writeTlv(this.sig.d2key)
@@ -1654,6 +1637,8 @@ function decodeT119(this: BaseClient, t119: Buffer) {
     .writeTlv(this.sig.srm_token || BUF0)
     .writeTlv(this.sig.device_token || BUF0)
     .writeTlv(this.sig.t543 || BUF0)
+    .writeTlv(this.sig.randkey)
+    .writeTlv(this.sig.session)
     .read()
   const age = t[0x11a].slice(2, 3).readUInt8()
   const gender = t[0x11a].slice(3, 4).readUInt8()

@@ -162,6 +162,7 @@ function loginErrorListener(this: Client, code: number, message: string) {
     if (this.login_timer) return
     // token expired
     if (!code || code < -100) {
+        this.terminate()
         this.logger.mark("登录token过期")
         this.em('system.token.expire')
         this.sig.token_retry_count++
