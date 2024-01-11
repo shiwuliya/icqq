@@ -1,5 +1,15 @@
 # Changelog
 
+## [0.6.8](https://github.com/icqqjs/icqq/compare/v0.6.7...v0.6.8) (2024-01-11)
+
+
+### Bug Fixes
+
+* seq ([7f24e8f](https://github.com/icqqjs/icqq/commit/7f24e8f9b8e8e4e71926c8a4c6fbec7c90d54d57))
+* token失效后报错问题。 ([90e769c](https://github.com/icqqjs/icqq/commit/90e769ccd527999fff1a595e04c0de2444443036))
+* 修改签名log、修改私聊消息发送失败判断。 ([ac0f22a](https://github.com/icqqjs/icqq/commit/ac0f22a3bd7703edbf19b793835308da5e806c7e))
+* 修改频道消息发送失败判断。 ([3b148da](https://github.com/icqqjs/icqq/commit/3b148dad1067c04879a52123aaed5950e481bd27))
+
 ## [0.6.7](https://github.com/icqqjs/icqq/compare/v0.6.6...v0.6.7) (2024-01-05)
 
 
