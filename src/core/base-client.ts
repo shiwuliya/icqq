@@ -1422,13 +1422,13 @@ async function refreshToken(this: BaseClient, force: boolean = false) {
       await register.call(this, false, true)
       if (this[IS_ONLINE]) {
         this.emit("internal.token", token)
-        return true;
+        return true
       }
     }
   } catch (e: any) {
     this.emit("internal.verbose", "refresh token error: " + e?.message, VerboseLevel.Error)
   }
-  return false;
+  return false
 }
 
 function readTlv(r: Readable) {

@@ -84,6 +84,8 @@ export class Channel {
                             1: BigInt(this.guild.guild_id),
                             2: Number(this.channel_id),
                             3: this.c.uin,
+                            4: BigInt(this.c.tiny_id),
+                            7: 0
                         },
                         2: {
                             1: 3840,
@@ -97,10 +99,12 @@ export class Channel {
             }),
         );
         const rsp = pb.decode(payload);
-        if (rsp[1]) throw new ApiRejection(rsp[1], rsp[2]);
+        if (rsp[6][1] !== 3) {
+            throw new ApiRejection(rsp[6][2] || -70, rsp[6][3] || '频道消息发送失败，可能被风控');
+        }
         this.c.logger.info(
             `succeed to send: [Guild(${this.guild.guild_name}),Channel(${this.channel_name})] ` +
-                brief,
+            brief,
         );
         this.c.stat.sent_msg_cnt++;
         return {
