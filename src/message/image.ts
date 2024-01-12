@@ -82,6 +82,7 @@ export class Image {
 	type = 1000
 	origin?: boolean
 	private asface?: boolean
+	summary?: string
 
 	/** 缓存文件路径 */
 	private cachefile?: string
@@ -92,9 +93,10 @@ export class Image {
 	 * @param cachedir
 	 @param dm 是否私聊图片 */
 	constructor(elem: ImageElem | FlashElem, private dm = false, private cachedir?: string) {
-		let { file, cache, timeout, headers, asface, origin } = elem
+		let { file, cache, timeout, headers, asface, origin, summary } = elem
 		this.origin = origin
 		this.asface = asface
+		this.summary = summary
 		this.setProto()
 		if (file instanceof Buffer) {
 			this.task = this.fromProbeSync(file)
@@ -218,7 +220,7 @@ export class Image {
 	}
 
 	private setProto() {
-		let proto
+		let proto: any
 		if (this.dm) {
 			proto = {
 				1: this.md5.toString("hex"),
@@ -260,6 +262,7 @@ export class Image {
 				},
 			}
 		}
+		if (this.summary) proto[34][this.dm ? 8 : 9] = this.summary
 		Object.assign(this.proto, proto)
 	}
 

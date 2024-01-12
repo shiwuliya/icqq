@@ -68,6 +68,8 @@ export interface ImageElem {
 	asface?: boolean
 	/** 是否显示下载原图按钮 */
 	origin?: boolean
+	/** 图片概要 */
+	summary?: string
 }
 
 /** 闪照 */
