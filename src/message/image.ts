@@ -262,7 +262,7 @@ export class Image {
 				},
 			}
 		}
-		if (this.summary) proto[34][this.dm ? 8 : 9] = this.summary
+		if (this.summary) proto[this.dm ? 29 : 34][this.dm ? 8 : 9] = this.summary
 		Object.assign(this.proto, proto)
 	}
 
