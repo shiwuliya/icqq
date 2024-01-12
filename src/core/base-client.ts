@@ -115,6 +115,7 @@ export class BaseClient extends Trapper {
     a1: BUF0,
     d2: BUF0,
     d2key: BUF0,
+    old_d2key: BUF16,
     st_web: BUF0,
     t104: BUF0,
     t174: BUF0,
@@ -537,7 +538,7 @@ export class BaseClient extends Trapper {
 
   /** 下线 (keepalive: 是否保持tcp连接) */
   async logout(keepalive = false) {
-    await register.call(this, true)
+    await this.register(true)
     if (!keepalive && this[NET].connected) {
       this.terminate()
       await new Promise(resolve => this[NET].once("close", resolve))
@@ -601,7 +602,7 @@ export class BaseClient extends Trapper {
           if (this.sig.token_retry_count === 0 && info.token_ver >= 3) {
             read_bigdata.call(this);
             const { nickname, gender, age } = decodeT119.call(this, t119);
-            if ((await register.call(this)) === 0) {
+            if ((await this.register()) === 0) {
               this.sig.emp_time = info.emp_time;
               this.sig.register_retry_count = 0;
               await this.updateCmdWhiteList();
@@ -1111,6 +1112,44 @@ export class BaseClient extends Trapper {
     if (rsp[3] === 0) return rsp[4]
     throw new ApiRejection(rsp[3], rsp[5])
   }
+
+  async register(logout = false, reflush = false) {
+    return await new Promise(async (resolve) => {
+      const re_register = async () => {
+        const err = await _register.call(this, logout, reflush)
+        if (err === 0) {
+          this.sig.register_retry_count = 0
+          resolve(err)
+        } else if (err === 1) {
+          if (this.register_retry_num > this.sig.register_retry_count) {
+            this.sig.register_retry_count++
+            this.emit("internal.verbose", '上线失败，第' + this.sig.register_retry_count + '次重试', VerboseLevel.Warn)
+            setTimeout(() => {
+              re_register()
+            }, 2000)
+          } else {
+            this.sig.register_retry_count = 0
+            this.sig.token_retry_count = this.token_retry_num
+            resolve(err)
+          }
+        } else {
+          this.sig.register_retry_count = 0
+          resolve(err)
+        }
+      }
+      re_register()
+    })
+  }
+
+  async syncTimeDiff(this: BaseClient) {
+    const pkt = await buildLoginPacket.call(this, "Client.CorrectTime", BUF4, 0)
+    this[FN_SEND](pkt).then(buf => {
+      try {
+        this.sig.time_diff = buf.readInt32BE() - timestamp()
+      } catch {
+      }
+    }).catch(NOOP)
+  }
 }
 
 const EVENT_KICKOFF = Symbol("EVENT_KICKOFF")
@@ -1207,7 +1246,7 @@ function lostListener(this: BaseClient) {
   if (this[IS_ONLINE]) {
     this[IS_ONLINE] = false
     this.statistics.lost_times++
-    setTimeout(register.bind(this), 50)
+    setTimeout(this.register, 50)
   }
 }
 
@@ -1282,7 +1321,11 @@ async function packetListener(this: BaseClient, pkt: Buffer) {
         decrypted = encrypted
         break
       case 1:
-        decrypted = tea.decrypt(encrypted, this.sig.d2key)
+        try {
+          decrypted = tea.decrypt(Buffer.from(encrypted), this.sig.d2key)
+        } catch {
+          decrypted = tea.decrypt(Buffer.from(encrypted), this.sig.old_d2key)
+        }
         break
       case 2:
         decrypted = tea.decrypt(encrypted, BUF16)
@@ -1302,34 +1345,6 @@ async function packetListener(this: BaseClient, pkt: Buffer) {
     this.emit("internal.verbose", e.message, VerboseLevel.Error)
     this.emit("internal.verbose", e.stack, VerboseLevel.Debug)
   }
-}
-
-async function register(this: BaseClient, logout = false, reflush = false) {
-  return await new Promise(async (resolve) => {
-    const re_register = async () => {
-      const err = await _register.call(this, logout, reflush)
-      if (err === 0) {
-        this.sig.register_retry_count = 0
-        resolve(err)
-      } else if (err === 1) {
-        if (this.register_retry_num > this.sig.register_retry_count) {
-          this.sig.register_retry_count++
-          this.emit("internal.verbose", '上线失败，第' + this.sig.register_retry_count + '次重试', VerboseLevel.Warn)
-          setTimeout(() => {
-            re_register()
-          }, 2000)
-        } else {
-          this.sig.register_retry_count = 0
-          this.sig.token_retry_count = this.token_retry_num
-          resolve(err)
-        }
-      } else {
-        this.sig.register_retry_count = 0
-        resolve(err)
-      }
-    }
-    re_register()
-  })
 }
 
 async function _register(this: BaseClient, logout = false, reflush = false) {
@@ -1419,7 +1434,7 @@ async function refreshToken(this: BaseClient, force: boolean = false) {
     this.emit("internal.verbose", "refresh token type: " + type, VerboseLevel.Debug)
     if (type === 0) {
       const { token } = decodeT119.call(this, t[0x119])
-      await register.call(this, false, true)
+      await this.register(false, true)
       if (this[IS_ONLINE]) {
         this.emit("internal.token", token)
         return true
@@ -1591,6 +1606,7 @@ function decodeT119(this: BaseClient, t119: Buffer) {
   this.sig.srm_token = t[0x16a] || this.sig.srm_token
   this.sig.skey = t[0x120] || this.sig.skey
   this.sig.d2 = t[0x143] || this.sig.d2
+  this.sig.old_d2key = this.sig.d2key || BUF16;
   this.sig.d2key = t[0x305] || this.sig.d2key
   this.sig.tgtgt = t[0x10c] || md5(this.sig.d2key)
   this.sig.ksid = t[0x108] || Buffer.from(`|${this.device.imei}|` + this.apk.name)
@@ -1688,7 +1704,7 @@ function decodeLoginResponse(this: BaseClient, payload: Buffer): any {
     }
     const { token, nickname, gender, age } = decodeT119.call(this, t[0x119])
     read_bigdata.call(this)
-    register.call(this).then(async (err) => {
+    this.register().then(async (err) => {
       if (this[IS_ONLINE]) {
         this.sig.register_retry_count = 0
         await this.updateCmdWhiteList()
