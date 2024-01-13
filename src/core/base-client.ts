@@ -1416,7 +1416,7 @@ async function _register(this: BaseClient, logout = false, reflush = false) {
 }
 
 async function refreshToken(this: BaseClient, force: boolean = false) {
-  if ((!this.isOnline() || timestamp() - this.sig.emp_time < this.emp_interval) && !force)
+  if ((!this.isOnline() || this.emp_interval === 0 || timestamp() - this.sig.emp_time < this.emp_interval) && !force)
     return
   const pkt = await buildLoginPacket.call(this, "wtlogin.exchange_emp", await this.tokenLogin())
   try {
