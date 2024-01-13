@@ -158,6 +158,8 @@ export class BaseClient extends Trapper {
   readonly pt4token: { [domain: string]: Buffer } = {}
   /** 心跳间隔(秒) */
   protected interval = 60
+  /** token刷新间隔(秒) */
+  emp_interval = 12 * 3600
   /** 随心跳一起触发的函数，可以随意设定 */
   protected heartbeat = NOOP
   /** token登录重试次数 */
@@ -204,7 +206,7 @@ export class BaseClient extends Trapper {
       this.statistics.remote_ip = this[NET].remoteAddress as string
       this.statistics.remote_port = this[NET].remotePort as number
       this.emit("internal.verbose", `${this[NET].remoteAddress}:${this[NET].remotePort} connected`, VerboseLevel.Mark)
-      syncTimeDiff.call(this)
+      this.syncTimeDiff()
     })
     this[NET].on("packet", packetListener.bind(this))
     this[NET].on("lost", lostListener.bind(this))
@@ -572,7 +574,7 @@ export class BaseClient extends Trapper {
           if (info.apk.version != this.apk.version) {
             if (info.apk.id != this.apk.id || (this.statistics.ver && info.apk.subid > this.apk.subid)) {
               this.sig.token_retry_count = this.token_retry_num;
-              this.emit("internal.error.token");
+              await this.token_expire();
               return BUF0;
             } else if (!this.statistics.ver) {
               if (await this.switchQQVer(info.apk.ver)) {
@@ -1141,7 +1143,7 @@ export class BaseClient extends Trapper {
     })
   }
 
-  async syncTimeDiff(this: BaseClient) {
+  async syncTimeDiff() {
     const pkt = await buildLoginPacket.call(this, "Client.CorrectTime", BUF4, 0)
     this[FN_SEND](pkt).then(buf => {
       try {
@@ -1149,6 +1151,10 @@ export class BaseClient extends Trapper {
       } catch {
       }
     }).catch(NOOP)
+  }
+
+  async token_expire(code: any = null) {
+    this.emit("internal.error.token", code)
   }
 }
 
@@ -1281,7 +1287,7 @@ async function parseSso(this: BaseClient, buf: Buffer) {
       case ssoFailCode.RequiresD2:
       case ssoFailCode.FORCEQUIT_PARSEFAIL:
       case ssoFailCode.UserExtired:
-        this.emit("internal.error.token")
+        await this.token_expire(retcode)
         break
       default:
     }
@@ -1331,7 +1337,7 @@ async function packetListener(this: BaseClient, pkt: Buffer) {
         decrypted = tea.decrypt(encrypted, BUF16)
         break
       default:
-        this.emit("internal.error.token", flag)
+        await this.token_expire(flag)
         throw new Error("unknown flag:" + flag)
     }
     const sso = await parseSso.call(this, decrypted)
@@ -1391,7 +1397,7 @@ async function _register(this: BaseClient, logout = false, reflush = false) {
       heartbeatSuccess()
       this[HEARTBEAT] = setInterval(async () => {
         if (typeof this.heartbeat === "function") await this.heartbeat()
-        syncTimeDiff.call(this)
+        this.syncTimeDiff()
         this[FN_SEND](await buildLoginPacket.call(this, "Heartbeat.Alive", BUF0, 0), 5).catch(async () => {
           this.emit("internal.verbose", "Heartbeat.Alive timeout", VerboseLevel.Warn)
           this[FN_SEND](await buildLoginPacket.call(this, "Heartbeat.Alive", BUF0, 0), 5).catch(() => {
@@ -1409,18 +1415,8 @@ async function _register(this: BaseClient, logout = false, reflush = false) {
   return err
 }
 
-async function syncTimeDiff(this: BaseClient) {
-  const pkt = await buildLoginPacket.call(this, "Client.CorrectTime", BUF4, 0)
-  this[FN_SEND](pkt).then(buf => {
-    try {
-      this.sig.time_diff = buf.readInt32BE() - timestamp()
-    } catch {
-    }
-  }).catch(NOOP)
-}
-
 async function refreshToken(this: BaseClient, force: boolean = false) {
-  if ((!this.isOnline() || timestamp() - this.sig.emp_time < 43000) && !force)
+  if ((!this.isOnline() || timestamp() - this.sig.emp_time < this.emp_interval) && !force)
     return
   const pkt = await buildLoginPacket.call(this, "wtlogin.exchange_emp", await this.tokenLogin())
   try {
@@ -1711,14 +1707,14 @@ function decodeLoginResponse(this: BaseClient, payload: Buffer): any {
         await this.ssoPacketListHandler(null)
         this.emit("internal.online", token, nickname, gender, age)
       } else if (err === 1) {
-        this.emit("internal.error.token")
+        await this.token_expire()
       }
     })
     return
   }
 
   if (type === 15 || type === 16) {
-    return this.emit("internal.error.token")
+    return this.token_expire()
   }
 
   if (type === 2) {
