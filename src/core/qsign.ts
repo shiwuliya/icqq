@@ -87,7 +87,7 @@ export async function getSign(this: BaseClient, cmd: string, seq: number, body: 
 					}
 				}
 			}
-			this.emit("internal.verbose", `签名api异常： ${log}`, VerboseLevel.Error);
+			this.emit("internal.verbose", `签名api异常：${log}`, VerboseLevel.Error);
 		}
 	}
 	return params;

@@ -73,7 +73,7 @@ export async function getSign(this: BaseClient, cmd: string, seq: number, body: 
 			let list = Data.ssoPacketList || Data.requestCallback || [];
 			if (list.length > 0) this.ssoPacketListHandler(list);
 		} else {
-			this.emit("internal.verbose", `签名api异常： ${log}`, VerboseLevel.Error);
+			this.emit("internal.verbose", `签名api异常：${log}`, VerboseLevel.Error);
 		}
 	}
 	return params;
