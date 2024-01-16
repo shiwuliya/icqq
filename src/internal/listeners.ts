@@ -176,7 +176,7 @@ function loginErrorListener(this: Client, code: number, message: string) {
         this.logger.error(message)
         if (code === -3) { //register failed
             //fs.unlink(path.join(this.dir, this.uin + "_token"), NOOP)
-            this.sig.token_retry_count = this.token_retry_num
+            this.sig.token_retry_count = this.token_retry_num - 1
         }
         const t = this.config.reconn_interval
         if (t >= 1) {
