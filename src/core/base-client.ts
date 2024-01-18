@@ -699,12 +699,15 @@ export class BaseClient extends Trapper {
           if (this.sig.token_retry_count === 0 && info.token_ver >= 3) {
             read_bigdata.call(this);
             const { nickname, gender, age } = decodeT119.call(this, t119);
-            if ((await this.register()) === 0) {
+            const err = (await this.register());
+            if (err === 0) {
               this.sig.emp_time = info.emp_time;
               this.sig.register_retry_count = 0;
               await this.updateCmdWhiteList();
               await this.ssoPacketListHandler(null);
               this.emit("internal.online", BUF0, nickname, gender, age);
+              return BUF0;
+            } else if (err === 2) {
               return BUF0;
             }
           }
@@ -1210,8 +1213,8 @@ export class BaseClient extends Trapper {
     throw new ApiRejection(rsp[3], rsp[5])
   }
 
-  async register(logout = false, reflush = false) {
-    return await new Promise(async (resolve) => {
+  async register(logout = false, reflush = false,) {
+    const err = await new Promise(async (resolve) => {
       const re_register = async () => {
         const err = await _register.call(this, logout, reflush)
         if (err === 0) {
@@ -1236,6 +1239,9 @@ export class BaseClient extends Trapper {
       }
       re_register()
     })
+    //if (!logout && err == 1) this.emit("internal.error.token")
+    //if (!logout && err == 2) this.emit("internal.error.network", -3, "server is busy(register)")
+    return err;
   }
 
   async syncTimeDiff() {
@@ -1248,8 +1254,8 @@ export class BaseClient extends Trapper {
     }).catch(NOOP)
   }
 
-  async token_expire(code: any = null) {
-    this.emit("internal.error.token", code)
+  async token_expire(data: any = null) {
+    this.emit("internal.error.token", data?.retcode, data?.retmsg)
   }
 }
 
@@ -1352,11 +1358,16 @@ function lostListener(this: BaseClient) {
 }
 
 async function parseSso(this: BaseClient, buf: Buffer) {
-  const headlen = buf.readUInt32BE()
-  const seq = buf.readInt32BE(4)
-  const retcode = buf.readInt32BE(8)
-  let cmd = ''
-  let payload = BUF0
+  const stream = Readable.from(buf, { objectMode: false })
+  const headlen = stream.read(4).readUInt32BE()
+  const seq = stream.read(4).readInt32BE();
+  const retcode = stream.read(4).readInt32BE();
+  const retmsg = stream.read(stream.read(4).readUInt32BE() - 4)?.toString()
+  const cmd = stream.read(stream.read(4).readUInt32BE() - 4)?.toString()
+  const session = stream.read(stream.read(4).readUInt32BE() - 4)
+  const flag = stream.read(4).readInt32BE()
+  stream.read(stream.read(4).readUInt32BE() - 4)
+  let payload = stream.read(stream.read(4).readUInt32BE() - 4) || BUF0
   if (retcode !== 0) {
     const ssoFailCode = {
       A3_Error: 210,
@@ -1382,27 +1393,22 @@ async function parseSso(this: BaseClient, buf: Buffer) {
       case ssoFailCode.RequiresD2:
       case ssoFailCode.FORCEQUIT_PARSEFAIL:
       case ssoFailCode.UserExtired:
-        await this.token_expire(retcode)
+        await this.token_expire({ seq, retcode, retmsg, flag })
         break
       default:
     }
     //throw new Error("unsuccessful retcode: " + retcode)
   } else {
-    let offset = buf.readUInt32BE(12) + 12
-    let len = buf.readUInt32BE(offset) // length of cmd
-    cmd = String(buf.slice(offset + 4, offset + len))
-    offset += len
-    len = buf.readUInt32BE(offset) // length of session_id
-    offset += len
-    const flag = buf.readInt32BE(offset)
-    if (flag === 0) {
-      payload = buf.slice(headlen + 4)
-    } else if (flag === 1) {
-      payload = await unzip(buf.slice(headlen + 4))
-    } else if (flag === 8) {
-      payload = buf.slice(headlen)
-    } else {
-      throw new Error("unknown compressed flag: " + flag)
+    switch (flag) {
+      case 0:
+        break
+      case 1:
+        payload = await unzip(payload)
+        break
+      case 8:
+        break
+      default:
+        throw new Error("unknown compressed flag: " + flag)
     }
   }
   return {
@@ -1432,12 +1438,11 @@ async function packetListener(this: BaseClient, pkt: Buffer) {
         decrypted = tea.decrypt(encrypted, BUF16)
         break
       default:
-        await this.token_expire(flag)
+        await this.token_expire({ flag })
         throw new Error("unknown flag:" + flag)
     }
     const sso = await parseSso.call(this, decrypted)
-    if (sso.retcode !== 0) sso.cmd = `retcode:${sso.retcode}`
-    this.emit("internal.verbose", `recv:${sso.cmd} seq:${sso.seq}`, sso.retcode !== 0 ? VerboseLevel.Error : VerboseLevel.Debug)
+    this.emit("internal.verbose", `recv:${sso.cmd} seq:${sso.seq}${sso.retcode !== 0 ? ` retcode:${sso.retcode}` : ''}`, sso.retcode !== 0 ? VerboseLevel.Error : VerboseLevel.Debug)
     if (this[HANDLERS].has(sso.seq))
       this[HANDLERS].get(sso.seq)?.(sso.payload)
     else
@@ -1505,8 +1510,6 @@ async function _register(this: BaseClient, logout = false, reflush = false) {
   } catch {
     err = 2
   }
-  //if (!logout && err == 1) this.emit("internal.error.token")
-  if (!logout && err == 2) this.emit("internal.error.network", -3, "server is busy(register)")
   return err
 }
 

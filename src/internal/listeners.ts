@@ -159,10 +159,10 @@ function verifyListener(this: Client, url: string, phone: string) {
  * @param code -2服务器忙 -3上线失败(需要删token)
  */
 function loginErrorListener(this: Client, code: number, message: string) {
+    if (message) this.logger.error(message)
     if (this.login_timer) return
     // token expired
     if (!code || code < -100) {
-        this.terminate()
         this.logger.mark("登录token过期")
         this.em('system.token.expire')
         this.sig.token_retry_count++
@@ -173,7 +173,6 @@ function loginErrorListener(this: Client, code: number, message: string) {
     // network error
     else if (code < 0) {
         this.terminate()
-        this.logger.error(message)
         if (code === -3) { //register failed
             //fs.unlink(path.join(this.dir, this.uin + "_token"), NOOP)
             this.sig.token_retry_count = this.token_retry_num - 1
@@ -187,7 +186,6 @@ function loginErrorListener(this: Client, code: number, message: string) {
     }
     // login error
     else if (code > 0) {
-        this.logger.error(message)
         this.em("system.login.error", { code, message })
     }
 }
