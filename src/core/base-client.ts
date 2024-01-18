@@ -1254,7 +1254,7 @@ export class BaseClient extends Trapper {
     }).catch(NOOP)
   }
 
-  async token_expire(data: any = null) {
+  async token_expire(data: any = {}) {
     this.emit("internal.error.token", data?.retcode, data?.retmsg)
   }
 }
