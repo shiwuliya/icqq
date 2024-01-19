@@ -700,14 +700,14 @@ export class BaseClient extends Trapper {
             read_bigdata.call(this);
             const { nickname, gender, age } = decodeT119.call(this, t119);
             const err = (await this.register());
-            if (err === 0) {
+            if (err === 1) {
               this.sig.emp_time = info.emp_time;
               this.sig.register_retry_count = 0;
               await this.updateCmdWhiteList();
               await this.ssoPacketListHandler(null);
               this.emit("internal.online", BUF0, nickname, gender, age);
               return BUF0;
-            } else if (err === 2) {
+            } else if (err === -2) {
               return BUF0;
             }
           }
@@ -1213,14 +1213,14 @@ export class BaseClient extends Trapper {
     throw new ApiRejection(rsp[3], rsp[5])
   }
 
-  async register(logout = false, reflush = false,) {
+  async register(logout = false, reflush = false) {
     const err = await new Promise(async (resolve) => {
       const re_register = async () => {
         const err = await _register.call(this, logout, reflush)
-        if (err === 0) {
+        if (err === 1) {
           this.sig.register_retry_count = 0
           resolve(err)
-        } else if (err === 1) {
+        } else if (err === -1) {
           if (this.register_retry_num > this.sig.register_retry_count) {
             this.sig.register_retry_count++
             this.emit("internal.verbose", '上线失败，第' + this.sig.register_retry_count + '次重试', VerboseLevel.Warn)
@@ -1456,7 +1456,7 @@ async function packetListener(this: BaseClient, pkt: Buffer) {
 async function _register(this: BaseClient, logout = false, reflush = false) {
   this[IS_ONLINE] = false
   clearInterval(this[HEARTBEAT])
-  let err = 0
+  let err = 1
   const pb_buf = pb.encode({
     1: [
       { 1: 46, 2: timestamp() },
@@ -1483,7 +1483,7 @@ async function _register(this: BaseClient, logout = false, reflush = false) {
     const rsp = jce.decodeWrapper(payload)
     const result = !!rsp[9]
     if (!result && !reflush) {
-      err = 1
+      err = -1
     } else {
       this[IS_ONLINE] = true
       const heartbeatSuccess = async () => {
@@ -1508,7 +1508,7 @@ async function _register(this: BaseClient, logout = false, reflush = false) {
       }, this.interval * 1000)
     }
   } catch {
-    err = 2
+    err = -2
   }
   return err
 }
@@ -1804,7 +1804,7 @@ function decodeLoginResponse(this: BaseClient, payload: Buffer): any {
         await this.updateCmdWhiteList()
         await this.ssoPacketListHandler(null)
         this.emit("internal.online", token, nickname, gender, age)
-      } else if (err === 1) {
+      } else if (err === -1) {
         await this.token_expire()
       }
     })
