@@ -272,6 +272,7 @@ export type Apk = {
     buildtime: number
     appid: number
     subid: number
+    apad_subid?: number
     bitmap: number
     main_sig_map: number
     sub_sig_map: number
@@ -290,6 +291,7 @@ const mobile: Apk[] = [
         ver: "9.0.15",
         buildtime: 1702888273,
         subid: 537202216,
+        apad_subid: 537202255,
         bitmap: 150470524,
         sdkver: "6.0.0.2558",
         qua: 'V1_AND_SQ_9.0.15_5626_YYB_D',
@@ -301,6 +303,7 @@ const mobile: Apk[] = [
         ver: "9.0.8",
         buildtime: 1702888273,
         subid: 537200218,
+        apad_subid: 537200257,
         bitmap: 150470524,
         sdkver: "6.0.0.2558",
         qua: 'V1_AND_SQ_9.0.8_5540_YYB_D',
@@ -312,6 +315,7 @@ const mobile: Apk[] = [
         ver: "9.0.0",
         buildtime: 1701164403,
         subid: 537194351,
+        apad_subid: 537194390,
         bitmap: 150470524,
         sdkver: "6.0.0.2557",
         qua: 'V1_AND_SQ_9.0.0_5282_YYB_D',
@@ -323,6 +327,7 @@ const mobile: Apk[] = [
         ver: "8.9.93",
         buildtime: 1697015435,
         subid: 537187398,
+        apad_subid: 537187437,
         bitmap: 150470524,
         sdkver: "6.0.0.2556",
         qua: 'V1_AND_SQ_8.9.93_5028_YYB_D',
@@ -334,6 +339,7 @@ const mobile: Apk[] = [
         ver: "8.9.90",
         buildtime: 1697015435,
         subid: 537185007,
+        apad_subid: 537185046,
         bitmap: 150470524,
         sdkver: "6.0.0.2556",
         qua: 'V1_AND_SQ_8.9.90_4938_YYB_D',
@@ -345,6 +351,7 @@ const mobile: Apk[] = [
         ver: "8.9.88",
         buildtime: 1697015435,
         subid: 537182769,
+        apad_subid: 537182808,
         bitmap: 150470524,
         sdkver: "6.0.0.2556",
         qua: 'V1_AND_SQ_8.9.88_4852_YYB_D',
@@ -356,6 +363,7 @@ const mobile: Apk[] = [
         ver: "8.9.85",
         buildtime: 1697015435,
         subid: 537180568,
+        apad_subid: 537180607,
         bitmap: 150470524,
         sdkver: "6.0.0.2556",
         qua: 'V1_AND_SQ_8.9.85_4766_YYB_D',
@@ -367,6 +375,7 @@ const mobile: Apk[] = [
         ver: "8.9.83",
         buildtime: 1691565978,
         subid: 537178646,
+        apad_subid: 537178685,
         bitmap: 150470524,
         sdkver: "6.0.0.2554",
         qua: 'V1_AND_SQ_8.9.83_4680_YYB_D',
@@ -378,6 +387,7 @@ const mobile: Apk[] = [
         ver: "8.9.80",
         buildtime: 1691565978,
         subid: 537176863,
+        apad_subid: 537176902,
         bitmap: 150470524,
         sdkver: "6.0.0.2554",
         qua: 'V1_AND_SQ_8.9.80_4614_YYB_D',
@@ -389,6 +399,7 @@ const mobile: Apk[] = [
         ver: "8.9.78",
         buildtime: 1691565978,
         subid: 537175315,
+        apad_subid: 537175354,
         bitmap: 150470524,
         sdkver: "6.0.0.2554",
         qua: 'V1_AND_SQ_8.9.78_4548_YYB_D',
@@ -400,6 +411,7 @@ const mobile: Apk[] = [
         ver: "8.9.76",
         buildtime: 1691565978,
         subid: 537173477,
+        apad_subid: 537173525,
         bitmap: 150470524,
         sdkver: "6.0.0.2554",
         qua: 'V1_AND_SQ_8.9.76_4484_YYB_D',
@@ -411,6 +423,7 @@ const mobile: Apk[] = [
         ver: "8.9.75",
         buildtime: 1691565978,
         subid: 537173381,
+        apad_subid: 537173429,
         bitmap: 150470524,
         sdkver: "6.0.0.2554",
         qua: 'V1_AND_SQ_8.9.75_4482_YYB_D',
@@ -422,6 +435,7 @@ const mobile: Apk[] = [
         ver: "8.9.73",
         buildtime: 1690371091,
         subid: 537171689,
+        apad_subid: 537171737,
         bitmap: 150470524,
         sdkver: "6.0.0.2553",
         qua: 'V1_AND_SQ_8.9.73_4416_YYB_D',
@@ -433,6 +447,7 @@ const mobile: Apk[] = [
         ver: "8.9.71",
         buildtime: 1688720082,
         subid: 537170024,
+        apad_subid: 537170072,
         bitmap: 150470524,
         sdkver: "6.0.0.2551",
         qua: 'V1_AND_SQ_8.9.71_4332_YYB_D',
@@ -444,6 +459,7 @@ const mobile: Apk[] = [
         ver: "8.9.70",
         buildtime: 1688720082,
         subid: 537169928,
+        apad_subid: 537169976,
         bitmap: 150470524,
         sdkver: "6.0.0.2551",
         qua: 'V1_AND_SQ_8.9.70_4330_YYB_D',
@@ -455,6 +471,7 @@ const mobile: Apk[] = [
         ver: "8.9.68",
         buildtime: 1687254022,
         subid: 537168313,
+        apad_subid: 537168361,
         bitmap: 150470524,
         sdkver: "6.0.0.2549",
         qua: 'V1_AND_SQ_8.9.68_4264_YYB_D',
@@ -466,6 +483,7 @@ const mobile: Apk[] = [
         ver: "8.9.63",
         buildtime: 1685069178,
         subid: 537164840,
+        apad_subid: 537164888,
         bitmap: 150470524,
         sdkver: "6.0.0.2546",
         qua: 'V1_AND_SQ_8.9.63_4194_YYB_D',
@@ -485,76 +503,6 @@ const mobile: Apk[] = [
         ...shortInfo
     }
 })
-const aPadSubids = [
-    {
-        ver: '9.0.15',
-        subid: 537202255,
-    },
-    {
-        ver: '9.0.8',
-        subid: 537200257,
-    },
-    {
-        ver: '9.0.0',
-        subid: 537194390,
-    },
-    {
-        ver: '8.9.93',
-        subid: 537187437,
-    },
-    {
-        ver: '8.9.90',
-        subid: 537185046,
-    },
-    {
-        ver: '8.9.88',
-        subid: 537182808,
-    },
-    {
-        ver: '8.9.85',
-        subid: 537180607,
-    },
-    {
-        ver: '8.9.83',
-        subid: 537178685,
-    },
-    {
-        ver: '8.9.80',
-        subid: 537176902,
-    },
-    {
-        ver: '8.9.78',
-        subid: 537175354,
-    },
-    {
-        ver: '8.9.76',
-        subid: 537173525,
-    },
-    {
-        ver: '8.9.75',
-        subid: 537173429,
-    },
-    {
-        ver: '8.9.73',
-        subid: 537171737,
-    },
-    {
-        ver: '8.9.71',
-        subid: 537170072,
-    },
-    {
-        ver: '8.9.70',
-        subid: 537169976,
-    },
-    {
-        ver: '8.9.68',
-        subid: 537168361,
-    },
-    {
-        ver: '8.9.63',
-        subid: 537164888,
-    }
-]
 const tim: Apk[] = [
     // 每个版本不同的信息
     {
@@ -679,7 +627,7 @@ const apklist: { [platform in Platform]: Apk | Apk[] } = {
     [Platform.aPad]: mobile.map(apk => {
         return {
             ...apk,
-            subid: aPadSubids.find(s => s.ver === apk.ver)!.subid,
+            subid: apk?.apad_subid || apk.subid,
             display: 'aPad'
         }
     }),
