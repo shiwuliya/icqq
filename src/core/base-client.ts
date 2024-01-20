@@ -1257,6 +1257,24 @@ export class BaseClient extends Trapper {
   async token_expire(data: any = {}) {
     this.emit("internal.error.token", data?.retcode, data?.retmsg)
   }
+
+  sendHeartbeat() {
+    return new Promise(async (resolve, reject) => {
+      if (typeof this.heartbeat === "function") {
+        try {
+          await this.heartbeat()
+        } catch { }
+      }
+      this.syncTimeDiff()
+      this[FN_SEND](await buildLoginPacket.call(this, "Heartbeat.Alive", BUF0, 0), 10).catch(async () => {
+        this.emit("internal.verbose", "Heartbeat.Alive timeout", VerboseLevel.Warn)
+        this[FN_SEND](await buildLoginPacket.call(this, "Heartbeat.Alive", BUF0, 0), 10).catch((e) => {
+          this.emit("internal.verbose", "Heartbeat.Alive timeout x 2", VerboseLevel.Warn)
+          reject(e)
+        })
+      }).catch(reject).then(resolve)
+    })
+  }
 }
 
 const EVENT_KICKOFF = Symbol("EVENT_KICKOFF")
@@ -1494,18 +1512,14 @@ async function _register(this: BaseClient, logout = false, reflush = false) {
         await this.refreshToken()
         this.requestToken()
       }
-      heartbeatSuccess()
-      this[HEARTBEAT] = setInterval(async () => {
-        if (typeof this.heartbeat === "function") await this.heartbeat()
-        this.syncTimeDiff()
-        this[FN_SEND](await buildLoginPacket.call(this, "Heartbeat.Alive", BUF0, 0), 5).catch(async () => {
-          this.emit("internal.verbose", "Heartbeat.Alive timeout", VerboseLevel.Warn)
-          this[FN_SEND](await buildLoginPacket.call(this, "Heartbeat.Alive", BUF0, 0), 5).catch(() => {
-            this.emit("internal.verbose", "Heartbeat.Alive timeout x 2", VerboseLevel.Warn)
+      this.sendHeartbeat()?.then(heartbeatSuccess)
+      if (this.interval > 0) {
+        this[HEARTBEAT] = setInterval(() => {
+          this.sendHeartbeat()?.then(heartbeatSuccess).catch(() => {
             this[NET].destroy()
           })
-        }).then(heartbeatSuccess)
-      }, this.interval * 1000)
+        }, this.interval * 1000)
+      }
     }
   } catch {
     err = -2
