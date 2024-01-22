@@ -1411,7 +1411,7 @@ async function parseSso(this: BaseClient, buf: Buffer) {
       case ssoFailCode.RequiresD2:
       case ssoFailCode.FORCEQUIT_PARSEFAIL:
       case ssoFailCode.UserExtired:
-        await this.token_expire({ seq, retcode, retmsg, flag })
+        await this.token_expire({ seq, retcode, retmsg, cmd, session, flag })
         break
       default:
     }
