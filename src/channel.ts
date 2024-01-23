@@ -99,7 +99,7 @@ export class Channel {
             }),
         );
         const rsp = pb.decode(payload);
-        if (rsp[6][1] !== 3) {
+        if (rsp?.[6]?.[1] !== 3) {
             throw new ApiRejection(rsp[6][2] || -70, rsp[6][3] || '频道消息发送失败，可能被风控');
         }
         this.c.logger.info(
