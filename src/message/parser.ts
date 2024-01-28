@@ -253,6 +253,12 @@ export class Parser {
                     return
                 }
                 break
+            case 45:
+                elem = {
+                    type: "markdown",
+                    text: proto[1]?.toString()
+                }
+                break
             case 48:
                 elem = this.parseNewImgElem(proto, "image") as T.ImageElem | T.FlashElem
                 if (!elem) return
@@ -323,6 +329,10 @@ export class Parser {
                             this.parseExclusiveElem(37, proto)
                         } else if (proto[1] === 20) { //json
                             this.parseExclusiveElem(51, proto[2])
+                        } else if (proto[1] === 45) {
+                            this.parsePartialElem(proto[1], proto[2])
+                        } else if (proto[1] === 46) {
+                            this.parsePartialElem(proto[1], proto[2])
                         } else if (proto[1] === 48) {
                             this.parsePartialElem(proto[1], proto[2])
                         }

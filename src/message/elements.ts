@@ -175,6 +175,13 @@ export interface PokeElem {
 	text?: string
 }
 
+/** Markdown消息 */
+export interface MarkdownElem {
+	type: "markdown"
+	text: string
+}
+
+
 /** 特殊 (官方客户端无法解析此消息) */
 export interface MiraiElem {
 	type: "mirai"
@@ -251,7 +258,7 @@ export type ChainElem = TextElem | FaceElem | BfaceElem | MfaceElem | ImageElem 
 /** 注意：只有`ChainElem`中的元素可以组合发送，其他元素只能单独发送 */
 export type MessageElem = TextElem | FaceElem | BfaceElem | MfaceElem | ImageElem | AtElem | MiraiElem | ReplyElem |
 	FlashElem | PttElem | VideoElem | JsonElem | XmlElem | PokeElem | LocationElem |
-	ShareElem | MusicElem | FileElem | ForwardNode | QuoteElem
+	ShareElem | MusicElem | FileElem | ForwardNode | QuoteElem | MarkdownElem
 
 /** 可通过`sendMsg`发送的类型集合 (字符串、元素对象，或它们的数组) */
 export type Sendable = string | MessageElem | (string | MessageElem)[]
@@ -341,6 +348,11 @@ export const segment = {
 	xml(data: string, id?: number): XmlElem {
 		return {
 			type: "xml", data, id
+		}
+	},
+	markdown(text: string): MarkdownElem {
+		return {
+			type: "markdown", text
 		}
 	},
 	/** 一种特殊消息(官方客户端无法解析) */

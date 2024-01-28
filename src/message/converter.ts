@@ -4,7 +4,7 @@ import { Image } from "./image"
 import {
     AtElem, BfaceElem, Quotable, MessageElem, TextElem,
     FaceElem, FlashElem, ImageElem, JsonElem, LocationElem, MfaceElem, ReplyElem,
-    MiraiElem, PokeElem, PttElem, Sendable, ShareElem, VideoElem, XmlElem, FileElem, ForwardNode, MusicElem
+    MiraiElem, PokeElem, PttElem, Sendable, ShareElem, VideoElem, XmlElem, FileElem, ForwardNode, MusicElem, MarkdownElem
 } from "./elements"
 import { pb } from "../core"
 import { Anonymous, rand2uuid, parseDmMessageId, parseGroupMessageId } from "./message"
@@ -407,6 +407,20 @@ export class Converter {
         })
         this.brief += "[戳一戳]"
         this.is_chain = false
+    }
+
+    private markdown(elem: MarkdownElem) {
+        const { text } = elem
+        this.elems.push({
+            53: {
+                1: 45,
+                2: {
+                    1: text
+                },
+                3: 1
+            }
+        })
+        this.brief += "[markdown消息]"
     }
 
     private mirai(elem: MiraiElem) {
