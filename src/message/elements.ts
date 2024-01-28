@@ -70,6 +70,18 @@ export interface ImageElem {
 	origin?: boolean
 	/** 图片概要 */
 	summary?: string
+
+	/** 图片fid，接收时有效(QQNT) */
+	fid?: string
+	/** 图片md5，接收时有效 */
+	md5?: string
+	/** 图片高度，接收时有效 */
+	height?: number
+	/** 图片宽度，接收时有效 */
+	width?: number
+	/** 图片大小，接收时有效 */
+	size?: number
+
 }
 
 /** 闪照 */

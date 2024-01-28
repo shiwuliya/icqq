@@ -507,16 +507,16 @@ export class Client extends BaseClient {
      * 获取转发消息
      * use {@link Friend.getForwardMsg}
      */
-    getForwardMsg(resid: string, fileName?: string) {
-        return this.pickFriend(this.uin).getForwardMsg(resid, fileName);
+    getForwardMsg(resid: string, fileName?: string, nt?: boolean) {
+        return this.pickFriend(this.uin).getForwardMsg(resid, fileName, nt);
     }
 
     /**
      * 制作转发消息
      * use {@link Friend.makeForwardMsg} or {@link Group.makeForwardMsg}
      */
-    makeForwardMsg(fake: Forwardable[], dm = false) {
-        return (dm ? this.pickFriend : this.pickGroup)(this.uin).makeForwardMsg(fake);
+    makeForwardMsg(fake: Forwardable[], dm: boolean = false, nt?: boolean) {
+        return (dm ? this.pickFriend : this.pickGroup)(this.uin).makeForwardMsg(fake, nt);
     }
 
     /** Ocr图片转文字 */

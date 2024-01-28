@@ -22,7 +22,8 @@ import {
     lock,
     pipeline,
     DownloadTransform,
-    log
+    log,
+    BUF0
 } from "../common"
 import {
     Sendable,
@@ -462,6 +463,29 @@ export abstract class Contactable {
         }
     }
 
+    private async _newUploadMultiMsg(compressed: Buffer) {
+        const body = pb.encode({
+            2: {
+                1: this.dm ? 1 : 3,
+                2: {
+                    2: this.target
+                },
+                4: compressed
+            },
+            15: {
+                1: 4,
+                2: 2,
+                3: 9,
+                4: 0
+            }
+        })
+        const payload = await this.c.sendUni("trpc.group.long_msg_interface.MsgService.SsoSendLongMsg", body)
+        const rsp = pb.decode(payload)?.[2]
+        if (!rsp?.[3])
+            drop(rsp?.[1], rsp?.[2]?.toString() || "unknown trpc.group.long_msg_interface.MsgService.SsoSendLongMsg error")
+        return rsp[3].toString() as string
+    }
+
     private async _uploadMultiMsg(compressed: Buffer) {
         const body = pb.encode({
             1: 1,
@@ -479,15 +503,14 @@ export abstract class Contactable {
             8: 1,
         })
         const payload = await this.c.sendUni("MultiMsg.ApplyUp", body)
-        const rsp = pb.decode(payload)[2]
-        if (rsp[1] !== 0)
-            drop(rsp[1], rsp[2]?.toString() || "unknown MultiMsg.ApplyUp error")
+        let rsp = pb.decode(payload)[2]
+        if (rsp[1] !== 0) drop(rsp[1], rsp[2]?.toString() || "unknown MultiMsg.ApplyUp error")
         const buf = pb.encode({
             1: 1,
             2: 5,
             3: 9,
             4: [{
-                //1: 3,
+                1: this.dm ? 1 : 3,
                 2: this.target,
                 4: compressed,
                 5: 2,
@@ -509,7 +532,7 @@ export abstract class Contactable {
      * 需要注意的是，好友图片和群图片的内部格式不一样，对着群制作的转发消息中的图片，发给好友可能会裂图，反过来也一样
      * 支持4层套娃转发（PC仅显示3层）
      */
-    async makeForwardMsg(msglist: Forwardable[] | Forwardable): Promise<JsonElem> {
+    async makeForwardMsg(msglist: Forwardable[] | Forwardable, nt: boolean = false): Promise<JsonElem> {
         if (!Array.isArray(msglist))
             msglist = [msglist]
         const nodes = []
@@ -556,7 +579,7 @@ export abstract class Contactable {
                 }
 
                 if (resid && fileName) {
-                    const buff = await this._downloadMultiMsg(resid, this.dm ? 1 : 2)
+                    const buff = nt ? await this._newDownloadMultiMsg(String(resid), this.dm ? 1 : 2) : await this._downloadMultiMsg(String(resid), this.dm ? 1 : 2)
                     let arr = pb.decode(buff)[2]
                     if (!Array.isArray(arr)) arr = [arr]
                     for (let val of arr) {
@@ -593,29 +616,56 @@ export abstract class Contactable {
                 })
                 cnt++
             }
-            nodes.push({
-                1: {
-                    1: fake.user_id,
-                    2: this.target,
-                    3: this.dm ? 166 : 82,
-                    4: this.dm ? 11 : null,
-                    5: seq,
-                    6: fake.time || timestamp(),
-                    7: rand2uuid(rand),
-                    9: this.dm ? null : {
-                        1: this.target,
-                        4: nickname,
+            if (nt) {
+                nodes.push({
+                    1: {
+                        1: fake.user_id,
+                        //2: 'uid',
+                        6: this.dm ? this.c.uin : null,
+                        8: this.dm ? null : {
+                            1: this.target,
+                            2: nickname,
+                            5: 2
+                        }
                     },
-                    14: this.dm ? nickname : null,
-                    20: {
-                        1: 0,
-                        2: rand
+                    2: {
+                        1: this.dm ? 166 : 82,
+                        4: rand,
+                        5: seq,
+                        6: fake.time || timestamp(),
+                        7: 1,
+                        8: 0,
+                        9: 0
+                    },
+                    3: {
+                        1: maker.rich
                     }
-                },
-                3: {
-                    1: maker.rich
-                }
-            })
+                })
+            } else {
+                nodes.push({
+                    1: {
+                        1: fake.user_id,
+                        2: this.target,
+                        3: this.dm ? 166 : 82,
+                        4: this.dm ? 11 : null,
+                        5: seq,
+                        6: fake.time || timestamp(),
+                        7: rand2uuid(rand),
+                        9: this.dm ? null : {
+                            1: this.target,
+                            4: nickname,
+                        },
+                        14: this.dm ? nickname : null,
+                        20: {
+                            1: 0,
+                            2: rand
+                        }
+                    },
+                    3: {
+                        1: maker.rich
+                    }
+                })
+            }
         }
 
         MultiMsg.push({
@@ -630,11 +680,15 @@ export abstract class Contactable {
         if (imgs.length)
             await this.uploadImages(imgs)
         const compressed = await gzip(pb.encode({
-            1: nodes,
+            //1: nodes,
             2: MultiMsg
         }))
-
-        const resid = await this._uploadMultiMsg(compressed)
+        let resid
+        try {
+            resid = nt ? await this._newUploadMultiMsg(compressed) : await this._uploadMultiMsg(compressed)
+        } catch {
+            resid = nt ? await this._newUploadMultiMsg(compressed) : await this._uploadMultiMsg(compressed)
+        }
         const json = {
             "app": "com.tencent.multimsg",
             "config": { "autosize": 1, "forward": 1, "round": 1, "type": "normal", "width": 300 },
@@ -653,7 +707,6 @@ export abstract class Contactable {
             "ver": "0.0.0.5",
             "view": "contact"
         };
-
         return {
             type: "json",
             data: json
@@ -661,9 +714,9 @@ export abstract class Contactable {
     }
 
     /** 下载并解析合并转发 */
-    async getForwardMsg(resid: string, fileName: string = "MultiMsg") {
+    async getForwardMsg(resid: string, fileName: string = "MultiMsg", nt: boolean = false) {
         const ret = []
-        const buf = await this._downloadMultiMsg(String(resid), this.dm ? 1 : 2)
+        const buf = nt ? await this._newDownloadMultiMsg(String(resid), this.dm ? 1 : 2) : await this._downloadMultiMsg(String(resid), this.dm ? 1 : 2)
         let a = pb.decode(buf)[2]
         if (!Array.isArray(a)) a = [a]
         for (let b of a) {
@@ -683,6 +736,28 @@ export abstract class Contactable {
             }
         }
         return ret
+    }
+
+    private async _newDownloadMultiMsg(resid: string, bu: 1 | 2) {
+        const body = pb.encode({
+            1: {
+                1: {
+                    2: this.target
+                },
+                2: resid,
+                3: bu === 2 ? 3 : 1
+            },
+            15: {
+                1: 2,
+                2: 2,
+                3: 9,
+                4: 0
+            }
+        })
+        const payload = await this.c.sendUni("trpc.group.long_msg_interface.MsgService.SsoRecvLongMsg", body)
+        const rsp = pb.decode(payload)?.[1]
+        if (!rsp?.[4]) return BUF0
+        return unzip(rsp[4].toBuffer())
     }
 
     private async _downloadMultiMsg(resid: string, bu: 1 | 2) {

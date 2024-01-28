@@ -23,7 +23,8 @@ export class Parser {
     quotation?: pb.Proto
     atme = false
     atall = false
-    imgprefix = ""
+    newImg = false
+    imgprefix: any = {}
 
     private exclusive = false
     private it?: IterableIterator<[number, pb.Proto]>
@@ -65,7 +66,7 @@ export class Parser {
                 this.content = elem.data
                 break
             case 3: //flash
-                elem = this.parseImgElem(proto, "flash") as T.FlashElem
+                elem = this.parseNewImgElem(proto, "flash") as T.ImageElem | T.FlashElem
                 brief = "闪照"
                 this.content = `{flash:${(elem.file as string).slice(0, 32).toUpperCase()}}`
                 break
@@ -228,9 +229,10 @@ export class Parser {
                 break
             case 4:
             case 8:
-                elem = this.parseImgElem(proto, "image") as T.ImageElem
-                brief = elem.asface ? "[动画表情]" : "[图片]"
-                content = `{image:${(elem.file as string).slice(0, 32).toUpperCase()}}`
+                if (this.newImg) return
+                elem = this.parseImgElem(type, proto, "image") as T.ImageElem
+                brief = (elem.asface ? "[动画表情]" : "[图片]") + (elem.summary || "")
+                content = `{image:${(elem.md5 as string).toUpperCase()}}`
                 break
             case 34: //sface
                 brief = this.getNextText()
@@ -251,6 +253,12 @@ export class Parser {
                 } else {
                     return
                 }
+                break
+            case 48:
+                elem = this.parseNewImgElem(proto, "image") as T.ImageElem | T.FlashElem
+                if (!elem) return
+                brief = (elem.asface ? "[动画表情]" : "[图片]") + (elem.summary || "")
+                content = `{image:${(elem.md5 as string).toUpperCase()}}`
                 break
             default:
                 return
@@ -309,15 +317,15 @@ export class Parser {
                         if (proto[1] === 3) { //flash
                             this.parseExclusiveElem(3, proto[2][1] ? proto[2][1] : proto[2][2])
                         } else if (proto[1] === 33) { //face(id>255)
-                            this.parsePartialElem(33, proto[2]);
+                            this.parsePartialElem(33, proto[2])
                         } else if (proto[1] === 2) { //poke
-                            this.parseExclusiveElem(126, proto);
+                            this.parseExclusiveElem(126, proto)
                         } else if (proto[1] === 37) { //qlottie
-                            this.parseExclusiveElem(37, proto);
+                            this.parseExclusiveElem(37, proto)
                         } else if (proto[1] === 20) { //json
-                            this.parseExclusiveElem(51, proto[2]);
-                        } else if (proto[1] === 48) { //image prefix of qqnt
-                            this.imgprefix = "https://" + proto[2][1][2][3] + proto[2][1][2][1]
+                            this.parseExclusiveElem(51, proto[2])
+                        } else if (proto[1] === 48) {
+                            this.parsePartialElem(proto[1], proto[2])
                         }
                         break
                     default:
@@ -327,49 +335,78 @@ export class Parser {
         }
     }
 
-    private parseImgElem(proto: pb.Proto, type: "flash" | "image") {
+    private parseNewImgElem(proto: pb.Proto, type: "flash" | "image") {
         let elem: T.ImageElem | T.FlashElem
-		if (proto[34] && proto[34][30] && String(proto[34][30]).startsWith("&rkey=") && this.imgprefix) {
-			// QQNT图片
-			elem = {
-				type,
-				file: buildImageFileParam(proto[13].toHex(), proto[25], proto[22], proto[23], proto[20]),
-				url: this.imgprefix + String(proto[34][30]) + "&spec=0",
-			}
-			this.imgprefix = ""
-			return elem
-		} else if (proto[29] && proto[29][30] && String(proto[29][30]).startsWith("&rkey=") && this.imgprefix) {
-			// QQNT图片
-			elem = {
-				type,
-				file: buildImageFileParam(proto[7].toHex(), proto[2], proto[9], proto[8], proto[5]),
-				url: this.imgprefix + String(proto[29][30]) + "&spec=0",
-			}
-			this.imgprefix = ""
-			return elem
-		}
-        if (proto[7]?.toHex) {
+        const path = (proto[2][1]?.[11] || proto[2][1]?.[12])?.[30]
+        if (path) {
+            this.newImg = true
             elem = {
                 type,
-                file: buildImageFileParam(proto[7].toHex(), proto[2], proto[9], proto[8], proto[5]),
-                url: "",
+                file: proto[1][1][1][4]?.toString(),
+                url: `https://${proto[1][2][3]}${path}${proto[1][2][2][1] || "&spec=0"}`,
+                fid: proto[1][1][2]?.toString(),
+                md5: proto[1][1][1][2]?.toString(),
+                height: proto[1][1][1][7],
+                width: proto[1][1][1][6],
+                size: proto[1][1][1][1],
+                summary: proto[2][1]?.[2]?.toString()
             }
-            if (proto[29] && proto[29][30])
-                elem.url = `https://c2cpicdw.qpic.cn${proto[29][30]}&spec=0&rf=naio`
-            else if (proto[15])
+            if (type === "image") elem.asface = proto[2][1]?.[1] === 1
+            elem.file = buildImageFileParam(elem.md5 as string, elem.size, elem.width, elem.height, proto[1][1][1][5][2])
+            return elem
+        } else {
+            elem = {
+                type,
+                file: proto[1][1][1][4]?.toString(),
+                url: `https://${proto[1][2][3]}${proto[1][2][1]}`,
+                fid: proto[1][1][2]?.toString(),
+                md5: proto[1][1][1][2]?.toString(),
+                height: proto[1][1][1][7],
+                width: proto[1][1][1][6],
+                size: proto[1][1][1][1],
+                summary: proto[2][1]?.[2]?.toString()
+            }
+            if (type === "image") elem.asface = proto[2][1]?.[1] === 1
+            elem.file = buildImageFileParam(elem.md5 as string, elem.size, elem.width, elem.height, proto[1][1][1][5][2])
+            this.imgprefix[elem.md5 as string] = elem
+        }
+    }
+
+    private parseImgElem(source_type: number, proto: pb.Proto, type: "flash" | "image") {
+        let elem: T.ImageElem | T.FlashElem
+        let dm = type === 'flash' ? (proto[1] ? true : false) : (source_type === 8 ? false : true);
+        let md5 = proto[dm ? 7 : 13].toHex()
+        let path = proto[dm ? 29 : 34]?.[30]
+        if (this.imgprefix[md5] && path) {
+            elem = {
+                ...this.imgprefix[md5],
+                type,
+                url: `${new URL(this.imgprefix[md5].url).origin}${path}&spec=0`
+            }
+        } else {
+            elem = {
+                type,
+                file: '',
+                url: '',
+                md5: md5,
+                height: proto[dm ? 8 : 23],
+                width: proto[dm ? 9 : 22],
+                size: proto[dm ? 2 : 25],
+                summary: proto[dm ? 29 : 34]?.[dm ? 8 : 9]?.toString()
+            }
+            elem.file = buildImageFileParam(elem.md5 as string, elem.size, elem.width, elem.height, proto[dm ? 5 : 20])
+        }
+        if (type === "image") elem.asface = proto[dm ? 29 : 34]?.[1] === 1
+        if (!elem.url) {
+            if (path) {
+                elem.url = `https://c2cpicdw.qpic.cn${path}&spec=0`
+            } else if (proto[16]) {
+                elem.url = `https://gchat.qpic.cn${proto[16]}`
+            } else if (proto[15]) {
                 elem.url = `https://c2cpicdw.qpic.cn${proto[15]}`
-            else if (proto[10])
-                elem.url = `https://c2cpicdw.qpic.cn/offpic_new/0/${proto[10]}/0`
-            if (elem.type === "image")
-                elem.asface = proto[29]?.[1] === 1
-        } else { //群图
-            elem = {
-                type,
-                file: buildImageFileParam(proto[13].toHex(), proto[25], proto[22], proto[23], proto[20]),
-                url: proto[16] ? `https://gchat.qpic.cn${proto[16]}` : getGroupImageUrl(proto[13].toHex()),
+            } else {
+                elem.url = getGroupImageUrl(md5)
             }
-            if (elem.type === "image")
-                elem.asface = proto[34]?.[1] === 1
         }
         return elem
     }
