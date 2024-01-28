@@ -245,10 +245,9 @@ export class Parser {
                 break
             case 31: //mirai
                 if (proto[3] === 103904510) {
-                    brief = content = String(proto[2])
                     elem = {
                         type: "mirai",
-                        data: brief,
+                        data: String(proto[2]),
                     }
                 } else {
                     return
