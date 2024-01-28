@@ -178,7 +178,7 @@ export interface PokeElem {
 /** Markdown消息 */
 export interface MarkdownElem {
 	type: "markdown"
-	text: string
+	content: string
 }
 
 
@@ -350,9 +350,9 @@ export const segment = {
 			type: "xml", data, id
 		}
 	},
-	markdown(text: string): MarkdownElem {
+	markdown(content: string): MarkdownElem {
 		return {
-			type: "markdown", text
+			type: "markdown", content
 		}
 	},
 	/** 一种特殊消息(官方客户端无法解析) */

@@ -256,7 +256,7 @@ export class Parser {
             case 45:
                 elem = {
                     type: "markdown",
-                    text: proto[1]?.toString()
+                    content: proto[1]?.toString()
                 }
                 break
             case 48:

@@ -410,12 +410,12 @@ export class Converter {
     }
 
     private markdown(elem: MarkdownElem) {
-        const { text } = elem
+        const { content } = elem
         this.elems.push({
             53: {
                 1: 45,
                 2: {
-                    1: text
+                    1: content
                 },
                 3: 1
             }
