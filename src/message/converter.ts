@@ -4,7 +4,7 @@ import { Image } from "./image"
 import {
     AtElem, BfaceElem, Quotable, MessageElem, TextElem,
     FaceElem, FlashElem, ImageElem, JsonElem, LocationElem, MfaceElem, ReplyElem,
-    MiraiElem, PokeElem, PttElem, Sendable, ShareElem, VideoElem, XmlElem, FileElem, ForwardNode, MusicElem, MarkdownElem
+    MiraiElem, PokeElem, PttElem, Sendable, ShareElem, VideoElem, XmlElem, FileElem, ForwardNode, MusicElem, MarkdownElem, ButtonElem
 } from "./elements"
 import { pb } from "../core"
 import { Anonymous, rand2uuid, parseDmMessageId, parseGroupMessageId } from "./message"
@@ -421,6 +421,47 @@ export class Converter {
             }
         })
         this.brief += "[markdown消息]"
+    }
+
+    private button(elem: ButtonElem) {
+        const { content } = elem
+        const _content = {
+            1: {
+                1: content.rows.map(row => {
+                    return {
+                        1: row.buttons.map(button => {
+                            return {
+                                1: button.id,
+                                2: {
+                                    1: button.render_data.label,
+                                    2: button.render_data.visited_label,
+                                    3: button.render_data.style
+                                },
+                                3: {
+                                    1: button.action.type,
+                                    2: {
+                                        1: button.action.permisson.type
+                                    },
+                                    4: button.action.unsupport_tips,
+                                    5: button.action.data,
+                                    7: button.action.reply ? 1 : 0,
+                                    8: button.action.enter ? 1 : 0
+                                }
+                            }
+                        })
+                    }
+                }),
+                2: content.appid
+            }
+        }
+        this.elems.push({
+            53: {
+                1: 46,
+                2: _content,
+                3: 1
+            }
+        })
+        this.brief += "[button消息]"
     }
 
     private mirai(elem: MiraiElem) {

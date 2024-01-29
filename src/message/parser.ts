@@ -259,6 +259,50 @@ export class Parser {
                     content: proto[1]?.toString()
                 }
                 break
+            case 46:
+                try {
+                    const rows = Array.isArray(proto[1][1]) ? proto[1][1] : [proto[1][1]]
+                    elem = {
+                        type: "button",
+                        content: {
+                            appid: proto[1][2],
+                            rows: rows.map(row => {
+                                row = Array.isArray(row[1]) ? row[1] : [row[1]]
+                                const buttons: T.Button[] = []
+                                for (let val of row) {
+                                    const button: T.Button = {
+                                        id: "",
+                                        render_data: {},
+                                        action: {
+                                            permisson: {}
+                                        }
+                                    } as T.Button
+                                    if (val[1]) button.id = val[1]?.toString()
+                                    if (val[2]) {
+                                        button.render_data.label = val[2][1]?.toString()
+                                        button.render_data.visited_label = val[2][2]?.toString()
+                                        button.render_data.style = val[2][3]
+                                    }
+                                    if (val[3]) {
+                                        button.action.type = val[3][1]
+                                        button.action.unsupport_tips = val[3][4]?.toString()
+                                        button.action.data = val[3][5]?.toString()
+                                        button.action.reply = val[3][7] === 1
+                                        button.action.enter = val[3][8] === 1
+                                        if (val[3][2]) {
+                                            button.action.permisson.type = val[3][2][1]
+                                        }
+                                    }
+                                    buttons.push(button)
+                                }
+                                return { buttons }
+                            })
+                        }
+                    }
+                } catch {
+                    return
+                }
+                break
             case 48:
                 elem = this.parseNewImgElem(proto, "image") as T.ImageElem | T.FlashElem
                 if (!elem) return
