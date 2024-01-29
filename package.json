@@ -38,7 +38,8 @@
     "long": "^4.0.0",
     "pngjs": "^6.0.0",
     "probe-image-size": "^7.2.2",
-    "triptrap": "^0.0.17"
+    "triptrap": "^0.0.17",
+    "silk-wasm": "^3.1.0"
   },
   "devDependencies": {
     "@types/node": "^16.18.31",

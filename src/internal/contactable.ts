@@ -41,7 +41,8 @@ import {
     rand2uuid, ForwardNode, MusicPlatform, buildMusic, TextElem, Parser, musicFactory, JsonElem,
 } from "../message"
 import { CmdID, highwayUpload } from "./highway"
-import { buildShare, ShareConfig, ShareContent } from "../message/share";
+import { buildShare, ShareConfig, ShareContent } from "../message/share"
+import { decode as silkDecode, encode as silkEncode, getDuration as silkGetDuration } from "../core/silk"
 
 type Client = import("../client").Client
 
@@ -386,6 +387,9 @@ export abstract class Contactable {
         if (typeof elem.file === "string" && elem.file.startsWith("protobuf://"))
             return elem
         const buf = await getPttBuffer(elem.file, transcoding, this.c.config.ffmpeg_path || "ffmpeg")
+        if (!elem.seconds && String(buf.slice(0, 7)).includes("SILK")) {
+            elem.seconds = Math.ceil((await silkGetDuration(buf) || 0) / 1000)
+        }
         const hash = md5(buf)
         const codec = (String(buf.slice(0, 7)).includes("SILK") || !transcoding) ? 1 : 0
         const body = {
@@ -878,8 +882,34 @@ export async function getPttBuffer(file: string | Buffer, transcoding = true, ff
     }
 }
 
-function audioTrans(file: string, ffmpeg = "ffmpeg"): Promise<Buffer> {
+function audioTransSlik(file: string, ffmpeg = "ffmpeg") {
     return new Promise((resolve, reject) => {
+        const tmpfile = path.join(TMP_DIR, uuid())
+        exec(`${ffmpeg} -y -i "${file}" -f s16le -ar 24000 -ac 1 -fs 31457280 "${tmpfile}"`, async (error, stdout, stderr) => {
+            try {
+                const pcm = await fs.promises.readFile(tmpfile)
+                try {
+                    const slik = (await silkEncode(pcm, 24000)).data
+                    resolve(Buffer.from(slik))
+                } catch {
+                    reject(new ApiRejection(ErrorCode.FFmpegPttTransError, "音频转码到silk失败，请确认你的ffmpeg可以处理此转换"))
+                }
+            } catch {
+                reject(new ApiRejection(ErrorCode.FFmpegPttTransError, "音频转码到pcm失败，请确认你的ffmpeg可以处理此转换"))
+            } finally {
+                fs.unlink(tmpfile, NOOP)
+            }
+        })
+    })
+}
+
+function audioTrans(file: string, ffmpeg = "ffmpeg"): Promise<Buffer> {
+    return new Promise(async (resolve, reject) => {
+        try {
+            const slik = await audioTransSlik(file, ffmpeg)
+            resolve(slik as Buffer)
+            return
+        } catch { }
         const tmpfile = path.join(TMP_DIR, uuid())
         exec(`${ffmpeg} -y -i "${file}" -ac 1 -ar 8000 -f amr "${tmpfile}"`, async (error, stdout, stderr) => {
             try {

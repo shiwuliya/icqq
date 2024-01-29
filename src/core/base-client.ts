@@ -1371,7 +1371,7 @@ function lostListener(this: BaseClient) {
   if (this[IS_ONLINE]) {
     this[IS_ONLINE] = false
     this.statistics.lost_times++
-    setTimeout(this.register, 50)
+    setTimeout(this.register.bind(this), 50)
   }
 }
 
