@@ -265,7 +265,7 @@ export class Parser {
                     elem = {
                         type: "button",
                         content: {
-                            appid: proto[1][2],
+                            appid: Number(proto[1][2]),
                             rows: rows.map(row => {
                                 row = Array.isArray(row[1]) ? row[1] : [row[1]]
                                 const buttons: T.Button[] = []
@@ -281,16 +281,16 @@ export class Parser {
                                     if (val[2]) {
                                         button.render_data.label = val[2][1]?.toString()
                                         button.render_data.visited_label = val[2][2]?.toString()
-                                        button.render_data.style = val[2][3]
+                                        button.render_data.style = Number(val[2][3])
                                     }
                                     if (val[3]) {
-                                        button.action.type = val[3][1]
+                                        button.action.type = Number(val[3][1])
                                         button.action.unsupport_tips = val[3][4]?.toString()
                                         button.action.data = val[3][5]?.toString()
                                         button.action.reply = val[3][7] === 1
                                         button.action.enter = val[3][8] === 1
                                         if (val[3][2]) {
-                                            button.action.permisson.type = val[3][2][1]
+                                            button.action.permisson.type = Number(val[3][2][1])
                                         }
                                     }
                                     buttons.push(button)
