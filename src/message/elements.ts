@@ -408,6 +408,11 @@ export const segment = {
 			type: "markdown", content
 		}
 	},
+	button(content: ButtonElem["content"]): ButtonElem {
+		return {
+			type: "button", content
+		}
+	},
 	/** 一种特殊消息(官方客户端无法解析) */
 	mirai(data: string): MiraiElem {
 		return {
