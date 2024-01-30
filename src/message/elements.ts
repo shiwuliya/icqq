@@ -113,8 +113,9 @@ export interface VideoElem {
 	/**
 	 * 需要`ffmpeg`和`ffprobe`
 	 * @type {string} 本地视频文件路径，例如`"/tmp/1.mp4"`
+	 * @type {Buffer} video buffer
 	 */
-	file: string
+	file: string | Buffer
 	/** 视频名，接收时有效 */
 	name?: string
 	/** 作为文件的文件id，接收时有效 */
@@ -124,6 +125,8 @@ export interface VideoElem {
 	size?: number
 	/** 视频时长（秒），接收时有效 */
 	seconds?: number
+	/** 发送完成后是否删除文件 */
+	temp?: boolean
 }
 
 /** 地点分享 */
@@ -386,11 +389,10 @@ export const segment = {
 			type: "record", file, ...data
 		}
 	},
-	/** 视频，仅支持本地文件 */
-	video(file: string): VideoElem {
+	/** 视频，支持http://,base64:// */
+	video(file: string | Buffer, data: any = {}): VideoElem {
 		return {
-			type: "video",
-			file
+			type: "video", file, ...data
 		}
 	},
 	json(data: any): JsonElem {
