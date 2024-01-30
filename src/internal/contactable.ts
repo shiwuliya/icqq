@@ -259,8 +259,7 @@ export abstract class Contactable {
     }
 
     private async _downloadFileToTmpDir(url: string, headers?: any) {
-        const saveFileName = uuid()
-        const savePath = path.join(TMP_DIR, saveFileName)
+        const savePath = path.join(TMP_DIR, uuid())
         let readable = (await axios.get(url, {
             headers,
             responseType: "stream",
@@ -269,14 +268,27 @@ export abstract class Contactable {
         readable = readable.pipe(new DownloadTransform)
         await pipeline(readable, fs.createWriteStream(savePath))
         return savePath
+    }
 
+    private async _saveFileToTmpDir(file: string | Buffer) {
+        const buf = file instanceof Buffer ? file : Buffer.from(file.slice(9), "base64")
+        const savePath = path.join(TMP_DIR, uuid())
+        await fs.promises.writeFile(savePath, buf)
+        return savePath
     }
 
     /** 上传一个视频以备发送(理论上传一次所有群和好友都能发) */
     async uploadVideo(elem: VideoElem): Promise<VideoElem> {
-        let { file } = elem
-        if (file.startsWith("protobuf://")) return elem
-        if (file.startsWith('https://') || file.startsWith('http://')) file = await this._downloadFileToTmpDir(file)
+        let { file, temp = false } = elem
+        if (file instanceof Buffer || file.startsWith("base64://")) {
+            file = await this._saveFileToTmpDir(file)
+            temp = true
+        } else if (file.startsWith("protobuf://")) {
+          return elem
+        } else if (file.startsWith('https://') || file.startsWith('http://')) {
+            file = await this._downloadFileToTmpDir(file)
+            temp = true
+        }
         file = file.replace(/^file:\/{2}/, "")
         IS_WIN && file.startsWith("/") && (file = file.slice(1))
         const thumb = path.join(TMP_DIR, uuid())
@@ -357,6 +369,7 @@ export abstract class Contactable {
             )
         }
         fs.unlink(thumb, NOOP)
+        if (temp) fs.unlink(file, NOOP)
         const buf = pb.encode({
             1: rsp[5].toBuffer(),
             2: md5video,
@@ -854,7 +867,7 @@ export async function getPttBuffer(file: string | Buffer, transcoding = true, ff
         } else {
             const tmpfile = path.join(TMP_DIR, uuid())
             await fs.promises.writeFile(tmpfile, buf)
-            return audioTrans(tmpfile, ffmpeg)
+            return audioTrans(tmpfile, ffmpeg, true)
         }
     } else if (file.startsWith("http://") || file.startsWith("https://")) {
         // 网络文件
@@ -867,7 +880,7 @@ export async function getPttBuffer(file: string | Buffer, transcoding = true, ff
             fs.unlink(tmpfile, NOOP)
             return buf
         } else {
-            return audioTrans(tmpfile, ffmpeg)
+            return audioTrans(tmpfile, ffmpeg, true)
         }
     } else {
         // 本地文件
@@ -882,7 +895,7 @@ export async function getPttBuffer(file: string | Buffer, transcoding = true, ff
     }
 }
 
-function audioTransSlik(file: string, ffmpeg = "ffmpeg") {
+function audioTransSlik(file: string, ffmpeg = "ffmpeg", temp = false) {
     return new Promise((resolve, reject) => {
         const tmpfile = path.join(TMP_DIR, uuid())
         exec(`${ffmpeg} -y -i "${file}" -f s16le -ar 24000 -ac 1 -fs 31457280 "${tmpfile}"`, async (error, stdout, stderr) => {
@@ -898,15 +911,16 @@ function audioTransSlik(file: string, ffmpeg = "ffmpeg") {
                 reject(new ApiRejection(ErrorCode.FFmpegPttTransError, "音频转码到pcm失败，请确认你的ffmpeg可以处理此转换"))
             } finally {
                 fs.unlink(tmpfile, NOOP)
+                if (temp) fs.unlink(file, NOOP)
             }
         })
     })
 }
 
-function audioTrans(file: string, ffmpeg = "ffmpeg"): Promise<Buffer> {
+function audioTrans(file: string, ffmpeg = "ffmpeg", temp = false): Promise<Buffer> {
     return new Promise(async (resolve, reject) => {
         try {
-            const slik = await audioTransSlik(file, ffmpeg)
+            const slik = await audioTransSlik(file, ffmpeg, temp)
             resolve(slik as Buffer)
             return
         } catch { }
@@ -919,6 +933,7 @@ function audioTrans(file: string, ffmpeg = "ffmpeg"): Promise<Buffer> {
                 reject(new ApiRejection(ErrorCode.FFmpegPttTransError, "音频转码到amr失败，请确认你的ffmpeg可以处理此转换"))
             } finally {
                 fs.unlink(tmpfile, NOOP)
+                if (temp) fs.unlink(file, NOOP)
             }
         })
     })
