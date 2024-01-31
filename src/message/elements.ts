@@ -211,7 +211,7 @@ export interface Button {
 	action: {
 		/** 设置 0 跳转按钮：http 或 小程序 客户端识别 scheme，设置 1 回调按钮：回调后台接口, data 传给后台，设置 2 指令按钮：自动在输入框插入 @bot data */
 		type: number,
-		permisson: {
+		permission: {
 			/** 0 指定用户可操作，1 仅管理者可操作，2 所有人可操作，3 指定身份组可操作（仅频道可用） */
 			type: number,
 			/** 有权限的用户 id 的列表 */

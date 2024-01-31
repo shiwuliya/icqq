@@ -440,7 +440,7 @@ export class Converter {
                                 3: {
                                     1: button.action.type,
                                     2: {
-                                        1: button.action.permisson.type
+                                        1: button.action.permission.type
                                     },
                                     4: button.action.unsupport_tips,
                                     5: button.action.data,

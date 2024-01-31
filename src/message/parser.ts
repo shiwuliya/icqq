@@ -274,7 +274,7 @@ export class Parser {
                                         id: "",
                                         render_data: {},
                                         action: {
-                                            permisson: {}
+                                            permission: {}
                                         }
                                     } as T.Button
                                     if (val[1]) button.id = val[1]?.toString()
@@ -290,7 +290,7 @@ export class Parser {
                                         button.action.reply = val[3][7] === 1
                                         button.action.enter = val[3][8] === 1
                                         if (val[3][2]) {
-                                            button.action.permisson.type = Number(val[3][2][1]) || 0
+                                            button.action.permission.type = Number(val[3][2][1]) || 0
                                         }
                                     }
                                     buttons.push(button)
