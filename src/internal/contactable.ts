@@ -613,11 +613,7 @@ export abstract class Contactable {
                 }
             }
 
-            const maker = new Converter(fake.message, {
-                dm: this.dm,
-                cachedir: path.join(this.c.dir, "image"),
-            })
-
+            const maker = await this._preprocess(fake.message)
             if (maker?.brief && brief) {
                 maker.brief = brief
             }
@@ -692,10 +688,6 @@ export abstract class Contactable {
             }
         })
 
-        for (const maker of makers)
-            imgs = [...imgs, ...maker.imgs]
-        if (imgs.length)
-            await this.uploadImages(imgs)
         const compressed = await gzip(pb.encode({
             //1: nodes,
             2: MultiMsg
