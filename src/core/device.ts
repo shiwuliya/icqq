@@ -286,6 +286,18 @@ export type Apk = {
 const mobile: Apk[] = [
     // 每个版本不同的信息
     {
+        name: "A9.0.17.6a4a36ca",
+        version: "9.0.17.15185",
+        ver: "9.0.17",
+        buildtime: 1702888273,
+        subid: 537204056,
+        apad_subid: 537204095,
+        bitmap: 150470524,
+        sdkver: "6.0.0.2558",
+        qua: 'V1_AND_SQ_9.0.17_5712_YYB_D',
+        ssover: 21,
+    },
+    {
         name: "A9.0.15.4145f774",
         version: "9.0.15.14970",
         ver: "9.0.15",
