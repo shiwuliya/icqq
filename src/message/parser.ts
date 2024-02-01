@@ -291,6 +291,8 @@ export class Parser {
                                         button.action.enter = val[3][8] === 1
                                         if (val[3][2]) {
                                             button.action.permission.type = Number(val[3][2][1]) || 0
+                                            button.action.permission.specify_role_ids = val[3][2][2] || []
+                                            button.action.permission.specify_user_ids = val[3][2][3] || []
                                         }
                                     }
                                     buttons.push(button)
