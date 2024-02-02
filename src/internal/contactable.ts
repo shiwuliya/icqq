@@ -235,10 +235,6 @@ export abstract class Contactable {
                         ...elem
                     }
                     if (elem.type === 'record') return await this.uploadPtt(elem)
-                    if (elem.type === 'reply') {
-                        if (source) return
-                        source = await this.c.getMsg(elem.id)
-                    }
                     return Promise.resolve(elem)
                 })
             if (forwardNode.length) task.push(this.makeForwardMsg(forwardNode))
