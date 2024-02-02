@@ -1379,7 +1379,7 @@ async function parseSso(this: BaseClient, buf: Buffer) {
   const stream = Readable.from(buf, { objectMode: false })
   const headlen = stream.read(4).readUInt32BE()
   const seq = stream.read(4).readInt32BE();
-  const retcode = stream.read(4).readInt32BE();
+  const retcode = stream.read(4).readInt32BE()
   const retmsg = stream.read(stream.read(4).readUInt32BE() - 4)?.toString()
   const cmd = stream.read(stream.read(4).readUInt32BE() - 4)?.toString()
   const session = stream.read(stream.read(4).readUInt32BE() - 4)
