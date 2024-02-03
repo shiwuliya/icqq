@@ -2,7 +2,7 @@ import { deflateSync } from "zlib"
 import { FACE_OLD_BUF, facemap } from "./face"
 import { Image } from "./image"
 import {
-    AtElem, BfaceElem, Quotable, MessageElem, TextElem,
+    AtElem, BfaceElem, Quotable, ChainElemTypes, MessageElem, TextElem,
     FaceElem, FlashElem, ImageElem, JsonElem, LocationElem, MfaceElem, ReplyElem,
     MiraiElem, PokeElem, PttElem, Sendable, ShareElem, VideoElem, XmlElem, FileElem, ForwardNode, MusicElem, MarkdownElem, ButtonElem
 } from "./elements"
@@ -59,13 +59,15 @@ export class Converter {
     private fragments: Uint8Array[] = []
 
     public constructor(content: Sendable, private ext?: ConverterExt) {
-        if (typeof content === "string") {
-            this._text(content)
-        } else if (Array.isArray(content)) {
-            for (let elem of content)
-                this._convert(elem)
-        } else {
-            this._convert(content)
+        let _content = Array.isArray(content) ? content : [content];
+        for (let elem of _content) {
+            if (!(typeof (elem) === "string" || ChainElemTypes.includes(elem.type as any))) {
+                _content = [elem]
+                break
+            }
+        }
+        for (let elem of _content) {
+            this._convert(elem)
         }
         if (!this.elems.length && !this.rich[4])
             throw new Error("empty message")
