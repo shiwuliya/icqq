@@ -309,8 +309,8 @@ export interface ForwardNode extends Forwardable {
 }
 
 /** 可组合发送的元素 */
-export type ChainElem = TextElem | FaceElem | BfaceElem | MfaceElem | ImageElem | AtElem | MiraiElem | MarkdownElem | ButtonElem
-export const ChainElemTypes: ChainElem["type"][] = ["at", "text", "face", "sface", "bface", "rps", "dice", "image", "mirai", "markdown", "button"];
+export type ChainElem = TextElem | FaceElem | BfaceElem | MfaceElem | ImageElem | AtElem | MiraiElem | ReplyElem | ForwardNode | QuoteElem | MarkdownElem | ButtonElem
+export const ChainElemTypes: ChainElem["type"][] = ["text" , "at" , "face" , "sface" , "bface" , "rps" , "dice" , "image" , "markdown" , "button" , "mirai" , "reply" , "quote" , "node"];
 
 /** 注意：只有`ChainElem`中的元素可以组合发送，其他元素只能单独发送 */
 export type MessageElem = TextElem | FaceElem | BfaceElem | MfaceElem | ImageElem | AtElem | MiraiElem | ReplyElem |
