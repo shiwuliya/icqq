@@ -1,5 +1,26 @@
 # Changelog
 
+## [0.6.9](https://github.com/icqqjs/icqq/compare/v0.6.8...v0.6.9) (2024-02-03)
+
+
+### Bug Fixes
+
+* parseSso ([89ed4de](https://github.com/icqqjs/icqq/commit/89ed4de77ea82719f4fa744bca17f7d2579cd762))
+* QQNT图片解析、优化转发消息上传。 ([65b7bc0](https://github.com/icqqjs/icqq/commit/65b7bc07f581da2f0c169917aa853c70cdae11f2))
+* reply 重复处理 ([32c2489](https://github.com/icqqjs/icqq/commit/32c24897126f6a4ec9b3d4a82fe9e37cbd1f31de))
+* typo permisson → permission ([dc435b1](https://github.com/icqqjs/icqq/commit/dc435b1f35b018131e68235d83536c060d7d19a7))
+* 修复特定情况下可能会出现解密返回包失败问题。 ([62f3f12](https://github.com/icqqjs/icqq/commit/62f3f12fa8318ebe546cc54a8cf76b04c6282ec1))
+* 合并转发使用预处理 ([7341edf](https://github.com/icqqjs/icqq/commit/7341edf6632703441f4869cf86c2063ac245f7d1))
+* 增加9.0.15.14970。 ([919e3cd](https://github.com/icqqjs/icqq/commit/919e3cd0a233391aa90317621e515c25c5fde7a1))
+* 增加9.0.17.15185 ([caad99b](https://github.com/icqqjs/icqq/commit/caad99b0f44a8e78b11396b8b76853b330393f8a))
+* 当传入不支持组合发送的元素时丢弃其他元素。 ([32509fb](https://github.com/icqqjs/icqq/commit/32509fb4f4c4b8fc45def6c8876bff4104121909))
+* 支持Button消息解析。 ([95cc162](https://github.com/icqqjs/icqq/commit/95cc162a86dc526ff20352096ab6b19893dad5d6))
+* 支持markdown消息解析。 ([79d169e](https://github.com/icqqjs/icqq/commit/79d169e09b2b3ba731c3f5ce496d02fb53d46727))
+* 支持silk转码（silk-wasm）、修复掉线重连报错问题。 ([aea0163](https://github.com/icqqjs/icqq/commit/aea0163e3880b6dfa2ced12e43862584ebff7108))
+* 支持自定义图片概要。 ([ee7a634](https://github.com/icqqjs/icqq/commit/ee7a634f81d42de1f468d7bea845fb696b06aa7c))
+* 添加一些签名cmd名单。 ([1496192](https://github.com/icqqjs/icqq/commit/149619283a6fa9652768cfbde96eba5768c69d25))
+* 语音转码后删除缓存，支持发送 Buffer 视频 ([1000e42](https://github.com/icqqjs/icqq/commit/1000e4268eea1e71533eba1722a7588d53bd8f71))
+
 ## [0.6.8](https://github.com/icqqjs/icqq/compare/v0.6.7...v0.6.8) (2024-01-11)
 
 
