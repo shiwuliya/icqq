@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.6.10](https://github.com/icqqjs/icqq/compare/v0.6.9...v0.6.10) (2024-02-03)
+
+
+### Bug Fixes
+
+* 增加可组合发送的元素 ([c6786cc](https://github.com/icqqjs/icqq/commit/c6786ccee6134fe5efff9e2fbf6487da941c3617))
+
 ## [0.6.9](https://github.com/icqqjs/icqq/compare/v0.6.8...v0.6.9) (2024-02-03)
 
 
